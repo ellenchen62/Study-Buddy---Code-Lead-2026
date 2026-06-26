@@ -69,6 +69,7 @@
   .btn.sm{padding:7px 12px;font-size:13px}
   .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
   .btn.ghost:hover{color:var(--txt);border-color:var(--muted)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .between{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
   label.fld{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px;font-weight:500}
@@ -985,6 +986,12 @@ function renderPom(){
   const ring=document.getElementById('ring');
   ring.style.strokeDashoffset=off;
   ring.setAttribute('stroke',pom.phase==='Focus'?'var(--accent)':'var(--accent2)');
+  // Skip is locked during a focus block until the last 2 minutes (breaks can always be skipped).
+  const skip=document.getElementById('pt-skip');
+  const locked = pom.phase==='Focus' && pom.remaining>120;
+  skip.disabled=locked;
+  skip.title=locked?'Skip unlocks in the last 2 minutes of focus':'Skip to the next phase';
+  skip.textContent=locked?`Skip ▸ (${Math.ceil((pom.remaining-120)/60)} min)`:'Skip ▸';
 }
 document.getElementById('pt-start').onclick=function(){
   if(pom.running){pom.running=false;clearInterval(pom.timer);this.textContent='Start';return;}
@@ -999,7 +1006,10 @@ document.getElementById('pt-reset').onclick=()=>{
   clearInterval(pom.timer);pom.running=false;pom.phase='Focus';pom.total=pom.remaining=workMin()*60;pom.round=1;
   document.getElementById('pt-start').textContent='Start';renderPom();
 };
-document.getElementById('pt-skip').onclick=phaseEnd;
+document.getElementById('pt-skip').onclick=()=>{
+  if(pom.phase==='Focus' && pom.remaining>120){toast("Skip unlocks in the last 2 minutes of focus");return;}
+  phaseEnd();
+};
 function phaseEnd(){
   if(document.getElementById('pt-sound').checked)chime();
   if(pom.phase==='Focus'){
