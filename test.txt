@@ -16,6 +16,8 @@ Add a section for external resources
 
 Allow user to upload/create own flashcards
 
+Put Create Cards as a section in Flashcards
+
 
 [HIGH PRIORITY]
 ------------------------------------------------------------------------
