@@ -919,7 +919,97 @@ const TOPICS = {
   spa:["Present tense","Ser vs estar","Present tense","Question words","Irregular verbs","Adjective agreement","Greetings & vocabulary","Preterite tense","Numbers","Question words","Ser vs estar","Articles & gender","Present tense","Articles & gender","Gustar (likes)","Present tense","Greetings & vocabulary","Numbers","Ser vs estar","Preterite tense","Possessives","Reflexive verbs","Weather & vocabulary","Articles & gender","Ser vs estar"],
   his:["Declaration of Independence","Constitution","Civil War","Westward expansion","Road to Revolution","Declaration of Independence","Constitution","Reconstruction","Civil War","Road to Revolution","Early republic","Westward expansion","Constitution","Constitution","Constitution","Sectionalism & slavery","American Revolution","Enlightenment ideas","Constitution","Civil War","Reconstruction","Sectionalism & slavery","Constitution","Civil War","Constitution"],
 };
-function topicOf(subj,q){const i=QUESTIONS[subj].indexOf(q);return (i>=0&&TOPICS[subj]&&TOPICS[subj][i])||'General';}
+/* ===== SEPARATE TEST BANK — different questions from the practice set above ===== */
+/* each: [question, [choices], correctIndex, explanation, topic] */
+const TEST_QUESTIONS = {
+  alg:[
+    ["Solve x² − 7x + 10 = 0.",["x = 2 or 5","x = −2 or −5","x = 1 or 10","x = 3 or 4"],0,"(x−2)(x−5)=0 → x = 2 or 5.","Factoring quadratics"],
+    ["Evaluate log₃(27).",["2","3","4","9"],1,"3³ = 27, so the log is 3.","Logarithms"],
+    ["Simplify x⁵ · x².",["x⁷","x¹⁰","x³","x²·⁵"],0,"Add exponents: x^(5+2) = x⁷.","Exponent rules"],
+    ["What is the vertex of y = (x + 1)² − 4?",["(1, −4)","(−1, −4)","(−1, 4)","(1, 4)"],1,"Vertex (h,k) of a(x−h)²+k → here (−1, −4).","Quadratic graphs"],
+    ["Factor x² − 16.",["(x−4)(x+4)","(x−8)(x+2)","(x−4)²","prime"],0,"Difference of squares: x²−16 = (x−4)(x+4).","Factoring quadratics"],
+    ["If g(x) = 3x − 2, what is g(4)?",["7","10","12","14"],1,"3(4) − 2 = 10.","Functions"],
+    ["Solve 3^x = 81.",["x = 2","x = 3","x = 4","x = 9"],2,"3⁴ = 81, so x = 4.","Exponential equations"],
+    ["Find the slope through (0, 1) and (4, 9).",["1","2","4","8"],1,"(9−1)/(4−0) = 8/4 = 2.","Linear functions"],
+    ["Expand (x − 3)².",["x² − 9","x² − 6x + 9","x² + 6x + 9","x² − 6x − 9"],1,"(x−3)² = x² − 6x + 9.","Polynomial expansion"],
+    ["What is the discriminant of x² + 4x + 4, and what does it mean?",["0; one repeated real root","16; two real roots","−16; complex roots","8; two real roots"],0,"16 − 16 = 0 → one repeated real root.","Discriminant"],
+    ["Simplify √48.",["4√3","3√4","2√12","16√3"],0,"√48 = √(16·3) = 4√3.","Radicals"],
+    ["The conjugate of 5 − 3i is…",["5 + 3i","−5 + 3i","5 − 3i","3 − 5i"],0,"Flip the sign of the imaginary part: 5 + 3i.","Complex numbers"],
+    ["What is the domain of f(x) = √(x + 2)?",["x ≥ −2","x ≤ −2","x ≥ 2","all reals"],0,"x + 2 ≥ 0 → x ≥ −2.","Domain & range"],
+    ["What is the common difference of 10, 7, 4, 1, …?",["−3","3","−7","−2"],0,"Each term decreases by 3.","Sequences"],
+    ["The inverse of f(x) = x − 5 is…",["f⁻¹(x) = x − 5","f⁻¹(x) = x + 5","f⁻¹(x) = 5x","f⁻¹(x) = 5 − x"],1,"y = x − 5 → x = y + 5, so f⁻¹(x) = x + 5.","Inverse functions"],
+  ],
+  ela:[
+    ["Which is a metaphor?",["She is as brave as a lion.","Her courage was a roaring fire.","He ran like the wind.","The room was cold."],1,"A metaphor states one thing IS another, with no 'like/as'.","Figurative language"],
+    ["The repetition of vowel sounds in nearby words is called…",["Alliteration","Assonance","Onomatopoeia","Rhyme"],1,"Assonance repeats vowel sounds.","Literary devices"],
+    ["'Pathos' appeals to the audience's…",["Logic","Credibility","Emotions","Grammar"],2,"Pathos is the emotional appeal.","Rhetorical appeals"],
+    ["The part of a plot that introduces characters and setting is the…",["Climax","Exposition","Resolution","Falling action"],1,"Exposition provides background, characters, and setting.","Plot structure"],
+    ["A word's literal definition is its…",["Connotation","Denotation","Tone","Mood"],1,"Denotation is the dictionary meaning.","Diction"],
+    ["Which point of view addresses the reader as 'you'?",["First person","Second person","Third limited","Third omniscient"],1,"Second person uses 'you'.","Point of view"],
+    ["A brief reference to another well-known work or event is an…",["Analogy","Allusion","Anecdote","Antithesis"],1,"An allusion references something well known.","Literary devices"],
+    ["The narrator's attitude toward the subject is the…",["Mood","Tone","Theme","Plot"],1,"Tone is the author/narrator's attitude.","Tone & mood"],
+    ["Which sentence is grammatically correct?",["Each of the boys have a book.","Neither answer are right.","The list of items is long.","The dogs barks loudly."],2,"'List' is singular, so it takes 'is'.","Grammar"],
+    ["A struggle between a character and an outside force is…",["Internal conflict","External conflict","Resolution","Climax"],1,"External conflict is character vs. an outside force.","Reading comprehension"],
+    ["In MLA, the titles of books are…",["Put in quotes","Italicized","All capitals","Underlined twice"],1,"Long works like books are italicized in MLA.","MLA citation"],
+    ["The lesson or message of a fable is its…",["Plot","Moral","Setting","Tone"],1,"A fable's lesson is its moral.","Theme"],
+    ["Dialogue is…",["Description of setting","Conversation between characters","The narrator's private thoughts","A type of rhyme"],1,"Dialogue is spoken exchange between characters.","Character"],
+    ["'The thunder grumbled overhead' is an example of…",["Simile","Personification","Hyperbole","Alliteration"],1,"Giving thunder a human action (grumbling) is personification.","Figurative language"],
+    ["The sentence that states a paragraph's main idea is the…",["Thesis","Topic sentence","Conclusion","Transition"],1,"The topic sentence introduces the paragraph's main idea.","Paragraph structure"],
+  ],
+  sci:[
+    ["A push or pull on an object is called a…",["Mass","Force","Energy","Speed"],1,"A force is a push or a pull.","Newton's laws"],
+    ["The energy an object has because of its motion is…",["Potential energy","Kinetic energy","Thermal energy","Chemical energy"],1,"Kinetic energy is the energy of motion.","Energy"],
+    ["Power is measured in…",["Joules","Newtons","Watts","Meters"],2,"Power (rate of using energy) is measured in watts.","Units & measurement"],
+    ["If you double an object's speed, its kinetic energy…",["Doubles","Triples","Quadruples","Stays the same"],2,"KE ∝ v², so doubling v gives 4× the kinetic energy.","Energy"],
+    ["The pigment that captures light for photosynthesis is…",["Hemoglobin","Chlorophyll","Keratin","Melanin"],1,"Chlorophyll absorbs light energy.","Photosynthesis"],
+    ["The basic unit of life is the…",["Atom","Cell","Organ","Tissue"],1,"The cell is the basic unit of life.","Cell organelles"],
+    ["The building blocks that make up proteins are…",["Sugars","Amino acids","Fatty acids","Nucleotides"],1,"Amino acids are the monomers of proteins.","Cell processes"],
+    ["Which sugar is produced by photosynthesis?",["Fructose","Glucose","Sucrose","Lactose"],1,"Photosynthesis produces glucose.","Photosynthesis"],
+    ["An offspring receives one set of chromosomes from…",["Only the mother","Only the father","Each parent","Neither parent"],2,"Each parent contributes one set of chromosomes.","DNA & genetics"],
+    ["Which of these is NOT one of Newton's laws?",["Inertia","Action–reaction","F = ma","Conservation of mass"],3,"Conservation of mass is not one of Newton's three laws.","Newton's laws"],
+    ["The rigid outer layer found in plant cells but not animal cells is the…",["Cell membrane","Cell wall","Nucleus","Vacuole"],1,"Plant cells have a cell wall; animal cells do not.","Cell organelles"],
+    ["A change in an organism's DNA sequence is called a…",["Mutation","Diffusion","Reaction","Reflex"],0,"A mutation is a change in the DNA sequence.","DNA & genetics"],
+    ["Velocity is measured in units such as…",["m/s²","m/s","kg","N"],1,"Velocity is distance over time, e.g. m/s. (m/s² is acceleration.)","Kinematics"],
+    ["Organisms that break down dead material are…",["Producers","Consumers","Decomposers","Predators"],2,"Decomposers recycle nutrients from dead matter.","Ecosystems"],
+    ["The type of cell division that produces two identical cells is…",["Meiosis","Mitosis","Osmosis","Diffusion"],1,"Mitosis produces two genetically identical cells.","Cell processes"],
+  ],
+  spa:[
+    ["Conjugate 'hablar' — él/ella.",["hablo","hablas","habla","hablan"],2,"Third person singular: habla.","Present tense"],
+    ["Translate 'we live' (vivir).",["vivo","vives","vivimos","viven"],2,"Nosotros form: vivimos.","Present tense"],
+    ["Which means 'good afternoon'?",["Buenos días","Buenas tardes","Buenas noches","Hola"],1,"Buenas tardes = good afternoon.","Greetings & vocabulary"],
+    ["'I am a student' uses which verb?",["ser → soy","estar → estoy","tener → tengo","ir → voy"],0,"Identity uses ser: Soy estudiante.","Ser vs estar"],
+    ["What number is 'cincuenta'?",["15","40","50","60"],2,"Cincuenta = 50.","Numbers"],
+    ["The question word 'quién' means…",["what","who","where","when"],1,"Quién = who.","Question words"],
+    ["The feminine plural article 'the' is…",["el","la","los","las"],3,"las is the feminine plural article.","Articles & gender"],
+    ["Translate 'the tall boy' (masculine).",["el chico alta","la chica alta","el chico alto","los chico alto"],2,"Masculine agreement: el chico alto.","Adjective agreement"],
+    ["Preterite of 'vivir' — yo.",["vivo","viví","vivía","viviré"],1,"-ir preterite yo ends in -í: viví.","Preterite tense"],
+    ["'Your' (informal, singular) is…",["mi","tu","su","nuestro"],1,"tu = your (informal).","Possessives"],
+    ["'They get up' (levantarse) is…",["se levantan","me levanto","te levantas","nos levantamos"],0,"Ellos: se levantan.","Reflexive verbs"],
+    ["'It's hot' (weather) is…",["Hace frío","Hace calor","Hace viento","Está lloviendo"],1,"Hace calor = it's hot.","Weather & vocabulary"],
+    ["Translate 'How are you?' (formal).",["¿Cómo estás?","¿Cómo está usted?","¿Quién eres?","¿Qué pasa?"],1,"Formal: ¿Cómo está usted?","Greetings & vocabulary"],
+    ["'I like the books' is…",["Me gusta los libros","Me gustan los libros","Yo gusto los libros","Me gustas los libros"],1,"Plural noun → gustan: Me gustan los libros.","Gustar (likes)"],
+    ["'She is tired right now' uses…",["es cansada","está cansada","tiene cansada","va cansada"],1,"A temporary state uses estar: está cansada.","Ser vs estar"],
+  ],
+  his:[
+    ["The Revolutionary War officially ended with the…",["Treaty of Paris (1783)","Declaration of Independence","Louisiana Purchase","Missouri Compromise"],0,"The 1783 Treaty of Paris ended the Revolutionary War.","American Revolution"],
+    ["Which document begins with 'We the People'?",["Declaration of Independence","The Constitution","The Bill of Rights","Common Sense"],1,"The Constitution's Preamble begins 'We the People'.","Constitution"],
+    ["The branch of government that makes laws is the…",["Executive","Legislative","Judicial","Federal"],1,"The legislative branch (Congress) makes laws.","Constitution"],
+    ["The pamphlet 'Common Sense', which urged independence, was written by…",["Thomas Paine","John Adams","Paul Revere","Patrick Henry"],0,"Thomas Paine wrote Common Sense (1776).","Road to Revolution"],
+    ["The first national government of the U.S. was the…",["Constitution","Articles of Confederation","Bill of Rights","Magna Carta"],1,"The Articles of Confederation preceded the Constitution.","Early republic"],
+    ["The 1804 expedition to explore the western territory was led by…",["Lewis and Clark","Lewis and Adams","Clark and Jefferson","Washington and Lee"],0,"Lewis and Clark explored the Louisiana Territory.","Westward expansion"],
+    ["A system where states share power with a central government is called…",["Monarchy","Federalism","Communism","Mercantilism"],1,"Federalism shares power between national and state governments.","Constitution"],
+    ["The Civil War began with the attack on…",["Fort Sumter","Pearl Harbor","Gettysburg","Bunker Hill"],0,"The war began at Fort Sumter in 1861.","Civil War"],
+    ["The amendment that granted citizenship to formerly enslaved people was the…",["13th","14th","15th","19th"],1,"The 14th Amendment granted citizenship.","Reconstruction"],
+    ["The right to a trial by jury is protected by the…",["Declaration","Bill of Rights","Articles of Confederation","Mayflower Compact"],1,"The Bill of Rights protects the right to a jury trial.","Constitution"],
+    ["Regional tensions over slavery between North and South are known as…",["Federalism","Sectionalism","Imperialism","Isolationism"],1,"Sectionalism refers to regional divisions, especially over slavery.","Sectionalism & slavery"],
+    ["The President belongs to which branch of government?",["Legislative","Executive","Judicial","State"],1,"The President heads the executive branch.","Constitution"],
+    ["Enlightenment thinkers believed a government's power comes from…",["The king alone","The consent of the governed","The military","The church"],1,"'Consent of the governed' is a core Enlightenment idea.","Enlightenment ideas"],
+    ["The Supreme Court is the head of the…",["Legislative branch","Executive branch","Judicial branch","Cabinet"],2,"The Supreme Court heads the judicial branch.","Constitution"],
+    ["The general who led the Confederate army was…",["Ulysses S. Grant","Robert E. Lee","Abraham Lincoln","Stonewall Jackson"],1,"Robert E. Lee commanded the Confederate army.","Civil War"],
+  ],
+};
+// topic lookup: test questions carry their topic at index 4; practice questions use the TOPICS map.
+function topicOf(subj,q){if(q&&q[4])return q[4];const i=QUESTIONS[subj].indexOf(q);return (i>=0&&TOPICS[subj]&&TOPICS[subj][i])||'General';}
 
 /* ============================ STATE / STORAGE ============================ */
 const LS="studyhub_v1";
@@ -1471,10 +1561,11 @@ function renderPractice(){
   const g=document.getElementById('pr-grid');
   g.innerHTML=SUBJECTS.map(s=>{
     const n=(QUESTIONS[s.id]||[]).length;
+    const nt=(TEST_QUESTIONS[s.id]||[]).length;
     const best=DB.tests[s.id];
     return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
       <h3>${s.name}</h3>
-      <p>${n} practice questions${best?` · best test <strong style="color:${col(s.id)}">${best}%</strong>`:''}</p>
+      <p>${n} practice + ${nt} test questions${best?` · best test <strong style="color:${col(s.id)}">${best}%</strong>`:''}</p>
       <div class="row" style="margin-top:12px">
         <button class="btn sm" data-mode="practice" data-s="${s.id}">Practice</button>
         <button class="btn sm sec" data-mode="test" data-s="${s.id}">Take test</button>
@@ -1538,14 +1629,14 @@ function openTestSetup(subj){
   tt.subj=subj;
   prShow('pr-setup');
   document.getElementById('pr-s-title').textContent=subjById(subj).name+' · Practice Test';
-  const max=(QUESTIONS[subj]||[]).length;
+  const max=(TEST_QUESTIONS[subj]||[]).length;
   const opts=[5,10,max].filter((v,i,a)=>v<=max&&a.indexOf(v)===i);
   document.getElementById('pr-s-num').innerHTML=opts.map(n=>`<option value="${n}"${n===Math.min(10,max)?' selected':''}>${n} questions</option>`).join('');
 }
 document.getElementById('pr-s-back').onclick=renderPractice;
 document.getElementById('pr-s-start').onclick=()=>{
   const n=+document.getElementById('pr-s-num').value;
-  tt.qs=shuffle((QUESTIONS[tt.subj]||[]).slice()).slice(0,n).map(q=>({q,picked:null}));
+  tt.qs=shuffle((TEST_QUESTIONS[tt.subj]||[]).slice()).slice(0,n).map(q=>({q,picked:null}));
   tt.time=+document.getElementById('pr-s-time').value;
   startTest();
 };
