@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Hub — Focus Mode</title>
+<style>
+  :root{
+    --bg:#1a1d24; --bg2:#21252e; --panel:#272c37; --panel2:#2e3440;
+    --line:#363c49; --txt:#e4e7ec; --muted:#9aa4b2; --faint:#6b7480;
+    --accent:#7c9cc4; --accent2:#8fb39b; --warn:#cba86b; --bad:#c47c84;
+    --r:14px; --shadow:0 6px 24px rgba(0,0,0,.28);
+    /* subject colors (muted) */
+    --s-alg:#7c9cc4; --s-ela:#b39ac4; --s-sci:#8fb39b; --s-spa:#cba86b; --s-his:#c49a8f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--txt); line-height:1.5; font-size:15px;
+  }
+  button{font-family:inherit;cursor:pointer}
+  input,textarea,select{font-family:inherit;font-size:14px}
+  a{color:var(--accent)}
+  .app{display:flex;min-height:100vh}
+  /* Sidebar */
+  .sidebar{
+    width:230px;background:var(--bg2);border-right:1px solid var(--line);
+    padding:22px 14px;position:sticky;top:0;height:100vh;flex-shrink:0;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 10px 18px}
+  .brand .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:16px}
+  .brand h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+  .brand small{display:block;color:var(--faint);font-size:11px;font-weight:400}
+  .nav-btn{
+    display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    background:transparent;border:none;color:var(--muted);padding:10px 12px;
+    border-radius:10px;font-size:14px;transition:.15s;font-weight:500;
+  }
+  .nav-btn .ic{width:20px;text-align:center;font-size:15px;opacity:.85}
+  .nav-btn:hover{background:var(--panel);color:var(--txt)}
+  .nav-btn.active{background:var(--panel2);color:var(--txt)}
+  .nav-btn.active .ic{opacity:1}
+  .side-foot{margin-top:auto;font-size:11px;color:var(--faint);padding:10px}
+  /* Main */
+  .main{flex:1;min-width:0;padding:30px 38px 70px;max-width:1100px;margin:0 auto;width:100%}
+  .page{display:none;animation:fade .3s ease}
+  .page.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h2.title{font-size:24px;margin:0 0 4px;font-weight:650}
+  .sub{color:var(--muted);margin:0 0 26px;font-size:14px}
+  /* Cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}.main{padding:22px 18px 60px}.sidebar{width:64px}.brand h1,.brand small,.nav-btn span.lbl,.side-foot{display:none}.nav-btn{justify-content:center}}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+  .stat .n{font-size:30px;font-weight:680;line-height:1}
+  .stat .l{color:var(--muted);font-size:13px;margin-top:6px}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  /* Buttons */
+  .btn{background:var(--accent);color:#11151b;border:none;padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;transition:.15s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+  .btn.sec:hover{background:var(--line)}
+  .btn.sm{padding:7px 12px;font-size:13px}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+  .btn.ghost:hover{color:var(--txt);border-color:var(--muted)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .between{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  label.fld{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px;font-weight:500}
+  input[type=text],input[type=password],input[type=number],input[type=time],textarea,select{
+    width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--txt);
+    padding:10px 12px;border-radius:10px;outline:none;transition:.15s;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  textarea{resize:vertical;min-height:90px;line-height:1.55}
+  .section-h{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);font-weight:650;margin:30px 0 12px}
+  /* Subject chips */
+  .subj-card{cursor:pointer;border-left:4px solid var(--line);transition:.15s}
+  .subj-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .subj-card h3{margin:0 0 4px;font-size:16px}
+  .subj-card p{margin:0;color:var(--muted);font-size:13px}
+  .tag{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  /* Flashcard */
+  .flash{
+    min-height:230px;border-radius:16px;border:1px solid var(--line);background:var(--panel2);
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:34px;
+    font-size:20px;line-height:1.45;cursor:pointer;position:relative;user-select:none;
+  }
+  .flash .side-tag{position:absolute;top:14px;left:16px;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+  .flash .hint{position:absolute;bottom:14px;font-size:12px;color:var(--faint)}
+  .grade-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  .grade-row button{padding:12px 6px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-weight:600;font-size:13px}
+  .grade-row .g-again{border-color:var(--bad);color:var(--bad)}
+  .grade-row .g-hard{border-color:var(--warn);color:var(--warn)}
+  .grade-row .g-good{border-color:var(--accent);color:var(--accent)}
+  .grade-row .g-easy{border-color:var(--accent2);color:var(--accent2)}
+  .grade-row button small{display:block;font-weight:400;color:var(--faint);font-size:11px;margin-top:2px}
+  /* Pomodoro */
+  .timer-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px}
+  .timer-ring{position:relative;width:240px;height:240px}
+  .timer-ring svg{transform:rotate(-90deg)}
+  .timer-time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .timer-time .t{font-size:48px;font-weight:680;font-variant-numeric:tabular-nums}
+  .timer-time .ph{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+  /* Schedule grid */
+  .sched-table{width:100%;border-collapse:collapse;font-size:13px}
+  .sched-table th,.sched-table td{border:1px solid var(--line);padding:8px;text-align:center;vertical-align:top}
+  .sched-table th{background:var(--panel2);color:var(--muted);font-weight:600;font-size:12px}
+  .sched-slot{border-radius:8px;padding:6px 4px;margin:3px 0;font-size:12px;color:#11151b;font-weight:600;position:relative}
+  .sched-slot .x{position:absolute;top:1px;right:4px;cursor:pointer;opacity:.6;font-weight:700}
+  .sched-slot .x:hover{opacity:1}
+  /* Classroom */
+  .assign{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:.15s;border-left:4px solid var(--line)}
+  .assign:hover{background:var(--panel2)}
+  .assign.active{background:var(--panel2);box-shadow:var(--shadow)}
+  .assign .due{font-size:12px;color:var(--muted)}
+  .assign h4{margin:0 0 4px;font-size:15px}
+  .help-out{white-space:pre-wrap;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px;font-size:14px;line-height:1.6;min-height:60px}
+  .badge-demo{font-size:10px;background:var(--warn);color:#1a1d24;padding:2px 7px;border-radius:5px;font-weight:700;letter-spacing:.4px}
+  .tabs{display:flex;gap:6px;margin:14px 0;flex-wrap:wrap}
+  .tabs button{padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:13px;font-weight:600}
+  .tabs button.active{background:var(--panel2);color:var(--txt)}
+  .empty{color:var(--faint);text-align:center;padding:30px;font-size:14px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:12px 20px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transition:.3s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+  .progress{height:7px;background:var(--bg2);border-radius:10px;overflow:hidden;margin-top:8px}
+  .progress > div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;max-width:460px;width:100%;box-shadow:var(--shadow)}
+  .switchrow{display:flex;align-items:center;gap:8px;margin:6px 0}
+  details{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;background:var(--bg2)}
+  details summary{cursor:pointer;font-weight:600;font-size:14px}
+  details p,details ul{color:var(--muted);font-size:13px}
+  kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px}
+  /* practice choices */
+  .choice{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--bg2);border:1px solid var(--line);color:var(--txt);padding:12px 14px;border-radius:10px;margin-bottom:9px;font-size:14px;transition:.12s}
+  .choice:hover{border-color:var(--muted)}
+  .choice .key{width:24px;height:24px;flex-shrink:0;border-radius:6px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted)}
+  .choice.correct{border-color:var(--accent2);background:rgba(143,179,155,.14)}
+  .choice.correct .key{background:var(--accent2);color:#11151b}
+  .choice.wrong{border-color:var(--bad);background:rgba(196,124,132,.14)}
+  .choice.wrong .key{background:var(--bad);color:#11151b}
+  .choice.picked{border-color:var(--accent)}
+  .choice.picked .key{background:var(--accent);color:#11151b}
+  .choice[disabled]{cursor:default}
+  .qblock{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .qblock .qn{font-weight:600;margin-bottom:12px}
+  .rev-q{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:10px;border-left:4px solid var(--line)}
+  .rev-q.ok{border-left-color:var(--accent2)}
+  .rev-q.no{border-left-color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="dot">◐</div>
+      <div><h1>Study Hub</h1><small>focus mode</small></div>
+    </div>
+    <button class="nav-btn active" data-page="dashboard"><span class="ic">▦</span><span class="lbl">Dashboard</span></button>
+    <button class="nav-btn" data-page="subjects"><span class="ic">▤</span><span class="lbl">Subjects</span></button>
+    <button class="nav-btn" data-page="recall"><span class="ic">⚯</span><span class="lbl">Flashcards</span></button>
+    <button class="nav-btn" data-page="pomodoro"><span class="ic">◷</span><span class="lbl">Pomodoro</span></button>
+    <button class="nav-btn" data-page="feynman"><span class="ic">✎</span><span class="lbl">Feynman</span></button>
+    <button class="nav-btn" data-page="practice"><span class="ic">✓</span><span class="lbl">Practice & Tests</span></button>
+    <button class="nav-btn" data-page="classroom"><span class="ic">◫</span><span class="lbl">Classroom</span></button>
+    <button class="nav-btn" data-page="schedule"><span class="ic">◵</span><span class="lbl">Schedule</span></button>
+    <button class="nav-btn" data-page="settings"><span class="ic">⚙</span><span class="lbl">Settings</span></button>
+    <div class="side-foot">Runs locally · your data stays in this browser</div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <h2 class="title" id="greet">Welcome back</h2>
+      <p class="sub">Here's your study picture for today.</p>
+      <div class="grid g4" style="margin-bottom:16px">
+        <div class="stat"><div class="n" id="st-due">0</div><div class="l">Cards due now</div></div>
+        <div class="stat"><div class="n" id="st-streak">0</div><div class="l">Day streak 🔥</div></div>
+        <div class="stat"><div class="n" id="st-poms">0</div><div class="l">Focus sessions</div></div>
+        <div class="stat"><div class="n" id="st-cards">0</div><div class="l">Total flashcards</div></div>
+      </div>
+      <div class="grid g2">
+        <div class="card">
+          <div class="between"><h3 style="margin:0">Today's plan</h3><button class="btn sm sec" data-jump="schedule">Edit schedule</button></div>
+          <div id="today-plan" style="margin-top:14px"></div>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 6px">Jump back in</h3>
+          <p class="sub" style="margin:0 0 14px">Pick a study method.</p>
+          <div class="row">
+            <button class="btn" data-jump="recall">Review due cards</button>
+            <button class="btn sec" data-jump="pomodoro">Start a focus session</button>
+            <button class="btn sec" data-jump="feynman">Teach a concept</button>
+            <button class="btn sec" data-jump="classroom">Check assignments</button>
+          </div>
+          <div class="section-h">Study methods in here</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.9">
+            <strong style="color:var(--txt)">Active recall</strong> — flashcards force retrieval.<br>
+            <strong style="color:var(--txt)">Spaced repetition</strong> — cards return right before you'd forget.<br>
+            <strong style="color:var(--txt)">Pomodoro</strong> — timed focus + breaks.<br>
+            <strong style="color:var(--txt)">Feynman technique</strong> — explain it simply to find gaps.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUBJECTS -->
+    <section class="page" id="page-subjects">
+      <h2 class="title">Subjects</h2>
+      <p class="sub">Your six courses. Open one to study its cards or add your own.</p>
+      <div class="grid g3" id="subj-grid"></div>
+
+      <div id="subj-detail" style="display:none;margin-top:26px">
+        <button class="btn ghost sm" id="subj-back">← All subjects</button>
+        <div class="between" style="margin-top:16px">
+          <h3 id="sd-name" style="margin:0;font-size:20px"></h3>
+          <div class="row">
+            <button class="btn sm" id="sd-study">Study these cards</button>
+            <button class="btn sm sec" id="sd-add">+ Add card</button>
+          </div>
+        </div>
+        <p class="sub" id="sd-desc" style="margin-top:6px"></p>
+        <div class="section-h">Key topics</div>
+        <div class="row" id="sd-topics" style="margin-bottom:6px"></div>
+        <div class="section-h">Flashcards (<span id="sd-count">0</span>)</div>
+        <div id="sd-cards"></div>
+      </div>
+    </section>
+
+    <!-- FLASHCARDS / ACTIVE RECALL + SPACED REPETITION -->
+    <section class="page" id="page-recall">
+      <h2 class="title">Flashcards</h2>
+      <p class="sub">Active recall + spaced repetition. Grade yourself honestly — the schedule adapts.</p>
+      <div class="row" style="margin-bottom:14px">
+        <select id="rc-subject" style="max-width:240px"></select>
+        <span class="pill"><span id="rc-due">0</span> due · <span id="rc-new">0</span> new</span>
+      </div>
+      <div id="rc-stage">
+        <div class="flash" id="rc-card">
+          <span class="side-tag" id="rc-tag"></span>
+          <div id="rc-text">Loading…</div>
+          <span class="hint" id="rc-hint">click to flip</span>
+        </div>
+        <div id="rc-grades" style="display:none">
+          <div class="grade-row">
+            <button class="g-again" data-g="0">Again<small>&lt;1 min</small></button>
+            <button class="g-hard" data-g="1">Hard<small id="lbl-hard"></small></button>
+            <button class="g-good" data-g="2">Good<small id="lbl-good"></small></button>
+            <button class="g-easy" data-g="3">Easy<small id="lbl-easy"></small></button>
+          </div>
+        </div>
+      </div>
+      <div id="rc-done" class="card" style="display:none;text-align:center">
+        <h3>All caught up 🎉</h3>
+        <p class="sub" style="margin:6px 0 14px">No cards due in this deck right now. Spaced repetition will bring them back automatically.</p>
+        <button class="btn sec" id="rc-cram">Cram anyway (ignore schedule)</button>
+      </div>
+      <p class="sub" style="margin-top:16px;font-size:12.5px">Shortcuts: <kbd>space</kbd> flip · <kbd>1</kbd>–<kbd>4</kbd> grade</p>
+    </section>
+
+    <!-- POMODORO -->
+    <section class="page" id="page-pomodoro">
+      <h2 class="title">Pomodoro timer</h2>
+      <p class="sub">Focus in sprints. Default 25 min work / 5 min break, 4 rounds then a long break.</p>
+      <div class="grid g2">
+        <div class="card timer-wrap">
+          <div class="timer-ring">
+            <svg width="240" height="240">
+              <circle cx="120" cy="120" r="110" stroke="var(--line)" stroke-width="12" fill="none"/>
+              <circle id="ring" cx="120" cy="120" r="110" stroke="var(--accent)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="691" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-time"><div class="t" id="pt-time">25:00</div><div class="ph" id="pt-phase">Focus</div></div>
+          </div>
+          <div class="row" style="justify-content:center;margin-top:10px">
+            <button class="btn" id="pt-start">Start</button>
+            <button class="btn sec" id="pt-reset">Reset</button>
+            <button class="btn ghost" id="pt-skip">Skip ▸</button>
+          </div>
+          <div class="pill" style="margin-top:10px">Round <span id="pt-round">1</span> · <span id="pt-doneToday">0</span> done today</div>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 4px">Session setup</h3>
+          <label class="fld">What are you working on?</label>
+          <select id="pt-subj"></select>
+          <div class="grid g3" style="margin-top:4px">
+            <div><label class="fld">Focus (min)</label><input type="number" id="pt-work" value="25" min="1" max="90"></div>
+            <div><label class="fld">Break (min)</label><input type="number" id="pt-break" value="5" min="1" max="30"></div>
+            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="15" min="5" max="40"></div>
+          </div>
+          <label class="switchrow" style="margin-top:14px"><input type="checkbox" id="pt-sound" checked> Play a chime when a phase ends</label>
+          <div class="section-h">Why it works</div>
+          <p style="color:var(--muted);font-size:13px;margin:0">Short, bounded sprints lower the activation cost of starting and protect attention from fatigue. Pair each focus block with one method — e.g. recall cards, or a Feynman write-up.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEYNMAN -->
+    <section class="page" id="page-feynman">
+      <h2 class="title">Feynman technique</h2>
+      <p class="sub">If you can explain it simply, you understand it. Work through the four steps; gaps will surface.</p>
+      <div class="grid g2">
+        <div class="card">
+          <label class="fld">1 · Pick a concept</label>
+          <div class="row">
+            <select id="fy-subj" style="max-width:200px"></select>
+            <input type="text" id="fy-concept" placeholder="e.g. Why factoring works" style="flex:1;min-width:160px">
+          </div>
+          <label class="fld">2 · Explain it like you're teaching a 10-year-old</label>
+          <textarea id="fy-explain" placeholder="Plain words only. No jargon. Use an everyday analogy."></textarea>
+          <label class="fld">3 · Where did you get stuck or vague?</label>
+          <textarea id="fy-gaps" placeholder="The spots where you reached for jargon or hand-waved — those are your gaps. Go review them."></textarea>
+          <label class="fld">4 · Refine: the simplest true version</label>
+          <textarea id="fy-refine" placeholder="Tighten it. Shorter, clearer, with a concrete example."></textarea>
+          <div class="row" style="margin-top:14px">
+            <button class="btn" id="fy-save">Save explanation</button>
+            <button class="btn sec" id="fy-prompt">Give me prompts</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 6px">Saved explanations</h3>
+          <p class="sub" style="margin:0 0 12px">Revisit and re-explain these later — re-teaching is itself spaced recall.</p>
+          <div id="fy-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRACTICE & TESTS -->
+    <section class="page" id="page-practice">
+      <h2 class="title">Practice & Tests</h2>
+      <p class="sub">Practice mode gives instant feedback per question. Test mode is timed and scored like the real thing.</p>
+
+      <!-- chooser -->
+      <div id="pr-home">
+        <div class="section-h">Pick a subject</div>
+        <div class="grid g3" id="pr-grid"></div>
+      </div>
+
+      <!-- practice mode -->
+      <div id="pr-practice" style="display:none">
+        <button class="btn ghost sm" id="pr-p-back">← Back</button>
+        <div class="between" style="margin-top:14px">
+          <h3 id="pr-p-title" style="margin:0"></h3>
+          <span class="pill"><span id="pr-p-pos">1</span> / <span id="pr-p-total">0</span> · score <span id="pr-p-score">0</span></span>
+        </div>
+        <div class="progress" style="margin:12px 0 18px"><div id="pr-p-bar" style="width:0%"></div></div>
+        <div class="card">
+          <div id="pr-p-q" style="font-size:17px;font-weight:600;margin-bottom:16px"></div>
+          <div id="pr-p-choices"></div>
+          <div class="help-out" id="pr-p-fb" style="display:none"></div>
+          <div class="row" style="margin-top:16px;justify-content:flex-end">
+            <button class="btn" id="pr-p-next" style="display:none">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- test setup -->
+      <div id="pr-setup" style="display:none">
+        <button class="btn ghost sm" id="pr-s-back">← Back</button>
+        <div class="card" style="margin-top:14px;max-width:520px">
+          <h3 id="pr-s-title" style="margin:0 0 4px"></h3>
+          <p class="sub" style="margin:0 0 6px">A timed, scored practice test. No feedback until you submit.</p>
+          <label class="fld">Number of questions</label>
+          <select id="pr-s-num"></select>
+          <label class="fld">Time limit</label>
+          <select id="pr-s-time">
+            <option value="0">No limit</option>
+            <option value="600">10 minutes</option>
+            <option value="900" selected>15 minutes</option>
+            <option value="1200">20 minutes</option>
+          </select>
+          <button class="btn" id="pr-s-start" style="margin-top:18px">Start test</button>
+        </div>
+      </div>
+
+      <!-- test running -->
+      <div id="pr-test" style="display:none">
+        <div class="between">
+          <h3 id="pr-t-title" style="margin:0"></h3>
+          <span class="pill" id="pr-t-timerwrap" style="display:none">⏱ <span id="pr-t-timer">--:--</span></span>
+        </div>
+        <p class="sub" style="margin:6px 0 0">Answer every question, then submit. <span id="pr-t-count"></span></p>
+        <div id="pr-t-questions" style="margin-top:18px"></div>
+        <div class="row" style="margin-top:6px">
+          <button class="btn" id="pr-t-submit">Submit test</button>
+          <button class="btn ghost" id="pr-t-quit">Quit</button>
+        </div>
+      </div>
+
+      <!-- test results -->
+      <div id="pr-results" style="display:none">
+        <div class="card" style="text-align:center;margin-bottom:18px">
+          <div class="n" id="pr-r-pct" style="font-size:46px;font-weight:700"></div>
+          <div class="l" style="color:var(--muted)" id="pr-r-line"></div>
+          <div class="row" style="justify-content:center;margin-top:14px">
+            <button class="btn" id="pr-r-retry">Retake</button>
+            <button class="btn sec" id="pr-r-back">Back to subjects</button>
+          </div>
+        </div>
+        <div class="section-h">Review every question</div>
+        <div id="pr-r-review"></div>
+      </div>
+    </section>
+
+    <!-- CLASSROOM -->
+    <section class="page" id="page-classroom">
+      <div class="between">
+        <div><h2 class="title">Google Classroom <span class="badge-demo" id="cr-mode">DEMO</span></h2>
+        <p class="sub" style="margin:4px 0 0">Your assignments, with an AI helper for summaries, how-to steps, and tips.</p></div>
+        <button class="btn sec sm" id="cr-connect">Connect Classroom</button>
+      </div>
+      <div class="grid g2" style="margin-top:20px;align-items:start">
+        <div class="card">
+          <div class="between"><h3 style="margin:0">Assignments</h3><select id="cr-filter" style="max-width:160px"></select></div>
+          <div id="cr-list" style="margin-top:14px"></div>
+        </div>
+        <div class="card" id="cr-panel">
+          <div class="empty" id="cr-empty">← Pick an assignment to get help with it.</div>
+          <div id="cr-detail" style="display:none">
+            <div class="pill" id="cr-d-subj" style="margin-bottom:8px"></div>
+            <h3 style="margin:0 0 2px" id="cr-d-title"></h3>
+            <div class="due" id="cr-d-due" style="color:var(--muted);font-size:13px"></div>
+            <div class="tabs">
+              <button class="active" data-mode="summary">Summary</button>
+              <button data-mode="howto">How to do it</button>
+              <button data-mode="tips">Tips</button>
+            </div>
+            <div class="help-out" id="cr-out">Choose an option above.</div>
+            <p class="sub" id="cr-aimode" style="margin-top:10px;font-size:12px"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="page" id="page-schedule">
+      <h2 class="title">Study schedule builder</h2>
+      <p class="sub">Tell it when you're free and what to prioritize. It builds a weekly plan you can tweak.</p>
+      <div class="card">
+        <div class="grid g2">
+          <div>
+            <label class="fld">Days you'll study</label>
+            <div class="row" id="sc-days"></div>
+            <div class="grid g2" style="margin-top:4px">
+              <div><label class="fld">Start time</label><input type="time" id="sc-start" value="16:00"></div>
+              <div><label class="fld">End time</label><input type="time" id="sc-end" value="19:00"></div>
+            </div>
+            <label class="fld">Block length (minutes)</label>
+            <select id="sc-block"><option value="25">25 (one pomodoro)</option><option value="50" selected>50 (two pomodoros)</option><option value="60">60</option></select>
+          </div>
+          <div>
+            <label class="fld">Priority per subject (higher = more blocks)</label>
+            <div id="sc-priorities"></div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:18px">
+          <button class="btn" id="sc-generate">Generate schedule</button>
+          <button class="btn sec" id="sc-clear">Clear</button>
+        </div>
+      </div>
+      <div id="sc-result" style="margin-top:22px;display:none">
+        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Drag not needed — click ✕ to remove, or "Add block" in any cell.</span></div>
+        <div style="overflow-x:auto;margin-top:12px"><table class="sched-table" id="sc-table"></table></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="page-settings">
+      <h2 class="title">Settings</h2>
+      <p class="sub">Personalize the app and (optionally) turn on live AI.</p>
+      <div class="grid g2" style="align-items:start">
+        <div class="card">
+          <h3 style="margin:0 0 4px">You</h3>
+          <label class="fld">Your name</label>
+          <input type="text" id="set-name" placeholder="What should we call you?">
+          <button class="btn sm" id="set-save-name" style="margin-top:12px">Save</button>
+          <div class="section-h">Data</div>
+          <p class="sub" style="margin:0 0 12px">Everything lives in this browser only. You can reset card progress or wipe all data.</p>
+          <div class="row">
+            <button class="btn sec sm" id="set-reset-srs">Reset card schedule</button>
+            <button class="btn ghost sm" id="set-wipe">Erase all data</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 4px">Live AI (optional)</h3>
+          <p class="sub" style="margin:0 0 6px">The assignment helper works offline with guided templates. To get real AI-written summaries/tips, paste your own API key — it's stored only in this browser and sent straight to the provider.</p>
+          <label class="fld">Provider</label>
+          <select id="set-provider"><option value="none">Off — use templates</option><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI</option></select>
+          <label class="fld">API key</label>
+          <input type="password" id="set-key" placeholder="sk-…">
+          <button class="btn sm" id="set-save-ai" style="margin-top:12px">Save AI settings</button>
+          <details style="margin-top:16px"><summary>Why can't it use Claude's key for free?</summary>
+            <p>This page runs entirely in your browser with no server behind it, so there's no shared key it can borrow. Adding your own key (or running it through the templates) are the two safe options. Keys here never leave your machine except to call the provider you chose.</p>
+          </details>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin:0 0 6px">Connecting real Google Classroom later</h3>
+        <details><summary>Step-by-step (when you're ready)</summary>
+          <ol style="color:var(--muted);font-size:13px;line-height:1.8">
+            <li>Create a free project at <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a>.</li>
+            <li>Enable the <strong>Google Classroom API</strong> under APIs &amp; Services.</li>
+            <li>Configure the OAuth consent screen (External, add yourself as a test user).</li>
+            <li>Create an <strong>OAuth Client ID</strong> of type "Web application". Add your hosting URL to Authorized JavaScript origins (Classroom blocks <code>file://</code>, so host on e.g. GitHub Pages/Netlify).</li>
+            <li>Use scope <code>classroom.coursework.me.readonly</code> with Google Identity Services to fetch assignments.</li>
+            <li>Paste the Client ID below and press Connect on the Classroom page — the demo data is swapped for your real courses.</li>
+          </ol>
+          <label class="fld">Google OAuth Client ID</label>
+          <input type="text" id="set-gcid" placeholder="xxxxx.apps.googleusercontent.com">
+          <button class="btn sm sec" id="set-save-gcid" style="margin-top:10px">Save Client ID</button>
+        </details>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Add card modal -->
+<div class="modal-bg" id="modal-card">
+  <div class="modal">
+    <h3 style="margin:0 0 12px">Add a flashcard</h3>
+    <label class="fld">Subject</label>
+    <select id="ac-subj"></select>
+    <label class="fld">Front (question / prompt)</label>
+    <textarea id="ac-front" style="min-height:70px"></textarea>
+    <label class="fld">Back (answer)</label>
+    <textarea id="ac-back" style="min-height:70px"></textarea>
+    <div class="row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn sec sm" id="ac-cancel">Cancel</button>
+      <button class="btn sm" id="ac-save">Add card</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================ DATA ============================ */
+const SUBJECTS = [
+  {id:"alg", name:"Algebra 2", color:"--s-alg", desc:"Functions, quadratics, polynomials, exponentials & logs, sequences.",
+    topics:["Quadratic functions","Polynomial division","Factoring","Exponentials & logs","Rational expressions","Sequences & series","Systems of equations","Complex numbers"]},
+  {id:"ela", name:"English / Language Arts 9", color:"--s-ela", desc:"Close reading, literary analysis, essay structure, grammar & rhetoric.",
+    topics:["Thesis statements","Textual evidence","Literary devices","Argumentative essays","Theme & tone","Vocabulary in context","MLA citation","Rhetorical appeals"]},
+  {id:"sci", name:"Science · Physics + Biology", color:"--s-sci", desc:"Mechanics & energy plus cells, genetics, and ecology.",
+    topics:["Kinematics","Newton's laws","Energy & work","Cell structure","Photosynthesis","DNA & genetics","Evolution","Ecosystems"]},
+  {id:"spa", name:"Spanish 9", color:"--s-spa", desc:"Present/past tenses, core vocabulary, and everyday conversation.",
+    topics:["Present tense (-ar/-er/-ir)","Ser vs estar","Preterite tense","Common vocabulary","Adjective agreement","Question words","Reflexive verbs","Numbers & dates"]},
+  {id:"his", name:"US History 9", color:"--s-his", desc:"Founding era through Reconstruction: documents, causes, key figures.",
+    topics:["Colonial America","American Revolution","Constitution & Bill of Rights","Early republic","Westward expansion","Civil War causes","The Civil War","Reconstruction"]},
+];
+// "Science" counts as the combined sixth course area; six study areas total are the five cards (Science merges Physics+Biology as requested).
+
+const SEED_CARDS = {
+  alg:[
+    ["What is the quadratic formula?","x = (−b ± √(b²−4ac)) / 2a, for ax²+bx+c=0."],
+    ["What does the discriminant b²−4ac tell you?","Number/type of roots: >0 two real, =0 one real, <0 two complex."],
+    ["Factor x² − 5x + 6.","(x − 2)(x − 3)."],
+    ["log_b(xy) = ?","log_b(x) + log_b(y)."],
+    ["What is the vertex form of a parabola?","y = a(x − h)² + k, with vertex (h, k)."],
+    ["Simplify: x^a · x^b","x^(a+b)."],
+  ],
+  ela:[
+    ["What makes a strong thesis statement?","A specific, arguable claim that previews the essay's main points."],
+    ["Define 'metaphor' vs 'simile'.","Metaphor states one thing IS another; simile compares using 'like' or 'as'."],
+    ["What is the structure of a body paragraph?","Topic sentence → evidence → analysis → link back to thesis."],
+    ["What is 'tone' in literature?","The author's attitude toward the subject, shown through word choice."],
+    ["Name the three rhetorical appeals.","Ethos (credibility), Pathos (emotion), Logos (logic)."],
+  ],
+  sci:[
+    ["State Newton's 2nd law.","F = ma — force equals mass times acceleration."],
+    ["What is kinetic energy's formula?","KE = ½mv²."],
+    ["What is the powerhouse of the cell?","The mitochondria (produces ATP)."],
+    ["What are the reactants of photosynthesis?","Carbon dioxide + water (+ light energy) → glucose + oxygen."],
+    ["What base pairs with adenine in DNA?","Thymine (A–T); cytosine pairs with guanine (C–G)."],
+    ["Define acceleration.","Rate of change of velocity over time (Δv/Δt)."],
+  ],
+  spa:[
+    ["Conjugate 'hablar' (to speak) — yo form.","hablo."],
+    ["Ser vs estar — which is permanent?","Ser = permanent/identity; estar = temporary/location."],
+    ["'They eat' — translate (comer).","Ellos comen."],
+    ["How do you say 'Where is...?'","¿Dónde está...?"],
+    ["Translate: 'I have' (tener, yo).","Tengo."],
+  ],
+  his:[
+    ["What year was the Declaration of Independence signed?","1776."],
+    ["What did the Bill of Rights establish?","The first 10 amendments protecting individual liberties."],
+    ["Name a main cause of the Civil War.","Disputes over slavery and states' rights."],
+    ["What was the Louisiana Purchase?","1803 U.S. purchase of territory from France, doubling its size."],
+    ["What was Reconstruction?","The post–Civil War era (1865–77) rebuilding the South and integrating freed people."],
+  ],
+};
+
+const DEMO_ASSIGNMENTS = [
+  {id:"a1",subj:"alg",title:"Quadratics Problem Set 4",due:"Due tomorrow, 11:59 PM",desc:"Solve 12 quadratic equations using factoring, completing the square, and the quadratic formula. Show all work. Identify which method is most efficient for each."},
+  {id:"a2",subj:"ela",title:"Essay: Theme in 'Of Mice and Men'",due:"Due Fri",desc:"Write a 5-paragraph argumentative essay analyzing how Steinbeck develops the theme of loneliness. Use at least 3 quotes with MLA citations."},
+  {id:"a3",subj:"sci",title:"Lab Report: Acceleration on a Ramp",due:"Due Mon",desc:"Write up the ramp experiment. Include hypothesis, data table, a velocity-time graph, calculation of acceleration, and a conclusion connecting results to Newton's 2nd law."},
+  {id:"a4",subj:"sci",title:"Biology: Cell Organelle Diagram",due:"Due Wed",desc:"Label a eukaryotic cell diagram and write one function for each organelle. Compare plant vs animal cells in a short paragraph."},
+  {id:"a5",subj:"spa",title:"Preterite Tense Worksheet",due:"Due Thu",desc:"Complete 20 sentences conjugating regular and irregular verbs in the preterite. Then write 5 original sentences about what you did last weekend."},
+  {id:"a6",subj:"his",title:"DBQ: Causes of the American Revolution",due:"Due next Tue",desc:"Document-based question. Analyze 5 primary sources and write an essay arguing the most significant cause of the Revolution. Cite each document."},
+];
+
+/* ============================ PRACTICE QUESTION BANKS ============================ */
+/* each: [question, [choices], correctIndex, explanation] */
+const QUESTIONS = {
+  alg:[
+    ["Solve x² − 5x + 6 = 0.",["x = 1 or 6","x = 2 or 3","x = −2 or −3","x = 5 or 6"],1,"Factor: (x−2)(x−3)=0, so x=2 or 3."],
+    ["What is the discriminant of 2x² + 3x + 5, and what does it tell you?",["−31; two complex roots","49; two real roots","0; one real root","9; two real roots"],0,"b²−4ac = 9−40 = −31. Negative means two complex (non-real) roots."],
+    ["Simplify x³ · x⁴.",["x⁷","x¹²","x⁻¹","x¹"],0,"Same base: add exponents → x^(3+4)=x⁷."],
+    ["Evaluate log₂(8).",["2","3","4","8"],1,"2³ = 8, so log₂(8)=3."],
+    ["What is the vertex of y = (x − 3)² + 2?",["(−3, 2)","(3, −2)","(3, 2)","(2, 3)"],2,"Vertex form a(x−h)²+k has vertex (h,k) = (3,2)."],
+    ["Factor x² − 9.",["(x−3)²","(x−9)(x+1)","(x−3)(x+3)","prime"],2,"Difference of squares: a²−b²=(a−b)(a+b)."],
+    ["If f(x) = 2x + 1, what is f(3)?",["5","6","7","8"],2,"2(3)+1 = 7."],
+    ["Solve 2^x = 16.",["x = 2","x = 3","x = 4","x = 8"],2,"2⁴ = 16, so x = 4."],
+    ["Find the slope of the line through (1, 2) and (3, 8).",["2","3","4","6"],1,"slope = (8−2)/(3−1) = 6/2 = 3."],
+    ["Expand (x + 2)².",["x² + 4","x² + 2x + 4","x² + 4x + 4","x² + 4x + 2"],2,"(x+2)² = x² + 2·2·x + 4 = x²+4x+4."],
+    ["What is the domain of f(x) = √(x − 4)?",["x ≤ 4","x ≥ 4","x ≠ 4","all reals"],1,"The inside must be ≥ 0: x−4 ≥ 0 → x ≥ 4."],
+    ["Simplify (x⁶)/(x²).",["x³","x⁴","x⁸","x¹²"],1,"Divide same base: subtract exponents → x^(6−2)=x⁴."],
+  ],
+  ela:[
+    ["What is a thesis statement?",["The first sentence of any paragraph","A specific, arguable claim the essay proves","A summary of the plot","A famous quotation"],1,"A thesis is the central, arguable claim your whole essay supports."],
+    ["Which sentence is a simile?",["The classroom was a zoo.","Her smile was sunshine.","He ran like the wind.","Time is money."],2,"A simile compares using 'like' or 'as'. The others are metaphors."],
+    ["'The wind whispered through the trees' is an example of…",["Hyperbole","Personification","Onomatopoeia","Alliteration"],1,"Giving human traits (whispering) to non-human things is personification."],
+    ["What is the job of a topic sentence?",["End the essay","State the main idea of a paragraph","Cite a source","Hook the reader emotionally"],1,"A topic sentence introduces the single main idea of its paragraph."],
+    ["The rhetorical appeal 'ethos' relies on…",["Emotion","Logic and evidence","Credibility and trust","Repetition"],2,"Ethos = the speaker's credibility/character. Pathos=emotion, Logos=logic."],
+    ["'Theme' in a literary work means…",["The setting","The author's underlying message or insight","The main character","The sequence of events"],1,"Theme is the deeper message or universal idea the work explores."],
+    ["Which is the correct MLA in-text citation?",["(Smith, page 12)","(Smith 12)","[Smith, 12]","Smith, p.12"],1,"MLA uses author's last name and page number with no comma: (Smith 12)."],
+    ["'Tone' refers to…",["The volume of dialogue","The author's attitude toward the subject","The number of characters","The genre"],1,"Tone is the author's attitude, conveyed through word choice."],
+    ["The protagonist of a story is…",["The villain","The central main character","The narrator always","The setting"],1,"The protagonist is the main character the story centers on."],
+    ["Foreshadowing is when an author…",["Repeats a phrase","Hints at events to come","Describes the setting","Ends with a twist"],1,"Foreshadowing plants clues about what will happen later."],
+    ["The 'connotation' of a word is its…",["Dictionary definition","Emotional or implied meaning","Number of syllables","Origin language"],1,"Connotation is the feeling/association; denotation is the literal definition."],
+    ["A strong piece of textual evidence should be…",["Long and general","Specific and relevant to your claim","Your own opinion","From any book"],1,"Evidence must be specific and directly support the claim you're making."],
+  ],
+  sci:[
+    ["Newton's second law is best written as…",["F = mv","F = ma","E = mc²","p = mv"],1,"Force = mass × acceleration (F = ma)."],
+    ["The formula for kinetic energy is…",["KE = mgh","KE = ½mv²","KE = mv","KE = Fd"],1,"KE = ½mv². (mgh is gravitational potential energy.)"],
+    ["The SI unit of force is the…",["Joule","Watt","Newton","Pascal"],2,"Force is measured in newtons (N = kg·m/s²)."],
+    ["Acceleration is defined as the rate of change of…",["Distance","Velocity","Mass","Force"],1,"Acceleration = change in velocity over time (Δv/Δt)."],
+    ["What makes velocity different from speed?",["Velocity includes direction","Velocity is always larger","Speed includes direction","They are identical"],0,"Velocity is a vector (has direction); speed is just magnitude."],
+    ["Newton's first law is also called the law of…",["Gravity","Inertia","Momentum","Action-reaction"],1,"Objects keep their motion unless a net force acts — the law of inertia."],
+    ["Which organelle is the 'powerhouse of the cell'?",["Nucleus","Ribosome","Mitochondria","Golgi body"],2,"Mitochondria produce ATP, the cell's energy currency."],
+    ["The reactants of photosynthesis are…",["Glucose and oxygen","Carbon dioxide and water","Oxygen and water","ATP and glucose"],1,"CO₂ + H₂O (+ light) → glucose + O₂."],
+    ["In DNA, adenine (A) always pairs with…",["Guanine","Cytosine","Thymine","Uracil"],2,"A pairs with T; C pairs with G."],
+    ["The main job of the cell membrane is to…",["Make energy","Control what enters and leaves the cell","Store DNA","Build proteins"],1,"The membrane is selectively permeable, regulating transport."],
+    ["Natural selection means that…",["All organisms evolve equally","Traits that aid survival become more common","Animals choose their traits","Mutations never happen"],1,"Individuals better suited to their environment survive and reproduce more."],
+    ["In a food chain, producers are usually…",["Carnivores","Decomposers","Plants","Herbivores"],2,"Producers (plants) make their own food via photosynthesis."],
+  ],
+  spa:[
+    ["Conjugate 'hablar' for 'yo' (present tense).",["hablas","hablo","habla","hablan"],1,"-ar verbs: yo form ends in -o → hablo."],
+    ["Which verb describes a permanent trait or identity?",["estar","ser","tener","ir"],1,"Ser = permanent/identity; estar = temporary states/location."],
+    ["Translate 'They eat' (comer).",["Ellos come","Ellos comen","Ellos comemos","Ellos comes"],1,"-er verbs, ellos form: comen."],
+    ["How do you ask 'Where is…?'",["¿Qué es…?","¿Cómo está…?","¿Dónde está…?","¿Cuándo es…?"],2,"Dónde = where; está = is (location)."],
+    ["Conjugate 'tener' for 'yo'.",["teno","tieno","tengo","tienes"],2,"Tener is irregular: yo tengo."],
+    ["Which is correct for a feminine noun: 'the red house'?",["el casa rojo","la casa roja","la casa rojo","el casa roja"],1,"Adjectives and articles agree: la casa roja."],
+    ["Translate 'Good morning.'",["Buenas noches","Buenas tardes","Buenos días","Hasta luego"],2,"Buenos días = good morning."],
+    ["The preterite (past) 'yo' form of 'hablar' is…",["hablo","hablé","hablaba","hablaré"],1,"Preterite yo of -ar verbs ends in -é → hablé."],
+    ["What number is 'diez'?",["6","8","10","12"],2,"Diez = 10."],
+    ["The question word 'cuándo' means…",["where","when","how","why"],1,"Cuándo = when."],
+    ["Translate 'I am from Spain.'",["Estoy de España","Soy de España","Tengo de España","Voy de España"],1,"Origin uses ser: Soy de España."],
+    ["Which article is correct: '___ problema' (a masculine exception)?",["la","las","el","una"],2,"'Problema' is masculine despite the -a: el problema."],
+  ],
+  his:[
+    ["In what year was the Declaration of Independence adopted?",["1492","1776","1787","1812"],1,"The Declaration of Independence was adopted July 4, 1776."],
+    ["The Bill of Rights is…",["The Declaration's preamble","The first 10 amendments to the Constitution","A 1776 treaty","A list of British taxes"],1,"The first 10 amendments protect individual liberties."],
+    ["A central cause of the Civil War was…",["A border dispute with Canada","Disagreement over slavery","A gold shortage","Foreign invasion"],1,"Conflicts over slavery and states' rights drove the war."],
+    ["The Louisiana Purchase (1803) was bought from…",["Spain","Britain","France","Mexico"],2,"The U.S. bought the territory from France, doubling its size."],
+    ["The Boston Tea Party was a protest against…",["Religious laws","British taxes","Slavery","Westward expansion"],1,"Colonists protested taxation (the Tea Act) without representation."],
+    ["Who was the principal author of the Declaration of Independence?",["George Washington","Benjamin Franklin","Thomas Jefferson","John Adams"],2,"Thomas Jefferson drafted it."],
+    ["How many branches does the U.S. federal government have?",["Two","Three","Four","Five"],1,"Legislative, Executive, and Judicial — three branches."],
+    ["Reconstruction refers to the period…",["Before the Revolution","Rebuilding the South after the Civil War","During WWII","Of the Gold Rush"],1,"Reconstruction (1865–1877) rebuilt the South and integrated freed people."],
+    ["The Emancipation Proclamation was issued by…",["Abraham Lincoln","Ulysses S. Grant","Andrew Jackson","Robert E. Lee"],0,"Lincoln issued it in 1863, declaring enslaved people in rebel states free."],
+    ["'No taxation without representation' was a rallying cry of the…",["British Parliament","American colonists","French monarchy","Confederacy"],1,"Colonists objected to being taxed without a voice in Parliament."],
+    ["Who was the first President of the United States?",["Thomas Jefferson","John Adams","George Washington","James Madison"],2,"George Washington, inaugurated in 1789."],
+    ["'Manifest Destiny' was the belief that the U.S. should…",["Abolish slavery","Expand across the continent","Stay neutral in wars","Join the British Empire"],1,"It held that the U.S. was destined to expand westward across North America."],
+  ],
+};
+
+/* ============================ STATE / STORAGE ============================ */
+const LS="studyhub_v1";
+let DB = load();
+function load(){
+  try{const r=JSON.parse(localStorage.getItem(LS));if(r)return r;}catch(e){}
+  return {name:"",cards:[],feynman:[],pomToday:{date:"",count:0},streak:{count:0,last:""},
+          settings:{provider:"none",key:"",gcid:""},schedule:null};
+}
+function save(){localStorage.setItem(LS,JSON.stringify(DB));}
+
+// seed cards on first run
+function seedCards(){
+  if(DB.cards.length) return;
+  let id=1;
+  for(const s of SUBJECTS){
+    (SEED_CARDS[s.id]||[]).forEach(([f,b])=>{
+      DB.cards.push(newCard(id++,s.id,f,b));
+    });
+  }
+  save();
+}
+function newCard(id,subj,front,back){
+  return {id:"c"+id+"_"+Math.random().toString(36).slice(2,6),subj,front,back,
+    ease:2.5,interval:0,reps:0,due:0/*0 = new, ready now*/};
+}
+seedCards();
+if(!DB.tests)DB.tests={}; // best practice-test score per subject
+
+// streak update
+(function(){
+  const today=dstr();
+  if(DB.streak.last!==today){
+    const y=dstr(-1);
+    if(DB.streak.last===y) DB.streak.count+=1;
+    else if(DB.streak.last!=="") DB.streak.count=1;
+    else DB.streak.count=1;
+    DB.streak.last=today; save();
+  }
+})();
+function dstr(off=0){const d=new Date();d.setDate(d.getDate()+off);return d.toISOString().slice(0,10);}
+
+/* ============================ NAV ============================ */
+const pages=document.querySelectorAll('.page');
+const navBtns=document.querySelectorAll('.nav-btn');
+function go(p){
+  pages.forEach(x=>x.classList.toggle('active',x.id==='page-'+p));
+  navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===p));
+  if(p==='dashboard')renderDash();
+  if(p==='subjects')renderSubjects();
+  if(p==='recall')startRecall();
+  if(p==='pomodoro')initPom();
+  if(p==='feynman')renderFeynman();
+  if(p==='practice')renderPractice();
+  if(p==='classroom')renderClassroom();
+  if(p==='schedule')initSchedule();
+  if(p==='settings')renderSettings();
+  window.scrollTo(0,0);
+}
+navBtns.forEach(b=>b.onclick=()=>go(b.dataset.page));
+document.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>go(b.dataset.jump));
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1900);}
+function subjById(id){return SUBJECTS.find(s=>s.id===id);}
+function col(id){return getComputedStyle(document.documentElement).getPropertyValue(subjById(id).color).trim();}
+
+/* ============================ DASHBOARD ============================ */
+function dueCount(subj){const now=Date.now();return DB.cards.filter(c=>(!subj||c.subj===subj)&&(c.due===0||c.due<=now)).length;}
+function renderDash(){
+  document.getElementById('greet').textContent = (DB.name?("Welcome back, "+DB.name):"Welcome back")+" 👋";
+  document.getElementById('st-due').textContent=dueCount();
+  document.getElementById('st-streak').textContent=DB.streak.count;
+  document.getElementById('st-poms').textContent=(DB.pomToday.date===dstr()?DB.pomToday.count:0);
+  document.getElementById('st-cards').textContent=DB.cards.length;
+  const plan=document.getElementById('today-plan');
+  if(DB.schedule){
+    const day=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date().getDay()];
+    const slots=(DB.schedule.grid&&DB.schedule.grid[day])||[];
+    if(slots.length){
+      plan.innerHTML=slots.map(s=>`<div class="row" style="margin-bottom:8px"><span class="sched-slot" style="background:${col(s.subj)};min-width:130px">${subjById(s.subj).name}</span><span class="sub" style="margin:0">${s.time}</span></div>`).join('');
+    } else plan.innerHTML='<p class="sub" style="margin:0">Nothing scheduled today — enjoy the break, or add a block.</p>';
+  } else {
+    plan.innerHTML='<p class="sub" style="margin:0 0 10px">No schedule yet.</p><button class="btn sm" data-jump="schedule">Build my schedule</button>';
+    plan.querySelector('[data-jump]').onclick=()=>go('schedule');
+  }
+}
+
+/* ============================ SUBJECTS ============================ */
+function renderSubjects(){
+  document.getElementById('subj-detail').style.display='none';
+  document.getElementById('subj-grid').style.display='';
+  const g=document.getElementById('subj-grid');
+  g.innerHTML=SUBJECTS.map(s=>{
+    const n=DB.cards.filter(c=>c.subj===s.id).length, d=dueCount(s.id);
+    return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
+      <h3>${s.name}</h3><p>${s.desc}</p>
+      <div class="row" style="margin-top:12px"><span class="tag">${n} cards</span><span class="tag" style="color:${d?'var(--accent)':'var(--faint)'}">${d} due</span></div>
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.subj-card').forEach(c=>c.onclick=()=>openSubject(c.dataset.s));
+}
+function openSubject(id){
+  const s=subjById(id);
+  document.getElementById('subj-grid').style.display='none';
+  const d=document.getElementById('subj-detail');d.style.display='block';
+  document.getElementById('sd-name').textContent=s.name;
+  document.getElementById('sd-name').style.color=col(id);
+  document.getElementById('sd-desc').textContent=s.desc;
+  document.getElementById('sd-topics').innerHTML=s.topics.map(t=>`<span class="tag">${t}</span>`).join(' ');
+  const cards=DB.cards.filter(c=>c.subj===id);
+  document.getElementById('sd-count').textContent=cards.length;
+  document.getElementById('sd-cards').innerHTML = cards.length? cards.map(c=>`
+    <details><summary>${esc(c.front)}</summary><p>${esc(c.back)}</p>
+    <button class="btn ghost sm" data-del="${c.id}">Delete</button></details>`).join('')
+    : '<p class="empty">No cards yet. Add one!</p>';
+  document.getElementById('sd-cards').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    DB.cards=DB.cards.filter(c=>c.id!==b.dataset.del);save();openSubject(id);toast("Card deleted");
+  });
+  document.getElementById('sd-study').onclick=()=>{go('recall');document.getElementById('rc-subject').value=id;startRecall();};
+  document.getElementById('sd-add').onclick=()=>openAddCard(id);
+}
+document.getElementById('subj-back').onclick=renderSubjects;
+
+/* Add-card modal */
+function openAddCard(subj){
+  const sel=document.getElementById('ac-subj');
+  sel.innerHTML=SUBJECTS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  if(subj)sel.value=subj;
+  document.getElementById('ac-front').value='';document.getElementById('ac-back').value='';
+  document.getElementById('modal-card').classList.add('show');
+}
+document.getElementById('ac-cancel').onclick=()=>document.getElementById('modal-card').classList.remove('show');
+document.getElementById('ac-save').onclick=()=>{
+  const f=document.getElementById('ac-front').value.trim(),b=document.getElementById('ac-back').value.trim();
+  if(!f||!b){toast("Fill in both sides");return;}
+  DB.cards.push(newCard(Date.now(),document.getElementById('ac-subj').value,f,b));save();
+  document.getElementById('modal-card').classList.remove('show');toast("Card added ✓");
+  if(document.getElementById('page-subjects').classList.contains('active'))openSubject(document.getElementById('ac-subj').value);
+};
+
+/* ============================ SPACED REPETITION (SM-2 lite) ============================ */
+let rcQueue=[],rcIdx=0,rcFlipped=false,rcCram=false;
+function fillSubjSelect(el,all=true){
+  el.innerHTML=(all?'<option value="">All subjects</option>':'')+SUBJECTS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+function startRecall(){
+  const sel=document.getElementById('rc-subject');
+  if(!sel.dataset.init){fillSubjSelect(sel);sel.dataset.init=1;sel.onchange=()=>{rcCram=false;buildQueue();};}
+  buildQueue();
+}
+function buildQueue(){
+  const subj=document.getElementById('rc-subject').value, now=Date.now();
+  let pool=DB.cards.filter(c=>!subj||c.subj===subj);
+  document.getElementById('rc-due').textContent=pool.filter(c=>c.due&&c.due<=now).length+pool.filter(c=>c.due===0).length;
+  document.getElementById('rc-new').textContent=pool.filter(c=>c.due===0).length;
+  rcQueue = rcCram ? shuffle(pool.slice()) : pool.filter(c=>c.due===0||c.due<=now);
+  rcIdx=0;rcFlipped=false;
+  if(!rcQueue.length){document.getElementById('rc-stage').style.display='none';document.getElementById('rc-done').style.display='block';return;}
+  document.getElementById('rc-stage').style.display='block';document.getElementById('rc-done').style.display='none';
+  showCard();
+}
+function showCard(){
+  const c=rcQueue[rcIdx];
+  if(!c){buildQueue();return;}
+  rcFlipped=false;
+  document.getElementById('rc-tag').textContent=subjById(c.subj).name;
+  document.getElementById('rc-card').style.borderLeft='4px solid '+col(c.subj);
+  document.getElementById('rc-text').textContent=c.front;
+  document.getElementById('rc-hint').style.display='block';
+  document.getElementById('rc-grades').style.display='none';
+  updateGradeLabels(c);
+}
+function flip(){
+  if(rcFlipped||!rcQueue[rcIdx])return;
+  rcFlipped=true;
+  document.getElementById('rc-text').textContent=rcQueue[rcIdx].back;
+  document.getElementById('rc-hint').style.display='none';
+  document.getElementById('rc-grades').style.display='block';
+}
+document.getElementById('rc-card').onclick=flip;
+function updateGradeLabels(c){
+  // preview next interval
+  document.getElementById('lbl-hard').textContent=fmtIv(nextInterval(c,1));
+  document.getElementById('lbl-good').textContent=fmtIv(nextInterval(c,2));
+  document.getElementById('lbl-easy').textContent=fmtIv(nextInterval(c,3));
+}
+function nextInterval(c,grade){
+  // returns days
+  if(grade===0)return 0;
+  if(c.reps===0)return grade===3?4:1;
+  if(c.reps===1)return grade===3?6:(grade===1?3:4);
+  let ef=c.ease+(0.1-(3-grade)*(0.08+(3-grade)*0.02));
+  ef=Math.max(1.3,ef);
+  return Math.round(c.interval*ef);
+}
+function fmtIv(d){if(d===0)return'<1d';if(d<1)return'<1d';if(d>=30)return Math.round(d/30)+'mo';return d+'d';}
+function grade(g){
+  const c=rcQueue[rcIdx];if(!c||!rcFlipped)return;
+  if(g===0){c.reps=0;c.interval=0;c.due=Date.now()+60*1000;
+    rcQueue.push(c); // re-show this session
+  } else {
+    const iv=nextInterval(c,g);
+    let ef=c.ease+(0.1-(3-g)*(0.08+(3-g)*0.02));c.ease=Math.max(1.3,ef);
+    c.interval=iv;c.reps+=1;c.due=Date.now()+iv*86400000;
+  }
+  save();rcIdx++;
+  if(rcIdx>=rcQueue.length){ // recount fresh
+    buildQueue();
+    if(document.getElementById('rc-stage').style.display!=='none')showCard();
+  } else showCard();
+}
+document.querySelectorAll('#rc-grades [data-g]').forEach(b=>b.onclick=()=>grade(+b.dataset.g));
+document.getElementById('rc-cram').onclick=()=>{rcCram=true;buildQueue();};
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('page-recall').classList.contains('active'))return;
+  if(document.querySelector('.modal-bg.show'))return;
+  if(e.code==='Space'){e.preventDefault();flip();}
+  if(rcFlipped&&['1','2','3','4'].includes(e.key))grade(+e.key-1);
+});
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ============================ POMODORO ============================ */
+let pom={running:false,phase:'Focus',remaining:25*60,total:25*60,round:1,timer:null};
+function initPom(){
+  const sel=document.getElementById('pt-subj');
+  if(!sel.dataset.init){fillSubjSelect(sel);sel.dataset.init=1;}
+  document.getElementById('pt-doneToday').textContent=(DB.pomToday.date===dstr()?DB.pomToday.count:0);
+  renderPom();
+}
+function workMin(){return Math.max(1,+document.getElementById('pt-work').value||25);}
+function breakMin(){return Math.max(1,+document.getElementById('pt-break').value||5);}
+function longMin(){return Math.max(1,+document.getElementById('pt-long').value||15);}
+function renderPom(){
+  const m=Math.floor(pom.remaining/60),s=pom.remaining%60;
+  document.getElementById('pt-time').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('pt-phase').textContent=pom.phase;
+  document.getElementById('pt-round').textContent=pom.round;
+  const C=691,off=C*(1-pom.remaining/pom.total);
+  const ring=document.getElementById('ring');
+  ring.style.strokeDashoffset=off;
+  ring.setAttribute('stroke',pom.phase==='Focus'?'var(--accent)':'var(--accent2)');
+}
+document.getElementById('pt-start').onclick=function(){
+  if(pom.running){pom.running=false;clearInterval(pom.timer);this.textContent='Start';return;}
+  pom.running=true;this.textContent='Pause';
+  pom.timer=setInterval(()=>{
+    pom.remaining--;
+    if(pom.remaining<0){phaseEnd();return;}
+    renderPom();
+  },1000);
+};
+document.getElementById('pt-reset').onclick=()=>{
+  clearInterval(pom.timer);pom.running=false;pom.phase='Focus';pom.total=pom.remaining=workMin()*60;pom.round=1;
+  document.getElementById('pt-start').textContent='Start';renderPom();
+};
+document.getElementById('pt-skip').onclick=phaseEnd;
+function phaseEnd(){
+  if(document.getElementById('pt-sound').checked)chime();
+  if(pom.phase==='Focus'){
+    // record
+    if(DB.pomToday.date!==dstr()){DB.pomToday={date:dstr(),count:0};}
+    DB.pomToday.count++;save();
+    document.getElementById('pt-doneToday').textContent=DB.pomToday.count;
+    if(pom.round%4===0){pom.phase='Long break';pom.total=pom.remaining=longMin()*60;toast("Long break — well earned!");}
+    else{pom.phase='Break';pom.total=pom.remaining=breakMin()*60;toast("Break time ☕");}
+  } else {
+    if(pom.phase!=='Long break')pom.round++; else pom.round=1;
+    pom.phase='Focus';pom.total=pom.remaining=workMin()*60;toast("Back to focus 🎯");
+  }
+  renderPom();
+}
+function chime(){try{const a=new(window.AudioContext||window.webkitAudioContext)();const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=660;g.gain.setValueAtTime(.001,a.currentTime);g.gain.exponentialRampToValueAtTime(.3,a.currentTime+.05);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1);o.start();o.stop(a.currentTime+1);}catch(e){}}
+
+/* ============================ FEYNMAN ============================ */
+function renderFeynman(){
+  const sel=document.getElementById('fy-subj');
+  if(!sel.dataset.init){fillSubjSelect(sel,false);sel.dataset.init=1;}
+  const list=document.getElementById('fy-list');
+  list.innerHTML=DB.feynman.length? DB.feynman.slice().reverse().map(f=>`
+    <details><summary>${esc(f.concept)} <span class="tag" style="margin-left:6px">${subjById(f.subj)?.name||''}</span></summary>
+    <p><strong>Explain:</strong> ${esc(f.explain||'—')}</p>
+    <p><strong>Gaps:</strong> ${esc(f.gaps||'—')}</p>
+    <p><strong>Refined:</strong> ${esc(f.refine||'—')}</p>
+    <button class="btn ghost sm" data-fdel="${f.ts}">Delete</button></details>`).join('')
+    : '<p class="empty">Nothing saved yet. Teach your first concept!</p>';
+  list.querySelectorAll('[data-fdel]').forEach(b=>b.onclick=()=>{DB.feynman=DB.feynman.filter(f=>f.ts!=b.dataset.fdel);save();renderFeynman();});
+}
+document.getElementById('fy-save').onclick=()=>{
+  const concept=document.getElementById('fy-concept').value.trim();
+  if(!concept){toast("Name the concept first");return;}
+  DB.feynman.push({ts:Date.now(),subj:document.getElementById('fy-subj').value,concept,
+    explain:document.getElementById('fy-explain').value.trim(),
+    gaps:document.getElementById('fy-gaps').value.trim(),
+    refine:document.getElementById('fy-refine').value.trim()});
+  save();toast("Saved ✓");
+  ['fy-concept','fy-explain','fy-gaps','fy-refine'].forEach(i=>document.getElementById(i).value='');
+  renderFeynman();
+};
+document.getElementById('fy-prompt').onclick=()=>{
+  const c=document.getElementById('fy-concept').value.trim()||'this concept';
+  document.getElementById('fy-explain').setAttribute('placeholder',
+   `Try answering these in plain words:\n• What is ${c}, in one sentence a kid would get?\n• What everyday thing is it like?\n• Walk through one simple example start to finish.\n• Why does it matter / when do you use it?`);
+  toast("Prompts added to step 2");
+};
+
+/* ============================ CLASSROOM + AI HELPER ============================ */
+let crCurrent=null,crMode='summary';
+function renderClassroom(){
+  const f=document.getElementById('cr-filter');
+  if(!f.dataset.init){fillSubjSelect(f);f.dataset.init=1;f.onchange=renderClassroomList;}
+  renderClassroomList();
+}
+function renderClassroomList(){
+  const subj=document.getElementById('cr-filter').value;
+  const list=DEMO_ASSIGNMENTS.filter(a=>!subj||a.subj===subj);
+  const el=document.getElementById('cr-list');
+  el.innerHTML=list.map(a=>`<div class="assign" data-a="${a.id}" style="border-left-color:${col(a.subj)}">
+    <h4>${a.title}</h4><div class="due">${subjById(a.subj).name} · ${a.due}</div></div>`).join('');
+  el.querySelectorAll('.assign').forEach(x=>x.onclick=()=>openAssign(x.dataset.a));
+}
+function openAssign(id){
+  crCurrent=DEMO_ASSIGNMENTS.find(a=>a.id===id);
+  document.querySelectorAll('#cr-list .assign').forEach(x=>x.classList.toggle('active',x.dataset.a===id));
+  document.getElementById('cr-empty').style.display='none';
+  document.getElementById('cr-detail').style.display='block';
+  const s=subjById(crCurrent.subj);
+  const ds=document.getElementById('cr-d-subj');ds.textContent=s.name;ds.style.background=col(crCurrent.subj);ds.style.color='#11151b';ds.style.border='none';
+  document.getElementById('cr-d-title').textContent=crCurrent.title;
+  document.getElementById('cr-d-due').textContent=crCurrent.due+' · '+crCurrent.desc;
+  crMode='summary';
+  document.querySelectorAll('#cr-detail .tabs button').forEach(b=>b.classList.toggle('active',b.dataset.mode==='summary'));
+  runHelper();
+}
+document.querySelectorAll('#cr-detail .tabs button').forEach(b=>b.onclick=()=>{
+  crMode=b.dataset.mode;
+  document.querySelectorAll('#cr-detail .tabs button').forEach(x=>x.classList.toggle('active',x===b));
+  runHelper();
+});
+async function runHelper(){
+  if(!crCurrent)return;
+  const out=document.getElementById('cr-out');
+  const usingAI=DB.settings.provider!=='none'&&DB.settings.key;
+  document.getElementById('cr-aimode').textContent = usingAI
+    ? 'Powered by your '+DB.settings.provider+' key.'
+    : 'Guided template (offline). Add an API key in Settings for AI-written help.';
+  if(usingAI){
+    out.textContent='Thinking…';
+    try{out.textContent=await callAI(crCurrent,crMode);}
+    catch(e){out.textContent='AI call failed ('+e.message+'). Showing template instead:\n\n'+template(crCurrent,crMode);}
+  } else {
+    out.textContent=template(crCurrent,crMode);
+  }
+}
+function template(a,mode){
+  const s=subjById(a.subj).name;
+  if(mode==='summary'){
+    return `📋 In plain terms\n`+
+    `This ${s} assignment ("${a.title}") asks you to: ${a.desc}\n\n`+
+    `Core deliverable: ${guessDeliverable(a)}\n`+
+    `${a.due}.\n\n`+
+    `One-line goal: ${oneLineGoal(a)}`;
+  }
+  if(mode==='howto'){
+    return `🪜 Step-by-step plan\n`+howSteps(a).map((x,i)=>`${i+1}. ${x}`).join('\n');
+  }
+  return `💡 Tips to do it well\n`+tips(a).map(t=>`• ${t}`).join('\n')+
+    `\n\nStudy method pairing: open a Pomodoro block, and after a first draft, use the Feynman page to explain your reasoning in plain words — gaps show up fast.`;
+}
+function guessDeliverable(a){
+  const d=a.desc.toLowerCase();
+  if(d.includes('essay'))return 'a structured multi-paragraph essay with cited evidence';
+  if(d.includes('lab report'))return 'a written lab report with data, a graph, and analysis';
+  if(d.includes('worksheet')||d.includes('problem set'))return 'completed problems with all work shown';
+  if(d.includes('diagram'))return 'a labeled diagram plus short written explanations';
+  if(d.includes('dbq'))return 'a document-based argumentative essay citing each source';
+  return 'a completed, clearly-presented response';
+}
+function oneLineGoal(a){
+  const d=a.desc.toLowerCase();
+  if(d.includes('quadratic'))return 'Show you can solve quadratics three ways and pick the smartest method.';
+  if(d.includes('loneliness')||d.includes('theme'))return 'Prove a claim about the theme using specific quotes.';
+  if(d.includes('acceleration'))return 'Turn ramp data into an acceleration value and tie it to F=ma.';
+  if(d.includes('organelle'))return 'Show you know each cell part and what it does.';
+  if(d.includes('preterite'))return 'Demonstrate correct past-tense conjugation in real sentences.';
+  if(d.includes('revolution'))return 'Argue the single biggest cause using the documents as proof.';
+  return 'Demonstrate mastery of the topic clearly and completely.';
+}
+function howSteps(a){
+  const d=a.desc.toLowerCase();
+  if(d.includes('essay')||d.includes('dbq')){
+    return ['Read the prompt twice; underline exactly what it asks.',
+      'Brainstorm a clear, arguable thesis (your one-sentence answer).',
+      'Gather 3+ quotes/sources that support it; note page or doc numbers.',
+      'Outline: intro (thesis) → one paragraph per piece of evidence → conclusion.',
+      'Draft each body paragraph: claim → quote → your analysis → link to thesis.',
+      'Add MLA/document citations as you go, not after.',
+      'Revise for clarity, then proofread for grammar last.'];
+  }
+  if(d.includes('lab report')){
+    return ['State your hypothesis as an if/then prediction.',
+      'Build a clean data table of your measurements.',
+      'Plot velocity vs time; draw the best-fit line.',
+      'Find acceleration = slope of that line (Δv/Δt).',
+      'Compare your result to what Newton\'s 2nd law (F=ma) predicts.',
+      'Write a conclusion: did the data support the hypothesis? Sources of error?'];
+  }
+  if(d.includes('worksheet')||d.includes('problem set')){
+    return ['Do the easy ones first to build momentum.',
+      'For each problem, write the method you\'re using before solving.',
+      'Show every step — partial credit lives there.',
+      'Check answers by plugging back in / re-translating.',
+      'Flag the 2–3 you struggled with and turn them into flashcards here.'];
+  }
+  if(d.includes('diagram')){
+    return ['Sketch or print the diagram; label every structure.',
+      'Write one clear function next to each label.',
+      'Make a quick plant-vs-animal comparison list, then write it up.',
+      'Quiz yourself with the labels covered (active recall).'];
+  }
+  return ['Break the task into its required parts.',
+    'Do a rough version of each part first.',
+    'Refine and check against the instructions.',
+    'Proofread and confirm every requirement is met.'];
+}
+function tips(a){
+  const d=a.desc.toLowerCase();
+  const base=['Start with the hardest part while your focus is freshest.',
+    'Work in a 25-min Pomodoro so it feels finite.',
+    'Re-read the prompt before submitting and check each requirement off.'];
+  if(d.includes('quadratic'))return ['Factor first — if it\'s clean, it\'s fastest.','Use the discriminant to predict the answer type before solving.',...base];
+  if(d.includes('essay')||d.includes('dbq')||d.includes('theme'))return ['Write the thesis first; everything serves it.','Pick quotes that are short and punchy, then analyze WHY they prove your point.','Cite as you write so you don\'t lose sources.',...base];
+  if(d.includes('lab'))return ['Label graph axes with units — easy points often lost here.','Discuss at least one realistic source of error.',...base];
+  if(d.includes('preterite'))return ['Memorize the irregular stems separately (tener→tuv-, hacer→hic-).','Read your 5 sentences aloud to catch agreement errors.',...base];
+  return base;
+}
+async function callAI(a,mode){
+  const ask=`You are a helpful study coach for a 9th grader. For this ${subjById(a.subj).name} assignment titled "${a.title}" with instructions: "${a.desc}", give a ${mode==='summary'?'short plain-language summary of what it asks':mode==='howto'?'clear numbered step-by-step plan to complete it':'list of practical tips to do it well'}. Keep it concise and encouraging.`;
+  if(DB.settings.provider==='anthropic'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':DB.settings.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-3-5-haiku-latest',max_tokens:600,messages:[{role:'user',content:ask}]})});
+    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');return j.content[0].text;
+  } else {
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+DB.settings.key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:ask}]})});
+    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');return j.choices[0].message.content;
+  }
+}
+document.getElementById('cr-connect').onclick=()=>{
+  if(DB.settings.gcid){toast("Client ID saved — live Classroom hookup runs when hosted online.");}
+  else{toast("Add a Google OAuth Client ID in Settings to connect for real.");go('settings');}
+};
+
+/* ============================ SCHEDULE ============================ */
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+function initSchedule(){
+  const dc=document.getElementById('sc-days');
+  if(!dc.dataset.init){
+    dc.innerHTML=DAYS.map(d=>`<label class="switchrow" style="margin-right:4px"><input type="checkbox" class="sc-day" value="${d}" ${['Mon','Tue','Wed','Thu'].includes(d)?'checked':''}> ${d}</label>`).join('');
+    const pr=document.getElementById('sc-priorities');
+    pr.innerHTML=SUBJECTS.map(s=>`<div class="row" style="margin-bottom:8px"><span style="min-width:170px;font-size:13px">${s.name}</span>
+      <input type="range" min="0" max="3" value="1" class="sc-pri" data-s="${s.id}" style="flex:1"></div>`).join('');
+    dc.dataset.init=1;
+  }
+  if(DB.schedule){renderSchedule(DB.schedule.grid);}
+}
+document.getElementById('sc-generate').onclick=()=>{
+  const days=[...document.querySelectorAll('.sc-day:checked')].map(c=>c.value);
+  if(!days.length){toast("Pick at least one day");return;}
+  const start=document.getElementById('sc-start').value,end=document.getElementById('sc-end').value;
+  const blockMin=+document.getElementById('sc-block').value;
+  const [sh,sm]=start.split(':').map(Number),[eh,em]=end.split(':').map(Number);
+  let mins=(eh*60+em)-(sh*60+sm);
+  if(mins<blockMin){toast("Your time window is shorter than one block");return;}
+  const perDay=Math.floor(mins/blockMin);
+  // weighted subject list
+  const pris=[...document.querySelectorAll('.sc-pri')].map(r=>({s:r.dataset.s,w:+r.value}));
+  let pool=[];pris.forEach(p=>{for(let i=0;i<p.w;i++)pool.push(p.s);});
+  if(!pool.length){toast("Give at least one subject a priority above 0");return;}
+  const grid={};let rot=0;
+  days.forEach(d=>{
+    grid[d]=[];
+    for(let b=0;b<perDay;b++){
+      const t1=sh*60+sm+b*blockMin;
+      const time=fmtTime(t1)+'–'+fmtTime(t1+blockMin);
+      grid[d].push({subj:pool[rot%pool.length],time});rot++;
+    }
+  });
+  DB.schedule={grid};save();renderSchedule(grid);toast("Schedule generated ✓");
+};
+document.getElementById('sc-clear').onclick=()=>{DB.schedule=null;save();document.getElementById('sc-result').style.display='none';toast("Cleared");};
+function fmtTime(m){let h=Math.floor(m/60)%24,mm=m%60,ap=h<12?'AM':'PM',h12=h%12||12;return `${h12}:${String(mm).padStart(2,'0')} ${ap}`;}
+function renderSchedule(grid){
+  document.getElementById('sc-result').style.display='block';
+  const days=Object.keys(grid);
+  const maxRows=Math.max(...days.map(d=>grid[d].length),0);
+  let html='<tr>'+days.map(d=>`<th>${d}</th>`).join('')+'</tr>';
+  for(let r=0;r<maxRows;r++){
+    html+='<tr>'+days.map(d=>{
+      const slot=grid[d][r];
+      if(!slot)return '<td></td>';
+      return `<td><div class="sched-slot" style="background:${col(slot.subj)}">
+        <span class="x" data-d="${d}" data-r="${r}">✕</span>${subjById(slot.subj).name}<br><span style="font-weight:400">${slot.time}</span></div></td>`;
+    }).join('')+'</tr>';
+  }
+  // add-block row
+  html+='<tr>'+days.map(d=>`<td><button class="btn ghost sm" data-add="${d}" style="font-size:11px;padding:4px 8px">+ block</button></td>`).join('')+'</tr>';
+  const t=document.getElementById('sc-table');t.innerHTML=html;
+  t.querySelectorAll('.x').forEach(x=>x.onclick=()=>{grid[x.dataset.d].splice(+x.dataset.r,1);DB.schedule={grid};save();renderSchedule(grid);});
+  t.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
+    const d=b.dataset.add;const subj=prompt("Subject? Type: "+SUBJECTS.map(s=>s.id).join(', '));
+    if(!subj||!subjById(subj))return;
+    const time=prompt("Time label? e.g. 7:00 PM–7:50 PM","");
+    grid[d].push({subj,time:time||''});DB.schedule={grid};save();renderSchedule(grid);
+  });
+}
+
+/* ============================ SETTINGS ============================ */
+function renderSettings(){
+  document.getElementById('set-name').value=DB.name||'';
+  document.getElementById('set-provider').value=DB.settings.provider||'none';
+  document.getElementById('set-key').value=DB.settings.key||'';
+  document.getElementById('set-gcid').value=DB.settings.gcid||'';
+}
+document.getElementById('set-save-name').onclick=()=>{DB.name=document.getElementById('set-name').value.trim();save();toast("Saved ✓");};
+document.getElementById('set-save-ai').onclick=()=>{DB.settings.provider=document.getElementById('set-provider').value;DB.settings.key=document.getElementById('set-key').value.trim();save();toast("AI settings saved ✓");};
+document.getElementById('set-save-gcid').onclick=()=>{DB.settings.gcid=document.getElementById('set-gcid').value.trim();save();toast("Client ID saved ✓");};
+document.getElementById('set-reset-srs').onclick=()=>{if(confirm("Reset all card scheduling (keeps the cards)?")){DB.cards.forEach(c=>{c.ease=2.5;c.interval=0;c.reps=0;c.due=0;});save();toast("Card schedule reset");}};
+document.getElementById('set-wipe').onclick=()=>{if(confirm("Erase ALL data and start fresh? This cannot be undone.")){localStorage.removeItem(LS);location.reload();}};
+
+/* ============================ PRACTICE & TESTS ============================ */
+const PR_LETTERS=['A','B','C','D','E'];
+function prShow(id){['pr-home','pr-practice','pr-setup','pr-test','pr-results'].forEach(x=>document.getElementById(x).style.display=(x===id?'block':'none'));}
+function renderPractice(){
+  prShow('pr-home');
+  const g=document.getElementById('pr-grid');
+  g.innerHTML=SUBJECTS.map(s=>{
+    const n=(QUESTIONS[s.id]||[]).length;
+    const best=DB.tests[s.id];
+    return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
+      <h3>${s.name}</h3>
+      <p>${n} practice questions${best?` · best test <strong style="color:${col(s.id)}">${best}%</strong>`:''}</p>
+      <div class="row" style="margin-top:12px">
+        <button class="btn sm" data-mode="practice" data-s="${s.id}">Practice</button>
+        <button class="btn sm sec" data-mode="test" data-s="${s.id}">Take test</button>
+      </div>
+    </div>`;
+  }).join('');
+  g.querySelectorAll('[data-mode]').forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    if(b.dataset.mode==='practice')startPractice(b.dataset.s);
+    else openTestSetup(b.dataset.s);
+  });
+}
+
+/* --- PRACTICE MODE (instant feedback) --- */
+let pp={subj:null,qs:[],i:0,score:0,answered:false};
+function startPractice(subj){
+  pp={subj,qs:shuffle((QUESTIONS[subj]||[]).slice()),i:0,score:0,answered:false};
+  prShow('pr-practice');
+  document.getElementById('pr-p-title').textContent=subjById(subj).name+' · Practice';
+  document.getElementById('pr-p-total').textContent=pp.qs.length;
+  ppRender();
+}
+function ppRender(){
+  pp.answered=false;
+  const q=pp.qs[pp.i];
+  document.getElementById('pr-p-pos').textContent=pp.i+1;
+  document.getElementById('pr-p-score').textContent=pp.score;
+  document.getElementById('pr-p-bar').style.width=(pp.i/pp.qs.length*100)+'%';
+  document.getElementById('pr-p-q').textContent=q[0];
+  const ch=document.getElementById('pr-p-choices');
+  ch.innerHTML=q[1].map((c,idx)=>`<button class="choice" data-i="${idx}"><span class="key">${PR_LETTERS[idx]}</span><span>${esc(c)}</span></button>`).join('');
+  ch.querySelectorAll('.choice').forEach(b=>b.onclick=()=>ppAnswer(+b.dataset.i));
+  document.getElementById('pr-p-fb').style.display='none';
+  document.getElementById('pr-p-next').style.display='none';
+}
+function ppAnswer(idx){
+  if(pp.answered)return;pp.answered=true;
+  const q=pp.qs[pp.i],correct=q[2];
+  const btns=document.querySelectorAll('#pr-p-choices .choice');
+  btns.forEach((b,i)=>{b.setAttribute('disabled','');if(i===correct)b.classList.add('correct');else if(i===idx)b.classList.add('wrong');});
+  if(idx===correct)pp.score++;
+  document.getElementById('pr-p-score').textContent=pp.score;
+  const fb=document.getElementById('pr-p-fb');
+  fb.style.display='block';
+  fb.textContent=(idx===correct?'✓ Correct. ':'✗ Not quite. ')+q[3];
+  const next=document.getElementById('pr-p-next');
+  next.style.display='inline-block';
+  next.textContent=(pp.i+1>=pp.qs.length)?'Finish':'Next →';
+}
+document.getElementById('pr-p-next').onclick=()=>{
+  if(pp.i+1>=pp.qs.length){
+    toast(`Practice done — ${pp.score}/${pp.qs.length} correct`);
+    renderPractice();
+  } else {pp.i++;ppRender();}
+};
+document.getElementById('pr-p-back').onclick=renderPractice;
+
+/* --- TEST MODE (timed + scored) --- */
+let tt={subj:null,qs:[],time:0,timer:null,remaining:0};
+function openTestSetup(subj){
+  tt.subj=subj;
+  prShow('pr-setup');
+  document.getElementById('pr-s-title').textContent=subjById(subj).name+' · Practice Test';
+  const max=(QUESTIONS[subj]||[]).length;
+  const opts=[5,10,max].filter((v,i,a)=>v<=max&&a.indexOf(v)===i);
+  document.getElementById('pr-s-num').innerHTML=opts.map(n=>`<option value="${n}"${n===Math.min(10,max)?' selected':''}>${n} questions</option>`).join('');
+}
+document.getElementById('pr-s-back').onclick=renderPractice;
+document.getElementById('pr-s-start').onclick=()=>{
+  const n=+document.getElementById('pr-s-num').value;
+  tt.qs=shuffle((QUESTIONS[tt.subj]||[]).slice()).slice(0,n).map(q=>({q,picked:null}));
+  tt.time=+document.getElementById('pr-s-time').value;
+  startTest();
+};
+function startTest(){
+  prShow('pr-test');
+  document.getElementById('pr-t-title').textContent=subjById(tt.subj).name+' · Test';
+  document.getElementById('pr-t-count').textContent=tt.qs.length+' questions.';
+  const wrap=document.getElementById('pr-t-questions');
+  wrap.innerHTML=tt.qs.map((item,qi)=>`
+    <div class="qblock" id="q-${qi}">
+      <div class="qn">${qi+1}. ${esc(item.q[0])}</div>
+      ${item.q[1].map((c,ci)=>`<button class="choice" data-q="${qi}" data-c="${ci}"><span class="key">${PR_LETTERS[ci]}</span><span>${esc(c)}</span></button>`).join('')}
+    </div>`).join('');
+  wrap.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{
+    const qi=+b.dataset.q,ci=+b.dataset.c;tt.qs[qi].picked=ci;
+    document.querySelectorAll(`#q-${qi} .choice`).forEach(x=>x.classList.remove('picked'));
+    b.classList.add('picked');
+  });
+  // timer
+  clearInterval(tt.timer);
+  const tw=document.getElementById('pr-t-timerwrap');
+  if(tt.time>0){
+    tt.remaining=tt.time;tw.style.display='inline-flex';tickTest();
+    tt.timer=setInterval(tickTest,1000);
+  } else tw.style.display='none';
+}
+function tickTest(){
+  const m=Math.floor(tt.remaining/60),s=tt.remaining%60;
+  document.getElementById('pr-t-timer').textContent=`${m}:${String(s).padStart(2,'0')}`;
+  if(tt.remaining<=0){clearInterval(tt.timer);toast("Time's up — submitting");submitTest();return;}
+  tt.remaining--;
+}
+document.getElementById('pr-t-quit').onclick=()=>{clearInterval(tt.timer);renderPractice();};
+document.getElementById('pr-t-submit').onclick=()=>{
+  const unanswered=tt.qs.filter(x=>x.picked===null).length;
+  if(unanswered>0 && !confirm(`${unanswered} question(s) still blank. Submit anyway?`))return;
+  submitTest();
+};
+function submitTest(){
+  clearInterval(tt.timer);
+  let correct=0;
+  tt.qs.forEach(x=>{if(x.picked===x.q[2])correct++;});
+  const pct=Math.round(correct/tt.qs.length*100);
+  // save best
+  if(!DB.tests[tt.subj]||pct>DB.tests[tt.subj]){DB.tests[tt.subj]=pct;}
+  save();
+  prShow('pr-results');
+  document.getElementById('pr-r-pct').textContent=pct+'%';
+  const grade=pct>=90?'Excellent 🎉':pct>=80?'Great work':pct>=70?'Solid — keep going':pct>=60?'Passing, review the misses':'Keep practicing';
+  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · ${subjById(tt.subj).name} · ${grade}`;
+  document.getElementById('pr-r-pct').style.color = pct>=70?'var(--accent2)':pct>=50?'var(--warn)':'var(--bad)';
+  document.getElementById('pr-r-review').innerHTML=tt.qs.map((x,i)=>{
+    const ok=x.picked===x.q[2];
+    const your=x.picked===null?'<em>blank</em>':PR_LETTERS[x.picked]+'. '+esc(x.q[1][x.picked]);
+    return `<div class="rev-q ${ok?'ok':'no'}">
+      <div style="font-weight:600;margin-bottom:6px">${i+1}. ${esc(x.q[0])}</div>
+      <div style="font-size:13px;color:var(--muted)">Your answer: ${ok?'✓ ':'✗ '}${your}</div>
+      ${ok?'':`<div style="font-size:13px;color:var(--accent2);margin-top:3px">Correct: ${PR_LETTERS[x.q[2]]}. ${esc(x.q[1][x.q[2]])}</div>`}
+      <div style="font-size:13px;color:var(--faint);margin-top:5px">${esc(x.q[3])}</div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('pr-r-retry').onclick=()=>openTestSetup(tt.subj);
+document.getElementById('pr-r-back').onclick=renderPractice;
+
+/* ============================ UTIL ============================ */
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+/* init */
+renderDash();
+</script>
+</body>
+</html>
