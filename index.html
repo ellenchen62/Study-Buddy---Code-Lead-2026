@@ -155,6 +155,19 @@
   .rev-q{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:10px;border-left:4px solid var(--line)}
   .rev-q.ok{border-left-color:var(--accent2)}
   .rev-q.no{border-left-color:var(--bad)}
+  /* resource links */
+  a.res{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--txt);border:1px solid var(--line);border-radius:11px;padding:13px 15px;margin-bottom:10px;transition:.14s;border-left:4px solid var(--accent)}
+  a.res:hover{background:var(--panel2);transform:translateY(-1px);box-shadow:var(--shadow)}
+  a.res .rtype{flex-shrink:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 9px;border-radius:7px;background:var(--panel2);color:var(--muted);min-width:74px;text-align:center}
+  a.res .rmain{flex:1;min-width:0}
+  a.res .rtitle{font-weight:600;font-size:14.5px}
+  a.res .rnote{color:var(--muted);font-size:12.5px;margin-top:2px}
+  a.res .rarrow{color:var(--faint);font-size:18px}
+  .cc-card{border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:9px;background:var(--bg2)}
+  .cc-card .ccf{font-weight:600;font-size:14px}
+  .cc-card .ccb{color:var(--muted);font-size:13px;margin-top:3px}
+  .cc-card .ccx{float:right;cursor:pointer;color:var(--faint);font-weight:700}
+  .cc-card .ccx:hover{color:var(--bad)}
 </style>
 </head>
 <body>
@@ -167,7 +180,9 @@
     </div>
     <button class="nav-btn active" data-page="dashboard"><span class="ic">▦</span><span class="lbl">Dashboard</span></button>
     <button class="nav-btn" data-page="subjects"><span class="ic">▤</span><span class="lbl">Subjects</span></button>
+    <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Resources</span></button>
     <button class="nav-btn" data-page="recall"><span class="ic">⚯</span><span class="lbl">Flashcards</span></button>
+    <button class="nav-btn" data-page="create"><span class="ic">✚</span><span class="lbl">Create Cards</span></button>
     <button class="nav-btn" data-page="pomodoro"><span class="ic">◷</span><span class="lbl">Pomodoro</span></button>
     <button class="nav-btn" data-page="feynman"><span class="ic">✎</span><span class="lbl">Feynman</span></button>
     <button class="nav-btn" data-page="practice"><span class="ic">✓</span><span class="lbl">Practice & Tests</span></button>
@@ -234,6 +249,64 @@
         <div class="row" id="sd-topics" style="margin-bottom:6px"></div>
         <div class="section-h">Flashcards (<span id="sd-count">0</span>)</div>
         <div id="sd-cards"></div>
+      </div>
+    </section>
+
+    <!-- RESOURCES -->
+    <section class="page" id="page-resources">
+      <h2 class="title">External resources</h2>
+      <p class="sub">Hand-picked free articles, textbooks, videos, and practice sites. Pick a subject to see its links — all open in a new tab.</p>
+      <div class="grid g3" id="res-grid"></div>
+
+      <div id="res-detail" style="display:none;margin-top:26px">
+        <button class="btn ghost sm" id="res-back">← All subjects</button>
+        <h3 id="res-name" style="margin:16px 0 4px;font-size:20px"></h3>
+        <p class="sub" id="res-desc" style="margin:0 0 8px"></p>
+        <div id="res-list"></div>
+      </div>
+    </section>
+
+    <!-- CREATE / IMPORT FLASHCARDS -->
+    <section class="page" id="page-create">
+      <h2 class="title">Create flashcards</h2>
+      <p class="sub">Make your own cards from your notes, or upload a file and let AI build a set for you.</p>
+      <div class="grid g2" style="align-items:start">
+        <div class="card">
+          <label class="fld">Add cards to which subject?</label>
+          <select id="cc-subj"></select>
+
+          <div class="tabs" id="cc-tabs">
+            <button class="active" data-cc="paste">Type / paste</button>
+            <button data-cc="file">Upload a file</button>
+          </div>
+
+          <div id="cc-pane-paste">
+            <label class="fld">Your material</label>
+            <p class="sub" style="margin:0 0 6px;font-size:12px">Two ways: paste notes and let AI build cards, <em>or</em> write one card per line as <kbd>Question | Answer</kbd>.</p>
+            <textarea id="cc-text" style="min-height:170px" placeholder="Paste your notes here for AI to turn into flashcards…&#10;&#10;— or — write your own, one per line:&#10;What is photosynthesis? | How plants make food from light&#10;Capital of France :: Paris"></textarea>
+          </div>
+
+          <div id="cc-pane-file" style="display:none">
+            <label class="fld">Upload a file</label>
+            <input type="file" id="cc-file" accept=".txt,.md,.csv,.pdf,.docx,.doc">
+            <p class="sub" id="cc-filestatus" style="margin:8px 0 0;font-size:12px">Supported: .txt, .md, .csv, .pdf, .docx</p>
+            <label class="fld">Extracted text</label>
+            <textarea id="cc-filetext" style="min-height:130px" placeholder="The file's text will appear here. You can edit it before generating cards."></textarea>
+          </div>
+
+          <div class="row" style="margin-top:16px">
+            <button class="btn" id="cc-ai">Generate with AI ✨</button>
+            <button class="btn sec" id="cc-manual">Make cards from Q | A lines</button>
+          </div>
+          <p class="sub" id="cc-ainote" style="margin-top:10px;font-size:12px"></p>
+        </div>
+
+        <div class="card">
+          <div class="between"><h3 style="margin:0">Preview</h3><span class="pill"><span id="cc-count">0</span> cards</span></div>
+          <p class="sub" style="margin:6px 0 12px">Review and trim before adding. Nothing is saved until you click Add.</p>
+          <div id="cc-preview"><p class="empty">No cards yet — generate or build some on the left.</p></div>
+          <button class="btn" id="cc-add" style="margin-top:14px;display:none">Add <span id="cc-addn">0</span> cards to deck</button>
+        </div>
       </div>
     </section>
 
@@ -600,6 +673,51 @@ const SUBJECTS = [
     topics:["Colonial America","American Revolution","Constitution & Bill of Rights","Early republic","Westward expansion","Civil War causes","The Civil War","Reconstruction"]},
 ];
 // "Science" counts as the combined sixth course area; six study areas total are the five cards (Science merges Physics+Biology as requested).
+
+/* External resources per subject. type drives the little badge. All open in a new tab. */
+const RESOURCES = {
+  alg:[
+    {type:"Course",title:"Khan Academy — Algebra 2",note:"Full free video course with practice for every unit.",url:"https://www.khanacademy.org/math/algebra2"},
+    {type:"Course",title:"Khan Academy — Get Ready for Algebra 2",note:"Brush up on the prerequisites first.",url:"https://www.khanacademy.org/math/get-ready-for-algebra-ii"},
+    {type:"Textbook",title:"OpenStax — Free Math Textbooks",note:"College Algebra & Algebra and Trigonometry, free PDF/online.",url:"https://openstax.org/subjects/math"},
+    {type:"Reference",title:"Paul's Online Math Notes",note:"Clear written notes and worked examples for algebra.",url:"https://tutorial.math.lamar.edu/"},
+    {type:"Video",title:"PatrickJMT",note:"Short, focused math tutorial videos.",url:"https://patrickjmt.com/"},
+    {type:"Tool",title:"Desmos Graphing Calculator",note:"Graph functions and explore visually.",url:"https://www.desmos.com/calculator"},
+  ],
+  ela:[
+    {type:"Course",title:"Khan Academy — Grammar",note:"Free lessons on grammar, usage, and mechanics.",url:"https://www.khanacademy.org/humanities/grammar"},
+    {type:"Reference",title:"Purdue OWL",note:"The go-to guide for essay writing and MLA citations.",url:"https://owl.purdue.edu/owl/purdue_owl.html"},
+    {type:"Practice",title:"CommonLit",note:"Free reading passages with comprehension questions.",url:"https://www.commonlit.org/"},
+    {type:"Reference",title:"SparkNotes",note:"Summaries and analysis for common novels and plays.",url:"https://www.sparknotes.com/"},
+    {type:"Reference",title:"LitCharts",note:"Theme, character, and symbol guides for literature.",url:"https://www.litcharts.com/"},
+    {type:"Practice",title:"ReadWriteThink",note:"Interactive reading and writing tools.",url:"https://www.readwritethink.org/"},
+  ],
+  sci:[
+    {type:"Course",title:"Khan Academy — Physics",note:"Free video course: motion, forces, energy, and more.",url:"https://www.khanacademy.org/science/physics"},
+    {type:"Course",title:"Khan Academy — Biology",note:"Cells, genetics, evolution, and ecology, free.",url:"https://www.khanacademy.org/science/biology"},
+    {type:"Textbook",title:"OpenStax — Biology 2e",note:"Free, full high-school/college biology textbook.",url:"https://openstax.org/details/books/biology-2e"},
+    {type:"Textbook",title:"OpenStax — Free Science Textbooks",note:"Physics and more, free PDF/online.",url:"https://openstax.org/subjects/science"},
+    {type:"Video",title:"Crash Course — Biology",note:"Fast, engaging biology video series.",url:"https://thecrashcourse.com/topic/biology/"},
+    {type:"Video",title:"Crash Course — Physics",note:"Physics concepts explained on video.",url:"https://thecrashcourse.com/topic/physics/"},
+    {type:"Reference",title:"The Physics Classroom",note:"Tutorials, animations, and practice problems.",url:"https://www.physicsclassroom.com/"},
+  ],
+  spa:[
+    {type:"Reference",title:"SpanishDict",note:"Dictionary, verb conjugator, and grammar lessons.",url:"https://www.spanishdict.com/"},
+    {type:"Course",title:"StudySpanish — Grammar",note:"Systematic grammar lessons with quizzes.",url:"https://studyspanish.com/grammar"},
+    {type:"Practice",title:"Conjuguemos",note:"Drill verb conjugation and grammar online.",url:"https://conjuguemos.com/"},
+    {type:"Course",title:"Duolingo — Spanish",note:"Gamified daily practice for vocabulary and basics.",url:"https://www.duolingo.com/course/es/en/Learn-Spanish"},
+    {type:"Video",title:"Señor Jordan",note:"Friendly Spanish grammar video lessons.",url:"https://www.youtube.com/user/senorjordan"},
+    {type:"Audio",title:"Language Transfer — Spanish",note:"Free audio course that builds intuition.",url:"https://www.languagetransfer.org/"},
+  ],
+  his:[
+    {type:"Course",title:"Khan Academy — US History",note:"Free course from colonial era to today.",url:"https://www.khanacademy.org/humanities/us-history"},
+    {type:"Video",title:"Crash Course — US History",note:"48-episode video series with John Green.",url:"https://www.youtube.com/playlist?list=PL8dPuuaLjXtMwmepBjTSG593eG7ObzO7s"},
+    {type:"Textbook",title:"OpenStax — U.S. History",note:"Free, full U.S. history textbook.",url:"https://openstax.org/details/books/us-history"},
+    {type:"Primary",title:"National Archives",note:"Original documents: Declaration, Constitution, and more.",url:"https://www.archives.gov/"},
+    {type:"Primary",title:"Library of Congress",note:"Huge archive of primary sources and photos.",url:"https://www.loc.gov/"},
+    {type:"Reference",title:"History.com — US History",note:"Readable articles on key events and people.",url:"https://www.history.com/topics/us-history"},
+  ],
+};
 
 const SEED_CARDS = {
   alg:[
@@ -1187,6 +1305,8 @@ function go(p){
   navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===p));
   if(p==='dashboard')renderDash();
   if(p==='subjects')renderSubjects();
+  if(p==='resources')renderResources();
+  if(p==='create')renderCreate();
   if(p==='recall')startRecall();
   if(p==='pomodoro')initPom();
   if(p==='feynman')renderFeynman();
@@ -1951,6 +2071,158 @@ function coachFeedback(h,bySubj,weak,avg,trend){
   return parts.map(p=>`<p style="margin:0 0 8px">${p}</p>`).join('');
 }
 document.getElementById('pg-clear').onclick=()=>{if(confirm("Clear all test history? (Best scores are kept.)")){DB.history=[];save();renderProgress();toast("History cleared");}};
+
+/* ============================ RESOURCES ============================ */
+function renderResources(){
+  document.getElementById('res-detail').style.display='none';
+  const g=document.getElementById('res-grid');g.style.display='';
+  g.innerHTML=SUBJECTS.map(s=>{
+    const n=(RESOURCES[s.id]||[]).length;
+    return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
+      <h3>${s.name}</h3><p>${s.desc}</p>
+      <div class="row" style="margin-top:12px"><span class="tag">${n} resources →</span></div>
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.subj-card').forEach(c=>c.onclick=()=>openResources(c.dataset.s));
+}
+function openResources(id){
+  const s=subjById(id);
+  document.getElementById('res-grid').style.display='none';
+  document.getElementById('res-detail').style.display='block';
+  const nm=document.getElementById('res-name');nm.textContent=s.name;nm.style.color=col(id);
+  document.getElementById('res-desc').textContent='Free, hand-picked resources for '+s.name+'. Links open in a new tab.';
+  document.getElementById('res-list').innerHTML=(RESOURCES[id]||[]).map(r=>`
+    <a class="res" href="${r.url}" target="_blank" rel="noopener noreferrer" style="border-left-color:${col(id)}">
+      <span class="rtype">${r.type}</span>
+      <span class="rmain"><span class="rtitle">${esc(r.title)}</span><span class="rnote">${esc(r.note)}</span></span>
+      <span class="rarrow">↗</span>
+    </a>`).join('');
+}
+document.getElementById('res-back').onclick=renderResources;
+
+/* ============================ CREATE / IMPORT FLASHCARDS ============================ */
+let ccCards=[]; // {front,back}
+function renderCreate(){
+  const sel=document.getElementById('cc-subj');
+  if(!sel.dataset.init){
+    sel.innerHTML=SUBJECTS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    sel.dataset.init=1;
+    // tab switching
+    document.querySelectorAll('#cc-tabs button').forEach(b=>b.onclick=()=>{
+      document.querySelectorAll('#cc-tabs button').forEach(x=>x.classList.toggle('active',x===b));
+      document.getElementById('cc-pane-paste').style.display=b.dataset.cc==='paste'?'block':'none';
+      document.getElementById('cc-pane-file').style.display=b.dataset.cc==='file'?'block':'none';
+    });
+    document.getElementById('cc-file').addEventListener('change',ccLoadFile);
+    document.getElementById('cc-ai').onclick=ccGenerateAI;
+    document.getElementById('cc-manual').onclick=ccGenerateManual;
+    document.getElementById('cc-add').onclick=ccAddToDeck;
+  }
+  ccCards=[];renderCcPreview();
+  const ai=DB.settings.provider!=='none'&&DB.settings.key;
+  document.getElementById('cc-ainote').innerHTML = ai
+    ? `AI is on (your ${DB.settings.provider} key). It will read your material and write cards.`
+    : `AI is off — add your own API key in <strong>Settings</strong> to auto-generate, or use the “Q | A lines” button which works offline.`;
+}
+// which textarea is the active source?
+function ccSourceText(){
+  const fileTab=document.querySelector('#cc-tabs button[data-cc="file"]').classList.contains('active');
+  return (fileTab?document.getElementById('cc-filetext').value:document.getElementById('cc-text').value).trim();
+}
+function ccGenerateManual(){
+  const text=ccSourceText();
+  if(!text){toast("Add some text first");return;}
+  const cards=[];
+  text.split(/\r?\n/).forEach(line=>{
+    line=line.trim();if(!line)return;
+    const m=line.split(/\s*(?:\|\|?|::|\t| - )\s*/); // | or || or :: or tab or " - "
+    if(m.length>=2 && m[0] && m.slice(1).join(' ')){cards.push({front:m[0].trim(),back:m.slice(1).join(' ').trim()});}
+  });
+  if(!cards.length){toast("No 'Question | Answer' lines found — use a | between question and answer");return;}
+  ccCards=cards;renderCcPreview();toast(`Built ${cards.length} cards from your lines`);
+}
+async function ccGenerateAI(){
+  const text=ccSourceText();
+  if(!text){toast("Add notes or load a file first");return;}
+  if(!(DB.settings.provider!=='none'&&DB.settings.key)){toast("Turn on AI in Settings (add an API key) — or use the Q | A lines button");return;}
+  const btn=document.getElementById('cc-ai');const old=btn.textContent;btn.textContent='Thinking…';btn.disabled=true;
+  try{
+    ccCards=await callAIFlashcards(text);
+    renderCcPreview();
+    toast(ccCards.length?`AI created ${ccCards.length} cards`:'AI returned no cards — try more material');
+  }catch(e){toast('AI failed: '+e.message);}
+  finally{btn.textContent=old;btn.disabled=false;}
+}
+function renderCcPreview(){
+  const wrap=document.getElementById('cc-preview');
+  document.getElementById('cc-count').textContent=ccCards.length;
+  const addBtn=document.getElementById('cc-add');
+  if(!ccCards.length){wrap.innerHTML='<p class="empty">No cards yet — generate or build some on the left.</p>';addBtn.style.display='none';return;}
+  wrap.innerHTML=ccCards.map((c,i)=>`<div class="cc-card"><span class="ccx" data-i="${i}">✕</span><div class="ccf">${esc(c.front)}</div><div class="ccb">${esc(c.back)}</div></div>`).join('');
+  wrap.querySelectorAll('.ccx').forEach(x=>x.onclick=()=>{ccCards.splice(+x.dataset.i,1);renderCcPreview();});
+  document.getElementById('cc-addn').textContent=ccCards.length;
+  addBtn.style.display='inline-block';
+}
+function ccAddToDeck(){
+  if(!ccCards.length)return;
+  const subj=document.getElementById('cc-subj').value;
+  let id=Date.now();
+  ccCards.forEach(c=>{if(c.front&&c.back)DB.cards.push(newCard(id++,subj,String(c.front).trim(),String(c.back).trim()));});
+  save();
+  toast(`Added ${ccCards.length} cards to ${subjById(subj).name} ✓`);
+  ccCards=[];renderCcPreview();
+  document.getElementById('cc-text').value='';document.getElementById('cc-filetext').value='';
+}
+// ---- file reading (txt/md/csv directly; pdf/docx via CDN libs loaded on demand) ----
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load library (need internet)'));document.head.appendChild(s);});}
+async function ccLoadFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const status=document.getElementById('cc-filestatus');
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  status.textContent='Reading '+f.name+'…';
+  try{
+    let text='';
+    if(['txt','md','csv','text'].includes(ext)){text=await f.text();}
+    else if(ext==='pdf'){text=await readPDF(f,status);}
+    else if(ext==='docx'){text=await readDOCX(f);}
+    else if(ext==='doc'){throw new Error('.doc not supported — save as .docx or .txt');}
+    else {text=await f.text();}
+    document.getElementById('cc-filetext').value=text.trim();
+    status.textContent=text.trim()?`Loaded ${f.name} — ${text.trim().length} characters. Now Generate with AI or use Q | A lines.`:`No text found in ${f.name}.`;
+  }catch(err){status.textContent='Could not read file: '+err.message;}
+}
+async function readPDF(f,status){
+  if(!window.pdfjsLib){status.textContent='Loading PDF reader…';await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');}
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const buf=await f.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+  let out='';
+  for(let p=1;p<=pdf.numPages;p++){status.textContent=`Reading PDF page ${p}/${pdf.numPages}…`;const page=await pdf.getPage(p);const tc=await page.getTextContent();out+=tc.items.map(i=>i.str).join(' ')+'\n';}
+  return out;
+}
+async function readDOCX(f){
+  if(!window.mammoth){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');}
+  const buf=await f.arrayBuffer();
+  const r=await window.mammoth.extractRawText({arrayBuffer:buf});
+  return r.value||'';
+}
+async function callAIFlashcards(material){
+  const ask=`You are a study assistant. From the study material below, create high-quality flashcards. Return ONLY a JSON array (no prose, no code fence) of objects like {"front":"question or term","back":"concise answer"}. Make 8–15 cards, each testing one idea, with short clear answers.\n\nMATERIAL:\n${material.slice(0,6000)}`;
+  let raw;
+  if(DB.settings.provider==='anthropic'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':DB.settings.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-3-5-haiku-latest',max_tokens:1500,messages:[{role:'user',content:ask}]})});
+    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');raw=j.content[0].text;
+  } else {
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+DB.settings.key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:ask}]})});
+    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');raw=j.choices[0].message.content;
+  }
+  // pull the JSON array out of the response
+  raw=raw.replace(/```json|```/g,'').trim();
+  const start=raw.indexOf('['),end=raw.lastIndexOf(']');
+  if(start>=0&&end>start)raw=raw.slice(start,end+1);
+  let arr;try{arr=JSON.parse(raw);}catch(e){throw new Error('could not parse AI output');}
+  return (Array.isArray(arr)?arr:[]).map(o=>({front:o.front||o.q||o.question||'',back:o.back||o.a||o.answer||''})).filter(c=>c.front&&c.back);
+}
 
 /* ============================ UTIL ============================ */
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
