@@ -180,7 +180,7 @@
     </div>
     <button class="nav-btn active" data-page="dashboard"><span class="ic">▦</span><span class="lbl">Dashboard</span></button>
     <button class="nav-btn" data-page="subjects"><span class="ic">▤</span><span class="lbl">Subjects</span></button>
-    <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Resources</span></button>
+    <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Learn</span></button>
     <button class="nav-btn" data-page="recall"><span class="ic">⚯</span><span class="lbl">Flashcards</span></button>
     <button class="nav-btn" data-page="create"><span class="ic">✚</span><span class="lbl">Create Cards</span></button>
     <button class="nav-btn" data-page="pomodoro"><span class="ic">◷</span><span class="lbl">Pomodoro</span></button>
@@ -254,7 +254,7 @@
 
     <!-- RESOURCES -->
     <section class="page" id="page-resources">
-      <h2 class="title">External resources</h2>
+      <h2 class="title">Learn</h2>
       <p class="sub">Hand-picked free articles, textbooks, videos, and practice sites. Pick a subject to see its links — all open in a new tab.</p>
       <div class="grid g3" id="res-grid"></div>
 
@@ -368,9 +368,9 @@
           <div class="grid g3" style="margin-top:4px">
             <div><label class="fld">Focus (min)</label><input type="number" id="pt-work" value="30" min="10" max="1440"></div>
             <div><label class="fld">Break (min)</label><input type="number" id="pt-break" value="10" min="1" max="60"></div>
-            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="20" min="1" max="120"></div>
+            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="20" min="1" max="90"></div>
           </div>
-          <p class="sub" style="margin:8px 0 0;font-size:12px">Focus: 10 min–24 h · Break: 1–60 min · break is always kept ≤ focus.</p>
+          <p class="sub" style="margin:8px 0 0;font-size:12px">Focus: 10 min–24 h · Break: 1–60 min · Long break: up to 1.5 h · break is always kept ≤ focus.</p>
           <label class="switchrow" style="margin-top:14px"><input type="checkbox" id="pt-sound" checked> Play a chime when a phase ends</label>
           <div class="section-h">Why it works</div>
           <p style="color:var(--muted);font-size:13px;margin:0">Short, bounded sprints lower the activation cost of starting and protect attention from fatigue. Pair each focus block with one method — e.g. recall cards, or a Feynman write-up.</p>
@@ -1485,16 +1485,27 @@ function initPom(){
   const sel=document.getElementById('pt-subj');
   if(!sel.dataset.init){
     fillSubjSelect(sel);sel.dataset.init=1;
-    // enforce the limits whenever the student edits a field
-    ['pt-work','pt-break','pt-long'].forEach(id=>document.getElementById(id).addEventListener('change',clampPomInputs));
+    // enforce the limits as the student types (live cap), and fully on blur/change
+    ['pt-work','pt-break','pt-long'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.addEventListener('input',capMaxLive);            // stop values going over the max as they type
+      el.addEventListener('change',()=>clampPomInputs(true));
+      el.addEventListener('blur',()=>clampPomInputs(true));
+    });
   }
   document.getElementById('pt-doneToday').textContent=(DB.pomToday.date===dstr()?DB.pomToday.count:0);
   renderPom();
 }
-const POM_LIMITS={work:[10,1440],brk:[1,60],long:[1,120]};
+const POM_LIMITS={work:[10,1440],brk:[1,60],long:[1,90]}; // long break max = 1.5 h
 function clampN(v,[lo,hi],dflt){v=Math.round(+v);if(!isFinite(v)||!v)v=dflt;return Math.min(hi,Math.max(lo,v));}
-// Focus stays within 10–1440 min, break within 1–60 min, and break can never exceed focus.
-function clampPomInputs(){
+// While typing, never let a field exceed its max (prevents e.g. 300-min break sitting in the box).
+function capMaxLive(e){
+  const el=e.target;const lim=el.id==='pt-work'?POM_LIMITS.work:el.id==='pt-break'?POM_LIMITS.brk:POM_LIMITS.long;
+  if(el.value!==''&&+el.value>lim[1])el.value=lim[1];
+}
+// Full enforcement: focus 10–1440, break 1–60, long 1–90, and break/long can never exceed focus.
+// syncIdle: if the timer isn't running and we're on Focus, update the displayed countdown to the new focus length.
+function clampPomInputs(syncIdle){
   const wEl=document.getElementById('pt-work'),bEl=document.getElementById('pt-break'),lEl=document.getElementById('pt-long');
   let w=clampN(wEl.value,POM_LIMITS.work,30);
   let b=clampN(bEl.value,POM_LIMITS.brk,10);
@@ -1502,9 +1513,9 @@ function clampPomInputs(){
   let note='';
   if(b>w){b=w;note='Break can’t be longer than focus — trimmed it to match.';} // study time cannot be less than break
   if(l>w){l=w;}
-  if(String(w)!==wEl.value)wEl.value=w;
-  bEl.value=b;lEl.value=l;wEl.value=w;
+  wEl.value=w;bEl.value=b;lEl.value=l;
   if(note)toast(note);
+  if(syncIdle && !pom.running && pom.phase==='Focus'){pom.total=pom.remaining=w*60;renderPom();}
   return {w,b,l};
 }
 function workMin(){return clampN(document.getElementById('pt-work').value,POM_LIMITS.work,30);}
@@ -1528,6 +1539,10 @@ function renderPom(){
 }
 document.getElementById('pt-start').onclick=function(){
   if(pom.running){pom.running=false;clearInterval(pom.timer);this.textContent='Start';return;}
+  clampPomInputs(false); // make sure typed values are valid before counting down
+  // if we're starting a fresh Focus block, lock in the (clamped) focus length
+  if(pom.phase==='Focus' && pom.remaining===pom.total && !pom.started){pom.total=pom.remaining=workMin()*60;}
+  pom.started=true;
   pom.running=true;this.textContent='Pause';
   pom.timer=setInterval(()=>{
     pom.remaining--;
@@ -1536,7 +1551,8 @@ document.getElementById('pt-start').onclick=function(){
   },1000);
 };
 document.getElementById('pt-reset').onclick=()=>{
-  clearInterval(pom.timer);pom.running=false;pom.phase='Focus';pom.total=pom.remaining=workMin()*60;pom.round=1;
+  clampPomInputs(false);
+  clearInterval(pom.timer);pom.running=false;pom.started=false;pom.phase='Focus';pom.total=pom.remaining=workMin()*60;pom.round=1;
   document.getElementById('pt-start').textContent='Start';renderPom();
 };
 document.getElementById('pt-skip').onclick=()=>{
