@@ -496,6 +496,7 @@
     <section class="page" id="page-progress">
       <h2 class="title">My Progress</h2>
       <p class="sub">Every practice test you take is recorded here, with feedback on what to study next.</p>
+      <div id="pg-mastery"></div>
       <div id="pg-empty" class="empty" style="display:none">No tests yet. Head to <strong>Practice &amp; Tests</strong>, take a test, and your results will show up here.</div>
       <div id="pg-content" style="display:none">
         <div class="grid g4" style="margin-bottom:18px">
@@ -622,6 +623,10 @@
             <p>This page runs entirely in your browser with no server behind it, so there's no shared key it can borrow. Adding your own key (or running it through the templates) are the two safe options. Keys here never leave your machine except to call the provider you chose.</p>
           </details>
         </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin:0 0 6px">Mastery celebration 🏆</h3>
+        <div id="set-mastery-wrap"></div>
       </div>
       <div class="card" style="margin-top:16px">
         <h3 style="margin:0 0 6px">Connecting real Google Classroom later</h3>
@@ -1154,7 +1159,7 @@ const CHALLENGE_QUESTIONS = {
     ["Which sentence is in the passive voice?",["The committee approved the plan.","The plan was approved by the committee.","The committee will approve it.","Approve the plan."],1,"Passive: the subject receives the action ('was approved').","Grammar"],
     ["When an author inserts an earlier scene into the story, it's a…",["Flashback","Foreshadowing","Climax","Frame story"],0,"A flashback is an inserted earlier scene.","Narrative structure"],
     ["'Ask not what your country can do for you…' relies most on…",["Parallelism","Onomatopoeia","Assonance","Hyperbole"],0,"The mirrored grammatical structure is parallelism.","Rhetorical devices"],
-    ["A narrator who misunderstands events creates…",["An unreliable narrator","Dramatic irony for the reader","Both A and B","Neither"],2,"The narrator is unreliable, producing dramatic irony for readers.","Point of view"],
+    ["A narrator who misunderstands events, so the reader perceives more than he does, is best called…",["An unreliable narrator","An omniscient narrator","A reliable narrator","A second-person narrator"],0,"Such a narrator is unreliable, which produces dramatic irony for the reader.","Point of view"],
     ["Which option states a theme rather than a topic?",["War","Loyalty can demand painful sacrifice.","A soldier's life","Friendship"],1,"A theme is a complete insight, not a one-word topic.","Theme"],
     ["In 'The pen is mightier than the sword,' pen and sword are…",["Metonyms for writing and force","Similes","Personification","Alliteration"],0,"Each stands in for a larger idea (metonymy).","Figurative language"],
   ],
@@ -1331,6 +1336,416 @@ const AP_QUESTIONS = {
   ],
 };
 
+/* ============================ EXPANSION BANKS (harder + ~double the questions) ============================
+   These extra questions are merged into the four core banks at load time, so every feature
+   (Practice, Practice Test, Challenge, Gauntlet) gets roughly double the volume and a harder average. */
+const QUESTIONS_X = {
+  alg:[
+    ["Solve x² + 6x + 9 = 0.",["x = −3 (double root)","x = 3","x = ±3","x = −9"],0,"(x+3)² = 0, so x = −3 is a repeated root.","Factoring quadratics"],
+    ["Simplify (x² − x − 6)/(x − 3).",["x + 2","x − 2","x + 3","x − 6"],0,"(x−3)(x+2)/(x−3) = x + 2.","Rational expressions"],
+    ["Solve 5^x = 125.",["x = 3","x = 2","x = 5","x = 25"],0,"5³ = 125.","Exponential equations"],
+    ["Expand (2x + 3)(x − 4).",["2x² − 5x − 12","2x² + 5x − 12","2x² − 5x + 12","2x² − 11x − 12"],0,"2x²−8x+3x−12 = 2x²−5x−12.","Polynomial expansion"],
+    ["Find the sum of the roots of x² − 7x + 12 = 0.",["7","−7","12","5"],0,"Sum = −b/a = 7.","Vieta's formulas"],
+    ["Find the product of the roots of x² − 7x + 12 = 0.",["12","−12","7","5"],0,"Product = c/a = 12.","Vieta's formulas"],
+    ["Simplify √8 · √2.",["4","√10","2√2","8"],0,"√16 = 4.","Radicals"],
+    ["Solve |x − 2| = 6.",["x = 8 or −4","x = 8 only","x = 4 or −8","x = 6 or −6"],0,"x−2=±6 → x=8 or −4.","Absolute value"],
+    ["For f(x) = x² − 4x + 3, find f(0).",["3","0","−1","7"],0,"f(0) = 3.","Functions"],
+    ["What is the x-coordinate of the vertex of y = x² − 6x + 5?",["3","6","−3","5"],0,"x = −b/2a = 3.","Quadratic graphs"],
+    ["Factor 3x² − 12.",["3(x − 2)(x + 2)","3(x − 4)","(3x − 6)(x + 2)","3(x² − 4) only"],0,"3(x²−4)=3(x−2)(x+2).","Factoring"],
+    ["Solve 2x² = 18.",["x = ±3","x = 9","x = ±9","x = 3"],0,"x²=9 → x=±3.","Quadratics"],
+    ["Evaluate log₃(81).",["4","3","9","27"],0,"3⁴ = 81.","Logarithms"],
+    ["Simplify (x⁻²)⁻³.",["x⁶","x⁻⁶","x⁻⁵","x⁵"],0,"(−2)(−3)=6.","Exponent rules"],
+    ["Find the midpoint of (−2, 5) and (4, −1).",["(1, 2)","(2, 4)","(1, 3)","(3, 2)"],0,"((−2+4)/2,(5−1)/2)=(1,2).","Coordinate geometry"],
+    ["Find the distance between (0, 0) and (3, 4).",["5","7","√7","12"],0,"√(9+16)=5.","Coordinate geometry"],
+    ["Solve the system y = 2x and x + y = 9.",["x = 3","x = 2","x = 4.5","x = 6"],0,"3x=9 → x=3.","Systems of equations"],
+    ["Multiply (3x²y)(2xy³).",["6x³y⁴","6x²y³","5x³y⁴","6x³y³"],0,"6, x³, y⁴.","Exponent rules"],
+    ["If f(x) = x + 2 and g(x) = 3x, find f(g(4)).",["14","18","12","20"],0,"g(4)=12, f(12)=14.","Composite functions"],
+    ["Solve log₂(x) = 5.",["x = 32","x = 10","x = 25","x = 7"],0,"2⁵=32.","Logarithms"],
+    ["Factor x² + x − 12.",["(x + 4)(x − 3)","(x − 4)(x + 3)","(x + 6)(x − 2)","(x + 2)(x − 6)"],0,"4·(−3)=−12, 4+(−3)=1.","Factoring quadratics"],
+    ["What does the discriminant of x² + x + 1 tell you?",["Negative (−3): no real roots","Zero: one root","Positive: two real roots","It equals 1"],0,"1−4=−3<0.","Discriminant"],
+    ["Simplify (x² − 9)/(x + 3).",["x − 3","x + 3","x − 9","x"],0,"(x−3)(x+3)/(x+3)=x−3.","Rational expressions"],
+    ["Solve 4^x = 1/16.",["x = −2","x = 2","x = −4","x = 1/2"],0,"4⁻²=1/16.","Exponential equations"],
+    ["What is the common ratio of 81, 27, 9, …?",["1/3","3","−3","1/9"],0,"27/81=1/3.","Geometric sequences"],
+  ],
+  ela:[
+    ["A direct comparison without 'like' or 'as' ('Her eyes were oceans') is a…",["Metaphor","Simile","Pun","Hyperbole"],0,"A metaphor states one thing is another.","Figurative language"],
+    ["The repeated 's' in 'silent snakes slither' is…",["Alliteration","Assonance","Rhyme","Meter"],0,"Repeated initial consonant sounds.","Literary devices"],
+    ["A reference to a famous person, place, or work is an…",["Allusion","Illusion","Analogy","Aside"],0,"An allusion references something well known.","Literary devices"],
+    ["A narrator who knows all characters' thoughts uses…",["Third-person omniscient","First person","Second person","Third-person limited"],0,"Omniscient = all-knowing.","Point of view"],
+    ["A word that sounds like its meaning ('buzz', 'hiss') is…",["Onomatopoeia","Oxymoron","Allusion","Pun"],0,"Onomatopoeia imitates sounds.","Literary devices"],
+    ["The turning point of a story is the…",["Climax","Exposition","Denouement","Rising action"],0,"Climax is the peak of tension.","Plot structure"],
+    ["'The early bird catches the worm' is best described as a…",["Proverb/aphorism","Metaphor","Allusion","Pun"],0,"A short, well-known saying expressing a truth.","Literary devices"],
+    ["A struggle within a character's own mind is…",["Internal conflict","External conflict","Climax","Resolution"],0,"Character vs. self.","Reading comprehension"],
+    ["The feeling a text creates in the reader is its…",["Mood","Tone","Theme","Plot"],0,"Mood = atmosphere felt by reader.","Tone & mood"],
+    ["Which is a complete sentence?",["The dog barked loudly.","Running down the street.","Because she was late.","After the long game."],0,"It has a subject, verb, and complete thought.","Grammar"],
+    ["The repetition of vowel sounds ('the rain in Spain') is…",["Assonance","Consonance","Alliteration","Rhyme"],0,"Assonance repeats vowel sounds.","Literary devices"],
+    ["A brief, often funny story used to illustrate a point is an…",["Anecdote","Allegory","Analogy","Aside"],0,"An anecdote is a short illustrative story.","Literary devices"],
+    ["Which sentence uses correct punctuation?",["I bought apples, oranges, and pears.","I bought apples oranges and pears.","I bought, apples oranges and pears.","I bought apples; oranges; and pears."],0,"Commas separate items in a series.","Grammar"],
+    ["The use of clues to hint at future events is…",["Foreshadowing","Flashback","Irony","Allusion"],0,"Foreshadowing hints at what is to come.","Literary devices"],
+    ["A comparison of two unlike things to explain an idea is an…",["Analogy","Allusion","Anecdote","Aside"],0,"An analogy explains by comparison.","Literary devices"],
+    ["The author's main purpose in a persuasive essay is to…",["Convince the reader","Entertain only","Describe a setting","List facts neutrally"],0,"Persuasive writing aims to convince.","Argument writing"],
+    ["A contrast between expectation and reality is…",["Irony","Imagery","Allusion","Alliteration"],0,"Irony = gap between expectation and reality.","Literary devices"],
+    ["Descriptive language appealing to the senses is…",["Imagery","Dialogue","Exposition","Meter"],0,"Imagery uses sensory detail.","Literary devices"],
+    ["Which word is the adverb in 'She sang beautifully'?",["beautifully","She","sang","none"],0,"'Beautifully' modifies the verb.","Grammar"],
+    ["The central character a reader roots for is the…",["Protagonist","Antagonist","Narrator","Foil"],0,"Protagonist = central main character.","Character"],
+    ["A character who contrasts with another to highlight traits is a…",["Foil","Protagonist","Narrator","Antagonist"],0,"A foil highlights qualities by contrast.","Character"],
+    ["'Boom!' and 'crash!' are examples of…",["Onomatopoeia","Hyperbole","Simile","Allusion"],0,"They imitate sounds.","Literary devices"],
+    ["The time and place of a story is its…",["Setting","Plot","Theme","Mood"],0,"Setting = time and place.","Reading comprehension"],
+    ["Which title is correctly capitalized?",["The Catcher in the Rye","the catcher in the rye","The Catcher In The Rye","THE catcher in the rye"],0,"Capitalize major words; short article/preposition stay lowercase mid-title.","Grammar / mechanics"],
+    ["An exaggeration for effect ('I could eat a horse') is…",["Hyperbole","Litotes","Simile","Allusion"],0,"Hyperbole is deliberate exaggeration.","Figurative language"],
+  ],
+  sci:[
+    ["The unit of electric current is the…",["Ampere","Volt","Ohm","Watt"],0,"Current is measured in amperes.","Units & measurement"],
+    ["Ohm's law is…",["V = IR","P = IV","F = ma","V = I/R"],0,"Voltage = current × resistance.","Electricity"],
+    ["Mitosis results in…",["Two identical diploid cells","Four gametes","Two haploid cells","One large cell"],0,"Two genetically identical cells.","Cell processes"],
+    ["The process by which plants lose water vapor through leaves is…",["Transpiration","Respiration","Digestion","Condensation"],0,"Transpiration is water loss through leaves.","Plant biology"],
+    ["Density is calculated as…",["mass ÷ volume","mass × volume","volume ÷ mass","force ÷ area"],0,"ρ = m/V.","Units & measurement"],
+    ["A neutral atom has equal numbers of protons and…",["Electrons","Neutrons","Ions","Isotopes"],0,"Protons = electrons.","Atomic structure"],
+    ["The first trophic level of a food chain is the…",["Producers","Herbivores","Carnivores","Decomposers"],0,"Producers form the base.","Ecosystems"],
+    ["Acceleration has units of…",["m/s²","m/s","kg·m","N·s"],0,"Acceleration is m/s².","Kinematics"],
+    ["Which organelle carries out cellular respiration?",["Mitochondrion","Chloroplast","Nucleus","Ribosome"],0,"Mitochondria make ATP.","Cell organelles"],
+    ["The bending of light as it passes between media is…",["Refraction","Reflection","Diffraction","Absorption"],0,"Refraction is bending of light.","Waves & optics"],
+    ["RNA differs from DNA in that RNA contains…",["Uracil instead of thymine","Thymine instead of uracil","No nitrogen bases","Only a double helix"],0,"RNA uses uracil.","DNA & genetics"],
+    ["The net force on an object moving at constant velocity is…",["Zero","Maximum","Equal to its weight","Greater than zero"],0,"Balanced forces → zero net force.","Newton's laws"],
+    ["Photosynthesis releases which gas?",["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"],0,"O₂ is released.","Photosynthesis"],
+    ["The SI unit of power is the…",["Watt","Joule","Newton","Pascal"],0,"Power is in watts.","Units & measurement"],
+    ["A trait masked in the heterozygote is…",["Recessive","Dominant","Codominant","Sex-linked"],0,"Recessive traits are masked.","Genetics"],
+    ["The change of a liquid to a gas at its surface is…",["Evaporation","Condensation","Sublimation","Freezing"],0,"Evaporation: liquid → gas at the surface.","States of matter"],
+    ["Sound waves are…",["Longitudinal","Transverse","Electromagnetic","Standing only"],0,"Sound is longitudinal.","Waves"],
+    ["The molecule that stores and transfers cellular energy is…",["ATP","DNA","RNA","NaCl"],0,"ATP stores energy.","Cell processes"],
+    ["The force that opposes motion between surfaces is…",["Friction","Gravity","Tension","Normal force"],0,"Friction opposes motion.","Forces"],
+    ["Which blood cells fight infection?",["White blood cells","Red blood cells","Platelets","Plasma"],0,"White blood cells fight infection.","Human biology"],
+    ["The atomic number equals the number of…",["Protons","Neutrons","Electrons + neutrons","Isotopes"],0,"Atomic number = protons.","Atomic structure"],
+    ["Total momentum is conserved in a collision when…",["No external force acts","Energy is lost","The objects stick","Speed is constant"],0,"Conserved with no external force.","Momentum"],
+    ["Movement across a membrane from high to low concentration without energy is…",["Passive transport","Active transport","Endocytosis","Exocytosis"],0,"Passive transport needs no energy.","Cell transport"],
+    ["The unit of frequency is the…",["Hertz","Decibel","Watt","Meter"],0,"Frequency is in hertz.","Waves"],
+    ["Which is a chemical change?",["Iron rusting","Ice melting","Water boiling","Sugar dissolving"],0,"Rusting forms a new substance.","Chemistry basics"],
+  ],
+  spa:[
+    ["Conjuga 'comer' para 'nosotros' (presente).",["comemos","comen","comes","como"],0,"-er nosotros: comemos.","Present tense"],
+    ["'I want' (querer, yo) is…",["quiero","quero","queremos","quieres"],0,"Querer → quiero (e→ie).","Stem-changing verbs"],
+    ["Translate 'the white houses' (feminine plural).",["las casas blancas","los casas blancos","la casa blanca","las casa blancas"],0,"las casas blancas.","Adjective agreement"],
+    ["'¿Cuántos años tienes?' asks…",["How old are you?","What's your name?","Where are you?","How are you?"],0,"Literally 'how many years do you have?'","Common expressions"],
+    ["The yo form of 'ir' (to go) is…",["voy","vo","vas","va"],0,"Ir → yo voy.","Irregular verbs"],
+    ["'Me gusta el café' means…",["I like coffee","Coffee likes me","I drink coffee","I make coffee"],0,"Me gusta = it pleases me.","Gustar"],
+    ["How is 'the 5th of May' written in Spanish?",["el cinco de mayo","el mayo cinco","cinco mayo","mayo el cinco"],0,"el [day] de [month].","Dates"],
+    ["'Hace sol' means…",["It's sunny","It's snowing","It's windy","It's cold"],0,"Hace sol = it's sunny.","Weather"],
+    ["The plural of 'la luz' is…",["las luces","las luzes","los luces","la luzes"],0,"z→c before -es: luces.","Plurals"],
+    ["'Estoy cansado' uses estar because it describes…",["a temporary state","permanent identity","origin","profession"],0,"Estar for temporary conditions.","Ser vs estar"],
+    ["Conjuga 'escribir' para 'yo' (presente).",["escribo","escribe","escribimos","escribes"],0,"-ir yo: escribo.","Present tense"],
+    ["'Tengo que estudiar' means…",["I have to study","I am studying","I studied","I will study"],0,"Tener que + infinitive = have to.","Expressions"],
+    ["The opposite of 'grande' is…",["pequeño","alto","largo","bueno"],0,"Pequeño = small.","Vocabulary"],
+    ["'Son las tres' means…",["It's three o'clock","It's three days","There are three","I have three"],0,"Telling time: it's 3:00.","Telling time"],
+    ["The preterite 'él' form of 'hablar' is…",["habló","hablo","hablaba","hablará"],0,"Preterite él: habló.","Preterite tense"],
+    ["In 'Voy al cine', 'al' is a contraction of…",["a + el","a + la","de + el","a + los"],0,"a + el = al.","Contractions"],
+    ["The feminine of 'el profesor' is…",["la profesora","la profesor","el profesora","las profesor"],0,"la profesora.","Gender of nouns"],
+    ["'Nos vemos' means…",["See you (we'll see each other)","We saw","I see","They see us"],0,"Reflexive farewell.","Expressions"],
+    ["Conjuga 'ser' para 'ellos'.",["son","somos","sois","es"],0,"Ser ellos: son.","Irregular verbs"],
+    ["'Mucho gusto' is said when…",["meeting someone","leaving","eating","sleeping"],0,"Nice to meet you.","Greetings"],
+    ["The color 'rojo' means…",["red","blue","green","yellow"],0,"Rojo = red.","Vocabulary"],
+    ["'¿De dónde eres?' asks…",["Where are you from?","Where are you going?","How are you?","Who are you?"],0,"Where are you from.","Questions"],
+    ["Conjuga 'poder' para 'yo' (presente).",["puedo","podo","podemos","puede"],0,"Poder → puedo (o→ue).","Stem-changing verbs"],
+    ["'La mano' is which gender?",["feminine","masculine","neuter","both"],0,"La mano is feminine (exception).","Gender of nouns"],
+    ["'Hace dos días' means…",["two days ago","in two days","every two days","for two days"],0,"Hace + time = ago.","Time expressions"],
+  ],
+  his:[
+    ["The Pilgrims who founded Plymouth arrived on the…",["Mayflower","Santa María","Niña","Endeavour"],0,"The Mayflower (1620).","Colonial America"],
+    ["The Revolution's first battles were at…",["Lexington and Concord","Yorktown","Saratoga","New Orleans"],0,"Lexington and Concord (1775).","American Revolution"],
+    ["The first ten amendments are called the…",["Bill of Rights","Articles","Preamble","Federalist Papers"],0,"The Bill of Rights.","Constitution"],
+    ["The Declaration of Independence was primarily written by…",["Thomas Jefferson","Ben Franklin","John Adams","George Washington"],0,"Jefferson drafted it.","Founding documents"],
+    ["The Louisiana Purchase was made during the presidency of…",["Thomas Jefferson","George Washington","James Madison","John Adams"],0,"Jefferson, 1803.","Early republic"],
+    ["The pre-Civil War Southern economy relied on…",["plantation slavery","factories","fur trapping","shipbuilding"],0,"Plantation agriculture using enslaved labor.","Sectionalism"],
+    ["The Emancipation Proclamation was issued in…",["1863","1776","1812","1900"],0,"January 1, 1863.","Civil War"],
+    ["The author of 'Common Sense' was…",["Thomas Paine","Patrick Henry","Paul Revere","Sam Adams"],0,"Thomas Paine.","Road to Revolution"],
+    ["The branch that interprets laws is the…",["Judicial","Legislative","Executive","Federal"],0,"The judicial branch interprets laws.","Constitution"],
+    ["The Trail of Tears was the forced removal of the…",["Cherokee and other tribes","Pilgrims","Loyalists","Confederates"],0,"Native American removal in the 1830s.","Westward expansion"],
+    ["The Constitution begins with the words…",["We the People","Four score and seven","When in the course","I have a dream"],0,"'We the People…'","Constitution"],
+    ["The Civil War ended in…",["1865","1776","1812","1898"],0,"1865.","Civil War"],
+    ["The Boston Massacre (1770) increased…",["anti-British anger","support for the king","trade","westward migration"],0,"It fueled colonial resentment.","Road to Revolution"],
+    ["The first President under the Constitution was…",["George Washington","John Adams","Thomas Jefferson","James Madison"],0,"Washington (1789).","Early republic"],
+    ["The Underground Railroad helped…",["enslaved people escape to freedom","build railroads","move troops","trade cotton"],0,"It aided escapes from slavery.","Sectionalism & slavery"],
+    ["The 13th Amendment…",["abolished slavery","gave women the vote","created the income tax","limited terms"],0,"Abolished slavery (1865).","Reconstruction"],
+    ["The Declaration's natural-rights ideas came from…",["Enlightenment thinkers","the King","the Pope","mercantilists"],0,"Enlightenment ideas (Locke).","Enlightenment ideas"],
+    ["The Battle of Saratoga (1777) was important because it…",["brought France into the war","ended the war","captured Boston","freed enslaved people"],0,"It convinced France to ally with the colonies.","American Revolution"],
+    ["Power shared between national and state governments is…",["federalism","monarchy","anarchy","theocracy"],0,"Federalism.","Constitution"],
+    ["The 'Father of the Constitution' is…",["James Madison","George Washington","Thomas Jefferson","Alexander Hamilton"],0,"James Madison.","Constitution"],
+    ["Reconstruction followed which war?",["The Civil War","The Revolution","The War of 1812","World War I"],0,"After the Civil War.","Reconstruction"],
+    ["Colonists protested the Stamp Act because it was…",["a direct tax without representation","a trade benefit","a land grant","a religious law"],0,"Taxation without representation.","Road to Revolution"],
+    ["The Gettysburg Address was delivered by…",["Abraham Lincoln","Robert E. Lee","Ulysses Grant","Jefferson Davis"],0,"Lincoln, 1863.","Civil War"],
+    ["The Constitutional Convention met in…",["Philadelphia","Boston","New York","Washington"],0,"Philadelphia, 1787.","Constitution"],
+    ["The three-fifths clause counted enslaved people for…",["representation and taxes","voting rights","citizenship","military service"],0,"Representation and taxation.","Constitutional Convention"],
+  ],
+};
+const TEST_QUESTIONS_X = {
+  alg:[
+    ["Solve 3x² − 5x − 2 = 0.",["x = 2 or −1/3","x = −2 or 1/3","x = 1 or −2/3","x = 3 or −1/2"],0,"(3x+1)(x−2)=0.","Factoring quadratics"],
+    ["Evaluate log₅(1/25).",["−2","2","−5","5"],0,"5⁻²=1/25.","Logarithms"],
+    ["Simplify (2x³y²)⁴.",["16x¹²y⁸","8x¹²y⁸","16x⁷y⁶","2x¹²y⁸"],0,"2⁴=16, x¹², y⁸.","Exponent rules"],
+    ["Find the vertex of y = x² + 4x + 1.",["(−2, −3)","(2, −3)","(−2, 3)","(−4, 1)"],0,"x=−2, y=−3.","Quadratic graphs"],
+    ["Solve 9^x = 27.",["x = 3/2","x = 3","x = 2/3","x = 9"],0,"2x=3 → x=3/2.","Exponential equations"],
+    ["Factor 2x² − 50.",["2(x − 5)(x + 5)","2(x − 25)","(2x − 10)(x + 5)","2(x² − 5)"],0,"2(x²−25).","Factoring"],
+    ["If the roots of x² + bx + 6 = 0 are 2 and 3, find b.",["−5","5","6","−6"],0,"Sum=−b=5 → b=−5.","Vieta's formulas"],
+    ["Simplify √75 − √12.",["3√3","√63","5√3","√3"],0,"5√3−2√3=3√3.","Radicals"],
+    ["Find f⁻¹(x) for f(x) = (x − 4)/2.",["2x + 4","2x − 4","(x+4)/2","x/2 − 4"],0,"x=2y+4.","Inverse functions"],
+    ["The 8th term of 2, 6, 18, … is",["4374","2187","1458","6561"],0,"2·3⁷=4374.","Geometric sequences"],
+    ["Solve x² + 4x + 5 = 0.",["x = −2 ± i","x = −2","x = 2 ± i","x = −1, −5"],0,"x=−2±i.","Complex numbers"],
+    ["Expand (x − 2)³.",["x³ − 6x² + 12x − 8","x³ − 8","x³ − 6x² − 12x − 8","x³ + 6x² + 12x + 8"],0,"(x−2)³ = x³−6x²+12x−8.","Polynomial expansion"],
+    ["Solve log(x) + log(x − 3) = 1 (base 10).",["x = 5","x = 4","x = 2","x = 8"],0,"x²−3x=10 → x=5.","Logarithms"],
+    ["The range of f(x) = −x² + 4 is",["y ≤ 4","y ≥ 4","y ≤ 0","all reals"],0,"Opens down, max 4.","Domain & range"],
+    ["Simplify (x² − 5x + 6)/(x² − 9).",["(x − 2)/(x + 3)","(x − 2)/(x − 3)","(x + 2)/(x + 3)","x − 2"],0,"(x−2)(x−3)/[(x−3)(x+3)].","Rational expressions"],
+  ],
+  ela:[
+    ["'The wind screamed and the trees clawed at the sky' chiefly uses…",["Personification","Simile","Hyperbole","Alliteration"],0,"Human actions given to nature.","Figurative language"],
+    ["Which is a complex sentence?",["Although it rained, we played outside.","It rained. We played.","It rained and we played.","Playing outside in the rain."],0,"Dependent + independent clause.","Grammar"],
+    ["A recurring symbol or idea across a work is a…",["Motif","Climax","Foil","Stanza"],0,"A motif supports theme.","Literary devices"],
+    ["The storytelling voice that is not the author is the…",["Narrator","Protagonist","Antagonist","Author"],0,"The narrator tells the story.","Point of view"],
+    ["Best fix for the run-on 'I was tired I went to bed.'",["I was tired, so I went to bed.","I was tired I went, to bed.","I was tired; I, went to bed.","I was, tired I went to bed."],0,"Comma + conjunction.","Grammar"],
+    ["'It was the best of times, it was the worst of times' uses…",["Antithesis","Anaphora","Hyperbole","Pun"],0,"Contrasting ideas in parallel.","Rhetorical devices"],
+    ["Dramatic irony occurs when…",["The audience knows what a character does not","Two characters argue","The plot ends sadly","An author exaggerates"],0,"Audience knows more than the character.","Literary devices"],
+    ["The denouement of a plot is the…",["Resolution after the climax","Turning point","Introduction","Rising tension"],0,"It ties up the story.","Plot structure"],
+    ["Which is written in the passive voice?",["The window was broken by the storm.","The storm broke the window.","The storm is breaking windows.","Break the window."],0,"Subject receives the action.","Grammar"],
+    ["A juxtaposition of contradictory terms ('bittersweet') is an…",["Oxymoron","Allusion","Analogy","Anecdote"],0,"Oxymoron pairs opposites.","Figurative language"],
+    ["The perspective using 'you' throughout is…",["Second person","First person","Third limited","Omniscient"],0,"Second person addresses 'you'.","Point of view"],
+    ["In argument, a 'concession' is when the writer…",["Acknowledges a valid opposing point","Restates the thesis","Adds a new claim","Quotes a source"],0,"It admits merit to the other side.","Argument writing"],
+    ["Which sentence has a misplaced modifier?",["Running fast, the bus was missed by Tom.","Tom, running fast, missed the bus.","Running fast, Tom missed the bus.","Tom missed the bus while running."],0,"'Running fast' wrongly modifies 'the bus'.","Grammar"],
+    ["The central insight about life in a work is the…",["Theme","Motif","Setting","Tone"],0,"Theme is the central insight.","Theme"],
+    ["'Her smile was as warm as July' is a…",["Simile","Metaphor","Personification","Hyperbole"],0,"Comparison with 'as'.","Figurative language"],
+  ],
+  sci:[
+    ["A 5 N force accelerates a 2 kg cart. Its acceleration is…",["2.5 m/s²","10 m/s²","2 m/s²","7 m/s²"],0,"a=F/m=2.5.","Newton's laws"],
+    ["A wave travels 340 m/s at 170 Hz. Its wavelength is…",["2 m","0.5 m","510 m","2 Hz"],0,"λ=v/f=2 m.","Waves"],
+    ["A 3 kg object lifted 4 m gains PE of (g=10)…",["120 J","12 J","7 J","1200 J"],0,"PE=mgh=120 J.","Energy"],
+    ["In a circuit, 12 V across 4 Ω gives a current of…",["3 A","48 A","0.33 A","8 A"],0,"I=V/R=3 A.","Electricity"],
+    ["A cross of AA × aa gives offspring that are…",["all Aa","all aa","3:1","1:1 AA:aa"],0,"All heterozygous Aa.","Genetics"],
+    ["Which process produces genetically varied gametes?",["Meiosis","Mitosis","Binary fission","Budding"],0,"Meiosis yields variation.","Cell division"],
+    ["A 1000 kg car at 10 m/s has momentum of…",["10,000 kg·m/s","100 kg·m/s","1000 kg·m/s","10 kg·m/s"],0,"p=mv=10,000.","Momentum"],
+    ["The pH of a neutral solution at 25°C is…",["7","0","14","1"],0,"Neutral pH is 7.","Chemistry"],
+    ["Which subatomic particle is negatively charged?",["Electron","Proton","Neutron","Nucleus"],0,"Electrons are negative.","Atomic structure"],
+    ["At its highest point, a ball thrown straight up has a velocity of…",["0 m/s","9.8 m/s","its launch speed","maximum"],0,"Velocity is momentarily zero.","Kinematics"],
+    ["The enzyme that begins starch digestion in saliva is…",["Amylase","Pepsin","Lipase","Lactase"],0,"Salivary amylase.","Human biology"],
+    ["Two 4 Ω resistors in series total…",["8 Ω","2 Ω","4 Ω","16 Ω"],0,"Series adds: 8 Ω.","Electricity"],
+    ["A blood type AB person can receive red cells from…",["all ABO types","only AB","only O","only A"],0,"AB is the universal recipient.","Human biology"],
+    ["Work done by a 10 N force moving an object 3 m is…",["30 J","3.3 J","13 J","30 N"],0,"W=Fd=30 J.","Work & energy"],
+    ["The light reactions supply the Calvin cycle with ATP and…",["NADPH","glucose","oxygen","CO₂"],0,"ATP and NADPH.","Photosynthesis"],
+  ],
+  spa:[
+    ["The preterite 'yo' of 'ir/ser' is…",["fui","fue","iba","voy"],0,"Both ir and ser: yo fui.","Irregular preterite"],
+    ["'Si llueve, no ___ al parque' (we won't go).",["iremos","fuimos","íbamos","vayamos"],0,"Real condition → future: iremos.","Si clauses"],
+    ["Complete: 'A mí ___ gustan los libros.'",["me","mi","yo","te"],0,"Indirect-object pronoun me.","Gustar"],
+    ["The gerund (–ing) of 'leer' is…",["leyendo","leiendo","leendo","leyando"],0,"Leer → leyendo (i→y).","Present progressive"],
+    ["'Llevo dos años estudiando' means…",["I've been studying for two years","I studied two years ago","I will study two years","I take two years"],0,"Llevar + time + gerund.","Time expressions"],
+    ["The formal 'usted' command of 'hablar' is…",["hable","habla","hablas","hablen"],0,"Usted command: hable.","Commands"],
+    ["In 'Me lo dio', 'lo' refers to…",["a masculine direct object","me","the giver","a place"],0,"Masculine direct object.","Object pronouns"],
+    ["Choose ser/estar: 'La sopa ___ fría.' (it went cold)",["está","es","son","están"],0,"Temporary condition → está.","Ser vs estar"],
+    ["The preterite 'nosotros' of 'tener' is…",["tuvimos","tenemos","teníamos","tuvieron"],0,"Tener pret.: tuvimos.","Irregular preterite"],
+    ["'No tengo ___ dinero.' (any)",["nada de","ningún","algún","alguno"],0,"No...nada de = not any.","Negation"],
+    ["'Taller than' is…",["más alto que","tan alto como","el más alto","muy alto"],0,"más + adj + que.","Comparatives"],
+    ["'Se venden casas' is an example of…",["the passive/impersonal se","reflexive yo","a command","future tense"],0,"Se + verb = passive/impersonal.","Se constructions"],
+    ["The imperfect 'yo' of 'ser' is…",["era","fui","soy","seré"],0,"Ser imperfect: era.","Imperfect tense"],
+    ["'Acabo de comer' means…",["I just ate","I finish eating","I will eat","I'm eating"],0,"Acabar de + inf = to have just.","Expressions"],
+    ["'Hace mucho calor, ___ agua.' (drink — tú command)",["bebe","bebes","beber","beba"],0,"Affirmative tú command: bebe.","Commands"],
+  ],
+  his:[
+    ["The Northwest Ordinance (1787) is known for…",["organizing western territories and banning slavery there","ending the Revolution","creating the Bank","starting the Civil War"],0,"It governed territories and barred slavery in the Northwest.","Early republic"],
+    ["The XYZ Affair strained U.S. relations with…",["France","Britain","Spain","Mexico"],0,"A crisis with France (1797–98).","Early republic"],
+    ["The Monroe Doctrine (1823) warned Europe against…",["new colonization in the Americas","trading with the U.S.","building canals","ending slavery"],0,"No further European colonization in the Americas.","Foreign policy"],
+    ["The Seneca Falls Convention (1848) launched the movement for…",["women's rights","abolition only","temperance","labor unions"],0,"The women's rights movement.","Reform movements"],
+    ["The Compromise of 1850 strengthened the…",["Fugitive Slave Act","income tax","Bank charter","Homestead Act"],0,"It toughened the Fugitive Slave Act.","Sectionalism"],
+    ["'Bleeding Kansas' arose from disputes over…",["whether the territory would allow slavery","gold mining","railroad routes","Native land"],0,"Violence over slavery in Kansas.","Sectionalism"],
+    ["The Federalists favored…",["a strong central government","states' rights above all","no constitution","a king"],0,"A strong national government.","First party system"],
+    ["Eli Whitney's cotton gin (1793) had the effect of…",["expanding slavery","ending slavery","industrializing only the North","reducing cotton output"],0,"It made cotton profitable, expanding slavery.","Antebellum economy"],
+    ["The Whiskey Rebellion tested the government's ability to…",["enforce federal law and taxes","declare war","free enslaved people","admit states"],0,"Washington enforced federal tax law.","Early republic"],
+    ["The Missouri Compromise admitted Maine free and Missouri as…",["a slave state","a free state","a territory","unorganized"],0,"Missouri entered as a slave state.","Sectionalism"],
+    ["The Dred Scott decision was written by Chief Justice…",["Roger Taney","John Marshall","Earl Warren","John Jay"],0,"Taney, 1857.","Road to Civil War"],
+    ["The 'Great Awakening' was primarily a…",["religious revival","political party","military campaign","trade pact"],0,"A wave of religious revival.","Colonial America"],
+    ["The Hartford Convention opposed which war?",["The War of 1812","The Revolution","The Civil War","The Mexican War"],0,"Federalists opposed the War of 1812.","Early republic"],
+    ["The 14th Amendment's 'equal protection' clause restricts the…",["states","federal courts only","military","territories only"],0,"It restricts the states.","Reconstruction amendments"],
+    ["The antebellum Southern economy was dependent on…",["a single cash crop and enslaved labor","factories","fishing","fur trade"],0,"A one-crop (cotton) economy and slavery.","Sectionalism"],
+  ],
+};
+const CHALLENGE_QUESTIONS_X = {
+  alg:[
+    ["Solve 3x² − 2x − 4 = 0 (to 2 d.p.).",["x ≈ 1.54 or −0.87","x ≈ 1.20 or −0.50","x ≈ 2.00 or −0.67","x ≈ 0.87 or −1.54"],0,"x=[2±√52]/6 ≈ 1.54 or −0.87.","Quadratic formula"],
+    ["If logₐ 2 = 0.3 and logₐ 3 = 0.5, find logₐ 12.",["1.1","0.8","1.3","0.9"],0,"log12=2(0.3)+0.5=1.1.","Logarithms"],
+    ["Sum to infinity of 16, 12, 9, … is",["64","48","36","∞"],0,"r=3/4, S=16/(1/4)=64.","Infinite series"],
+    ["Factor completely x³ + 27.",["(x + 3)(x² − 3x + 9)","(x + 3)³","(x + 3)(x² + 3x + 9)","(x − 3)(x² + 3x + 9)"],0,"Sum of cubes.","Factoring"],
+    ["If f(x) = 2x − 1, find (f∘f)(x).",["4x − 3","4x − 1","2x − 3","4x + 1"],0,"f(2x−1)=4x−3.","Composite functions"],
+    ["Solve 2^(2x) − 5·2^x + 4 = 0.",["x = 0 or 2","x = 1 or 4","x = 2 only","x = 0 or 1"],0,"u=2^x: u=1 or 4 → x=0 or 2.","Exponential equations"],
+    ["The remainder when 2x³ − 3x + 1 is divided by (x + 2) is",["−9","9","−5","3"],0,"P(−2)=−9.","Polynomial division"],
+    ["Find k so that x² − kx + 9 has a double root.",["k = ±6","k = 6","k = 9","k = ±3"],0,"k²−36=0 → k=±6.","Discriminant"],
+  ],
+  ela:[
+    ["The deliberate omission of conjunctions ('I came, I saw, I conquered') is…",["Asyndeton","Polysyndeton","Anaphora","Zeugma"],0,"Asyndeton omits conjunctions.","Rhetorical devices"],
+    ["The repeated use of conjunctions ('and…and…and') for effect is…",["Polysyndeton","Asyndeton","Anaphora","Chiasmus"],0,"Polysyndeton piles up conjunctions.","Rhetorical devices"],
+    ["A 14-line poem with a turn (volta) is a…",["Sonnet","Ode","Limerick","Villanelle"],0,"A sonnet has 14 lines and a volta.","Poetic forms"],
+    ["'The crown announced a new tax' uses which device for the monarchy?",["Metonymy","Synecdoche","Simile","Hyperbole"],0,"Metonymy substitutes an associated term.","Figurative language"],
+    ["A story-within-a-story structure is called a…",["Frame narrative","Flashback","Foil","Foreshadow"],0,"A frame narrative encloses another story.","Narrative structure"],
+    ["When a character speaks privately to the audience, unheard by others, it is an…",["Aside","Allusion","Anecdote","Epilogue"],0,"An aside is spoken to the audience.","Drama terms"],
+    ["Biting, mocking humor aimed at reform is…",["Satire","Sentimentality","Nostalgia","Reverence"],0,"Satire critiques through ridicule.","Tone & genre"],
+    ["'To ___ did you give it?' — the correct word is…",["whom","who","whose","who's"],0,"Object of the preposition 'to' → whom.","Grammar"],
+  ],
+  sci:[
+    ["A 2 kg ball at 4 m/s bounces off a wall at 4 m/s. The change in momentum is…",["16 kg·m/s","0","8 kg·m/s","4 kg·m/s"],0,"Δp=2(−4−4)=−16; magnitude 16.","Momentum"],
+    ["A 60 W bulb runs 5 minutes. Energy used is…",["18,000 J","300 J","12 J","60 J"],0,"E=Pt=60·300=18,000 J.","Energy & power"],
+    ["In a test cross AaBb × aabb, the fraction showing both recessive traits is…",["1/4","9/16","1/16","1/2"],0,"(1/2)(1/2)=1/4.","Genetics"],
+    ["Two 6 Ω resistors in parallel total…",["3 Ω","12 Ω","6 Ω","1/12 Ω"],0,"1/R=1/3 → 3 Ω.","Electricity"],
+    ["A satellite's orbital speed must increase if its orbital radius…",["decreases","increases","stays the same","is irrelevant"],0,"Closer orbits need higher speed (v∝1/√r).","Gravitation"],
+    ["During which stage of respiration is CO₂ released?",["Krebs cycle","Glycolysis","Electron transport chain","Light reactions"],0,"The Krebs cycle releases CO₂.","Cell respiration"],
+    ["A 0.2 kg ball dropped from 5 m rebounds to 1.8 m. Fraction of mechanical energy retained is…",["0.36","0.18","0.64","0.50"],0,"E∝h: 1.8/5=0.36.","Energy"],
+    ["The mRNA start codon AUG codes for…",["Methionine","Stop","Glycine","Valine"],0,"AUG = methionine (start).","Molecular genetics"],
+  ],
+  spa:[
+    ["'Ojalá ___ ganado el partido' (had won — past, contrary to fact).",["hubiéramos","hayamos","habíamos","habremos"],0,"Pluperfect subjunctive: hubiéramos ganado.","Pluperfect subjunctive"],
+    ["'Te lo habría dicho si ___.' (if I had known)",["hubiera sabido","habría sabido","sabía","supe"],0,"Si + pluperfect subjunctive.","Conditional perfect"],
+    ["The 'vosotros' affirmative command of 'hablar' is…",["hablad","hablen","habláis","hablar"],0,"Vosotros command: hablad.","Commands"],
+    ["'Por más que ___, no entiende.' (however much he studies)",["estudie","estudia","estudió","estudiará"],0,"Concessive → subjunctive: estudie.","Subjunctive"],
+    ["Replace objects: 'No le des el libro a él.'",["No se lo des","No le lo des","No lo le des","No se los des"],0,"le→se before lo.","Object pronouns"],
+    ["'Llegamos sin que nadie nos ___ (ver).'",["viera","vio","veía","verá"],0,"'Sin que' + past subjunctive: viera.","Adverbial subjunctive"],
+    ["The future perfect ('habré' + participle) expresses…",["will have done","would do","had done","was doing"],0,"Future perfect.","Compound tenses"],
+    ["'Cualquiera que ___ la respuesta, gana.' (whoever knows)",["sepa","sabe","sabía","sabrá"],0,"Indefinite 'cualquiera que' → subjunctive: sepa.","Subjunctive"],
+  ],
+  his:[
+    ["Gibbons v. Ogden (1824) expanded federal power over…",["interstate commerce","slavery","religion","the military"],0,"Federal authority over interstate commerce.","Judicial branch"],
+    ["The Tariff of Abominations (1828) triggered the…",["Nullification Crisis","Civil War","Revolution","Trail of Tears"],0,"South Carolina's nullification fight.","Jacksonian era"],
+    ["The Kansas-Nebraska Act (1854) repealed which line?",["The Missouri Compromise line","The Mason-Dixon survey","The Proclamation Line","The 49th parallel"],0,"It repealed the 36°30′ restriction.","Sectionalism"],
+    ["Lincoln's primary stated goal early in the war was to…",["preserve the Union","abolish slavery at once","expand westward","punish the South"],0,"His first aim was to preserve the Union.","Civil War"],
+    ["The 'spoils system' under Jackson refers to…",["rewarding supporters with government jobs","selling western land","tariff policy","bank deposits"],0,"Patronage for loyal supporters.","Jacksonian era"],
+    ["The Wilmot Proviso proposed to…",["ban slavery in lands gained from Mexico","annex Cuba","tax the South","free all enslaved people"],0,"Ban slavery in Mexican-cession territory.","Sectionalism"],
+    ["The Freedmen's Bureau was created to…",["aid formerly enslaved people after the war","collect tariffs","build railroads","remove Native Americans"],0,"It assisted freedpeople.","Reconstruction"],
+    ["The 'Corrupt Bargain' of 1824 denied the presidency to…",["Andrew Jackson","John Quincy Adams","Henry Clay","James Monroe"],0,"Jackson won the popular vote but lost in the House.","Jacksonian era"],
+  ],
+};
+const AP_QUESTIONS_X = {
+  alg:[
+    ["A cable hangs in a parabola modeled by h(x) = 0.5x² − 4x + 12 (meters). What is the cable's lowest height?",["4 m","8 m","12 m","0 m"],0,"Vertex at x=4: h(4)=8−16+12=4 m.","Quadratic optimization"],
+    ["A town's population follows P(t) = 500·(1.08)^t. To the nearest year, when does it first exceed 1000?",["t = 9","t = 6","t = 12","t = 5"],0,"1.08^t=2 → t=ln2/ln1.08≈9 yr.","Exponential growth"],
+    ["A rocket's height (m) is h(t) = −5t² + 20t + 25. At what time t (s) does it return to the ground?",["t = 5","t = 4","t = 25","t = 1"],0,"−5t²+20t+25=0 → (t−5)(t+1)=0 → t=5.","Quadratic word problem"],
+    ["A loan's balance halves each year, starting at $6400. After how many whole years does it first drop below $500?",["4 years","3 years","5 years","6 years"],0,"6400/2⁴=400<500; after 3 years it is 800.","Exponential decay"],
+    ["Two trains' distances (km) from a station are d₁ = 60t and d₂ = 200 − 40t (t in hours). When are they equidistant?",["t = 2","t = 2.5","t = 1.5","t = 4"],0,"60t=200−40t → 100t=200 → t=2.","Linear systems"],
+    ["A rectangle's length is 3 more than its width, and its area is 40. What is the width?",["5","8","4","6"],0,"w(w+3)=40 → (w+8)(w−5)=0 → w=5.","Quadratic word problem"],
+    ["An earthquake's intensity is 1000 times the reference I₀. Its Richter magnitude M = log₁₀(I/I₀) is…",["3","2","1000","6"],0,"log₁₀(1000)=3.","Logarithms"],
+    ["A deposit grows as A = 1200·(1.05)^t. About how many years to reach $1800?",["≈ 8.3","≈ 5.0","≈ 12.0","≈ 3.6"],0,"1.05^t=1.5 → t≈8.3.","Exponential growth"],
+    ["A drone's speed (m/s) is v(t) = t² − 6t + 8. At what times is it momentarily stopped (v = 0)?",["t = 2 and t = 4","t = 1 and t = 8","t = −2 and −4","t = 3 only"],0,"(t−2)(t−4)=0.","Quadratics"],
+    ["Five payments 100 + 100(1.1) + 100(1.1)² + … + 100(1.1)⁴ total approximately…",["$610.51","$550.00","$500.00","$671.56"],0,"S=100(1.1⁵−1)/0.1≈610.51.","Geometric series"],
+    ["A ladder leans on a wall: its base is x m out, its top reaches (x + 7) m up, and the ladder is 13 m long. Find x.",["5","12","6","8"],0,"x²+(x+7)²=169 → x²+7x−60=0 → x=5.","Pythagorean / quadratics"],
+    ["A drug with a 6-hour half-life follows A = A₀(1/2)^(t/6). What fraction remains after 18 hours?",["1/8","1/3","1/6","1/16"],0,"(1/2)³=1/8.","Exponential decay"],
+    ["A profit function is P(x) = −2x² + 40x − 150 (dollars). How many units maximize profit?",["10","20","15","5"],0,"x=−b/2a=10.","Quadratic optimization"],
+    ["Find the break-even points of P(x) = −2x² + 40x − 150 (where P = 0).",["x = 5 and 15","x = 10 and 20","x = 3 and 25","x = 5 and 30"],0,"x²−20x+75=0 → (x−5)(x−15)=0.","Quadratics"],
+    ["A bacteria colony triples each hour: 1000, 3000, 9000, … How many are present after 6 hours (the 7th term)?",["729000","243000","2187000","6000"],0,"1000·3⁶=729000.","Geometric sequences"],
+    ["A sound's loudness is L = 10·log₁₀(I/I₀) dB. If intensity rises by a factor of 100, by how many dB does L rise?",["20 dB","100 dB","2 dB","10 dB"],0,"10·log₁₀(100)=20 dB.","Logarithms"],
+  ],
+  ela:[
+    ["A politician's speech piles clause upon clause joined by 'and…and…and' to build momentum. This deliberate overuse of conjunctions is…",["Polysyndeton","Asyndeton","Anaphora","Litotes"],0,"Polysyndeton repeats conjunctions for effect.","Rhetorical schemes"],
+    ["A war correspondent writes 'I came, I saw, I conquered,' stripping out conjunctions for urgency. This omission is…",["Asyndeton","Polysyndeton","Chiasmus","Zeugma"],0,"Asyndeton omits conjunctions.","Rhetorical schemes"],
+    ["In a tragedy, the audience knows the cup is poisoned while the unaware hero raises it. This gap in knowledge is…",["Dramatic irony","Verbal irony","Situational irony","Cosmic irony"],0,"Dramatic irony: the audience knows what the character does not.","Irony"],
+    ["A poet writes a 14-line love poem in iambic pentameter whose argument turns at line 9. The form is a…",["Sonnet","Villanelle","Ballad","Ode"],0,"A 14-line poem with a volta is a sonnet.","Poetic forms"],
+    ["A novel opens with a traveler who narrates a long tale of his youth, the inner story enclosed by the opening scene. This structure is a…",["Frame narrative","In medias res","Stream of consciousness","Epistolary form"],0,"A frame narrative encloses one story within another.","Narrative structure"],
+    ["An essayist mockingly proposes an outrageous 'solution' to expose society's cruelty, aiming at reform through ridicule. This mode is…",["Satire","Eulogy","Elegy","Panegyric"],0,"Satire uses ridicule to criticize and reform.","Genre & tone"],
+    ["A character turns from the others and confides a secret plan to the audience alone. This convention is an…",["Aside","Soliloquy","Monologue","Epilogue"],0,"An aside is a remark to the audience unheard by others.","Drama terms"],
+    ["A character alone on stage voices his entire inner debate aloud. This solo speech is a…",["Soliloquy","Aside","Dialogue","Prologue"],0,"A soliloquy reveals inner thoughts aloud.","Drama terms"],
+    ["A headline reads 'Washington vetoes the bill,' using the capital city for the federal government. This device is…",["Metonymy","Synecdoche","Personification","Allusion"],0,"Metonymy substitutes an associated term.","Figurative language"],
+    ["A diplomat begins each of five sentences with 'Let us…' to unify a call to action. This repetition at the start of clauses is…",["Anaphora","Epistrophe","Antithesis","Chiasmus"],0,"Anaphora repeats opening words.","Rhetorical schemes"],
+    ["A novel's events are told out of order, opening at the hero's death and circling back to his childhood. Beginning amid the action is…",["In medias res","Denouement","Exposition","Foreshadowing"],0,"In medias res starts in the middle of events.","Narrative structure"],
+    ["A grammarian notes that in 'the prize went to ___ deserved it,' the blank is the subject of 'deserved.' The correct word is…",["whoever","whomever","whom","whose"],0,"As the subject of 'deserved,' use 'whoever'.","Grammar"],
+    ["A eulogy speaks of the mayor's 'living legacy' and 'a deafening silence,' joining contradictory terms. Such pairings are…",["Oxymorons","Hyperboles","Similes","Puns"],0,"An oxymoron joins contradictory terms.","Figurative language"],
+    ["A critic observes that a poem's meaning turns sharply at its ninth line, reversing the speaker's stance. This turn is the…",["Volta","Caesura","Enjambment","Refrain"],0,"The volta is the thematic turn in a sonnet.","Poetic structure"],
+    ["A novel tells its entire story through the characters' exchanged letters and diary entries. This form is…",["Epistolary","Allegorical","Picaresque","Pastoral"],0,"An epistolary work is told through letters/documents.","Literary forms"],
+    ["A narrator renders a character's unfiltered, associative flow of thoughts and impressions. This technique is…",["Stream of consciousness","Third-person objective","Frame narrative","Foreshadowing"],0,"Stream of consciousness renders continuous inner thought.","Narrative technique"],
+  ],
+  sci:[
+    ["A 1500 kg car accelerates from rest to 20 m/s in 5 s on a level road. What net force acts on it?",["6000 N","3000 N","30000 N","300 N"],0,"a=4 m/s²; F=ma=6000 N.","Dynamics"],
+    ["A spring (k = 200 N/m) is compressed 0.1 m. The elastic potential energy stored is…",["1 J","2 J","20 J","0.1 J"],0,"PE=½kx²=½·200·0.01=1 J.","Energy"],
+    ["A ball is thrown horizontally at 10 m/s from a 20 m cliff (g = 10). How long until it lands?",["2 s","4 s","1 s","√2 s"],0,"t=√(2h/g)=2 s.","Projectile motion"],
+    ["A cross of two heterozygous tall pea plants (Tt) yields 240 offspring. About how many are short?",["60","120","180","240"],0,"1/4 × 240 = 60.","Genetics"],
+    ["A 100 W motor lifts a 50 kg load (g = 10) at constant speed. How fast can it raise the load?",["0.2 m/s","2 m/s","5 m/s","20 m/s"],0,"v=P/(mg)=100/500=0.2 m/s.","Power"],
+    ["A sample has an 8-day half-life. After 24 days, what fraction remains?",["1/8","1/3","1/24","1/16"],0,"24/8=3 half-lives → 1/8.","Nuclear decay"],
+    ["Blood returns to the heart's right atrium. Which chamber then pumps it to the lungs?",["Right ventricle","Left ventricle","Left atrium","Aorta"],0,"The right ventricle pumps blood to the lungs.","Human physiology"],
+    ["A 2 kg cart at 3 m/s collides elastically head-on with an identical 2 kg cart at rest. The first cart's speed afterward is…",["0 m/s","3 m/s","1.5 m/s","6 m/s"],0,"Equal masses, elastic: velocities exchange; the first stops.","Collisions"],
+    ["A wave has frequency 250 Hz and speed 100 m/s. Its wavelength is…",["0.4 m","2.5 m","150 m","25000 m"],0,"λ=v/f=0.4 m.","Waves"],
+    ["In glycolysis, one glucose molecule yields a net of how many ATP?",["2","36","4","0"],0,"Glycolysis nets 2 ATP.","Cellular respiration"],
+    ["A 12 V battery drives 2 A through a circuit. The power delivered is…",["24 W","6 W","14 W","10 W"],0,"P=IV=24 W.","Electricity"],
+    ["On the Moon (g = 1.6 m/s²), an object weighs 32 N. Its mass is…",["20 kg","51 kg","32 kg","2 kg"],0,"m=W/g=20 kg.","Gravitation"],
+    ["A solution has [H⁺] = 1×10⁻³ M. Its pH is…",["3","11","−3","7"],0,"pH=−log(10⁻³)=3.","Chemistry"],
+    ["During DNA replication, the strand built continuously toward the replication fork is the…",["Leading strand","Lagging strand","Template strand","Okazaki fragment"],0,"The leading strand is synthesized continuously.","Molecular biology"],
+    ["A 1200 kg car rounds a flat curve of radius 50 m at 10 m/s. The centripetal force needed is…",["2400 N","240 N","120 N","12000 N"],0,"F=mv²/r=2400 N.","Circular motion"],
+    ["A heterozygous purple flower (Pp) is crossed with a white one (pp). What percent of offspring are white?",["50%","25%","75%","0%"],0,"Pp×pp → 1/2 white.","Genetics"],
+  ],
+  spa:[
+    ["Tu jefe te habría ascendido si tú ___ (llegar) a tiempo cada día. Completa con el pluscuamperfecto de subjuntivo.",["hubieras llegado","habrías llegado","llegaras","llegabas"],0,"Si + pluscuamperfecto de subjuntivo: hubieras llegado.","Pluperfect subjunctive"],
+    ["Es mejor que, mientras tanto, tú no ___ (decir) nada del asunto. Completa.",["digas","dices","dijiste","dirás"],0,"'Es mejor que' + subjuntivo: digas.","Subjunctive"],
+    ["Buscamos a alguien que ___ (saber) tres idiomas, aunque dudamos que exista. Completa.",["sepa","sabe","sabía","sabrá"],0,"Antecedente indefinido → subjuntivo: sepa.","Adjective-clause subjunctive"],
+    ["Si hubiera hecho buen tiempo, nosotros ___ a la playa. Completa con el condicional compuesto.",["habríamos ido","hubiéramos ido","íbamos","fuimos"],0,"Resultado de un 'si' pluscuamperfecto → condicional compuesto.","Conditional perfect"],
+    ["El profesor insistió en que los estudiantes ___ (entregar) la tarea ese día. Completa.",["entregaran","entregaron","entregan","entregarán"],0,"Mandato indirecto en pasado → imperfecto de subjuntivo.","Sequence of tenses"],
+    ["Por mucho que ellos ___ (intentarlo), el resultado no cambiará. Completa.",["lo intenten","lo intentan","lo intentaron","lo intentarán"],0,"'Por mucho que' → subjuntivo: lo intenten.","Concessive subjunctive"],
+    ["Reescribe con pronombres: 'Da el informe a la directora.'",["Dáselo","Dálelo","Dalo a ella","Se da lo"],0,"le→se + lo: Dáselo.","Object pronouns + commands"],
+    ["Para cuando lleguemos, la película ya ___ (empezar). Completa con el futuro perfecto.",["habrá empezado","habría empezado","ha empezado","empezó"],0,"Acción terminada antes de un punto futuro → futuro perfecto.","Future perfect"],
+    ["Es una lástima que tú no ___ (poder) venir a la fiesta anoche. Completa.",["hayas podido","puedas","podías","pudiste"],0,"Emoción sobre acción pasada → pretérito perfecto de subjuntivo.","Perfect subjunctive"],
+    ["No había nadie que ___ (conocer) la respuesta correcta. Completa.",["conociera","conocía","conoció","conozca"],0,"Antecedente negativo en pasado → imperfecto de subjuntivo.","Adjective-clause subjunctive"],
+    ["Tan pronto como ___ (salir) el sol, saldremos a caminar. Completa.",["salga","sale","salió","saldrá"],0,"Acción futura tras 'tan pronto como' → subjuntivo.","Adverbial subjunctive"],
+    ["Aunque ___ (costar) mucho, compraré ese coche. (concesión hipotética) Completa.",["cueste","cuesta","costó","costará"],0,"'Aunque' + subjuntivo = concesión hipotética.","Concessive subjunctive"],
+    ["Me molesta que la gente ___ (hablar) durante la película. Completa.",["hable","habla","hablaba","hablará"],0,"Emoción + 'que' → subjuntivo: hable.","Subjunctive of emotion"],
+    ["Quería un apartamento que ___ (tener) vista al mar, pero no lo encontré. Completa.",["tuviera","tenía","tuvo","tenga"],0,"Antecedente no hallado en pasado → imperfecto de subjuntivo.","Adjective-clause subjunctive"],
+    ["Si yo ___ (ser) tú, aceptaría la oferta de inmediato. Completa.",["fuera","sería","soy","era"],0,"'Si' hipotético → imperfecto de subjuntivo: fuera.","Si clauses"],
+    ["Reescribe con pronombres: 'Entregué las llaves a los vecinos.'",["Se las entregué","Les las entregué","Las les entregué","Se la entregué"],0,"les→se + las: Se las entregué.","Object pronouns"],
+  ],
+  his:[
+    ["A historian studies an 1819 ruling that struck down a state tax on the national bank, declaring 'the power to tax involves the power to destroy.' This case is…",["McCulloch v. Maryland","Marbury v. Madison","Gibbons v. Ogden","Dred Scott v. Sandford"],0,"McCulloch v. Maryland upheld federal supremacy and implied powers.","Federalism"],
+    ["In 1832, South Carolina declared a federal tariff void within its borders, prompting Jackson to threaten force. This is the…",["Nullification Crisis","Whiskey Rebellion","XYZ Affair","Bleeding Kansas"],0,"The Nullification Crisis pitted states' rights against federal power.","Jacksonian era"],
+    ["One 1787 delegate wants representation by population, another wants equal state votes. The deal creating a two-house Congress is the…",["Great Compromise","Three-Fifths Compromise","Missouri Compromise","Compromise of 1850"],0,"The Great Compromise created the bicameral Congress.","Constitutional Convention"],
+    ["An 1850s abolitionist paper denounces a law forcing Northerners to help capture escaped slaves. This law was part of the…",["Compromise of 1850","Missouri Compromise","Northwest Ordinance","Kansas-Nebraska Act"],0,"The Fugitive Slave Act was part of the Compromise of 1850.","Sectionalism"],
+    ["A 1776 pamphlet argues in plain language that it is absurd for a continent to be ruled by an island, urging independence. It is…",["Common Sense","The Federalist","The Declaration","Poor Richard's Almanack"],0,"Paine's Common Sense urged independence.","Road to Revolution"],
+    ["After the disputed 1876 election, a bargain made Hayes president in exchange for removing federal troops from the South, effectively ending…",["Reconstruction","the Civil War","the Gilded Age","the Revolution"],0,"The Compromise of 1877 ended Reconstruction.","Reconstruction"],
+    ["An 1857 opinion declares Congress cannot bar slavery in the territories and that Black Americans are not citizens. This case is…",["Dred Scott v. Sandford","Plessy v. Ferguson","Marbury v. Madison","Brown v. Board"],0,"Dred Scott denied citizenship and territorial limits.","Road to Civil War"],
+    ["A farmer in 1794 refuses a federal whiskey tax, and Washington leads troops to enforce the law. This showed the federal government could…",["enforce its laws","be safely ignored","not tax citizens","not raise an army"],0,"The Whiskey Rebellion proved federal enforcement power.","Early republic"],
+    ["At an 1848 convention, reformers issue a 'Declaration of Sentiments' demanding equality for women. This gathering was at…",["Seneca Falls","Philadelphia","Appomattox","Gettysburg"],0,"The Seneca Falls Convention launched women's rights.","Reform movements"],
+    ["A statesman in 1823 declares the Americas closed to further European colonization. This policy is the…",["Monroe Doctrine","Marshall Plan","Truman Doctrine","Open Door Policy"],0,"The Monroe Doctrine opposed European colonization.","Foreign policy"],
+    ["A planter notes a 1793 invention lets one worker clean fifty times more cotton daily, deepening reliance on enslaved labor. The invention was the…",["cotton gin","spinning jenny","steam engine","telegraph"],0,"Whitney's cotton gin expanded cotton and slavery.","Antebellum economy"],
+    ["A 1798 set of laws lets the president deport non-citizens and punish criticism of the government, sparking the Virginia and Kentucky Resolutions. These were the…",["Alien and Sedition Acts","Intolerable Acts","Coercive Acts","Force Bills"],0,"The Alien and Sedition Acts sparked the Resolutions.","Early republic"],
+    ["A delegate explains that counting three of every five enslaved persons will boost Southern seats in Congress. This is the…",["Three-Fifths Compromise","Great Compromise","Missouri Compromise","Connecticut Plan"],0,"The Three-Fifths Compromise set representation counting.","Constitutional Convention"],
+    ["An 1803 decision asserts the Court's power to strike down a law as unconstitutional for the first time. This case is…",["Marbury v. Madison","McCulloch v. Maryland","Gibbons v. Ogden","Worcester v. Georgia"],0,"Marbury v. Madison established judicial review.","Judicial review"],
+    ["A settler argues each territory's people, not Congress, should vote on slavery — the principle behind the Kansas-Nebraska Act. It is…",["popular sovereignty","nullification","judicial review","mercantilism"],0,"Popular sovereignty let settlers decide on slavery.","Sectionalism"],
+    ["A newly freed family in 1866 seeks food, schooling, and labor contracts from a federal agency aiding their transition. That agency was the…",["Freedmen's Bureau","Continental Congress","Federal Reserve","Tennessee Valley Authority"],0,"The Freedmen's Bureau aided formerly enslaved people.","Reconstruction"],
+  ],
+};
+/* Merge the expansion banks into the core banks (mutating each subject's array). */
+[[QUESTIONS,QUESTIONS_X],[TEST_QUESTIONS,TEST_QUESTIONS_X],[CHALLENGE_QUESTIONS,CHALLENGE_QUESTIONS_X],[AP_QUESTIONS,AP_QUESTIONS_X]].forEach(function(pair){
+  var base=pair[0], extra=pair[1];
+  SUBJECTS.forEach(function(s){ if(extra[s.id]) base[s.id]=(base[s.id]||[]).concat(extra[s.id]); });
+});
+
+/* ============================ FINAL EXAM ============================
+   A single, comprehensive, ultra-hard exam drawing on EVERY subject from its own bank.
+   Harder than the Challenge and Gauntlet combined. Unlocked only by scoring 100% on every
+   subject's Gauntlet. A perfect score permanently flags total mastery. */
+const FINAL_PULL=15; // questions drawn per Final Exam
+const FINAL_QUESTIONS=[
+  ["A cubic polynomial x³ − 6x² + 11x − 6 has three consecutive positive integer roots. What are they?",["1, 2, and 3","2, 3, and 4","0, 1, and 2","1, 3, and 5"],0,"It factors as (x−1)(x−2)(x−3), so the roots are 1, 2, 3.","Algebra · polynomials"],
+  ["Solve log₂(x) + log₄(x) = 3.",["x = 4","x = 8","x = 2","x = 16"],0,"log₄x = ½·log₂x, so (3/2)·log₂x = 3 → log₂x = 2 → x = 4.","Algebra · logarithms"],
+  ["An infinite geometric series has first term 18 and sums to 27. Its common ratio is…",["1/3","2/3","1/2","3/4"],0,"18/(1−r)=27 → 1−r=2/3 → r=1/3.","Algebra · series"],
+  ["If f(x) = x² + 2, find a positive value of a such that f(f(a)) = 27.",["√3","3","√5","5"],0,"(a²+2)²+2=27 → (a²+2)²=25 → a²+2=5 → a²=3 → a=√3.","Algebra · functions"],
+  ["Solve log₃(x²) − log₃(x + 6) = 1 for x > 0.",["x = 6","x = 3","x = 9","x = −3"],0,"x²/(x+6)=3 → x²−3x−18=0 → (x−6)(x+3)=0 → x=6.","Algebra · logarithms"],
+  ["How many real solutions does x⁴ − 5x² + 4 = 0 have?",["4","2","1","0"],0,"Let u=x²: (u−1)(u−4)=0 → x=±1,±2 → four real roots.","Algebra · equations"],
+  ["What is the sum of ALL real solutions of |x² − 4| = 3?",["0","7","2","√7"],0,"x²=7 gives ±√7; x²=1 gives ±1; the four solutions sum to 0.","Algebra · absolute value"],
+  ["A sonnet reverses its argument at line nine, cries 'O Death!' to an abstraction, and joins its clauses with no conjunctions. Which THREE devices appear?",["Volta, apostrophe, and asyndeton","Caesura, allusion, and zeugma","Enjambment, metonymy, and litotes","Refrain, anaphora, and irony"],0,"Line-9 turn = volta; addressing Death = apostrophe; dropped conjunctions = asyndeton.","ELA · devices"],
+  ["Which sentence is BOTH passive voice AND in the subjunctive mood?",["If I were chosen, the trophy would be awarded to me.","The committee awarded me the trophy.","I was chosen, and they gave me the trophy.","Choose me for the trophy."],0,"'were chosen' is subjunctive; 'would be awarded' is passive.","ELA · grammar"],
+  ["'The pen is mightier than the sword' substitutes each object for an associated idea (writing, force). This specific device is…",["Metonymy","Synecdoche","Personification","Hyperbole"],0,"Substituting an associated term is metonymy, not part-for-whole synecdoche.","ELA · figurative language"],
+  ["A first-person narrator who misreads events so that readers grasp more than he does is best described as…",["An unreliable narrator creating dramatic irony","An omniscient narrator","A foil","A protagonist"],0,"He is unreliable, producing dramatic irony for the reader.","ELA · point of view"],
+  ["'I came, I saw, I conquered' drops its conjunctions (asyndeton) and also forms a three-part parallel series called a…",["Tricolon","Couplet","Quatrain","Stanza"],0,"Three parallel members form a tricolon.","ELA · rhetoric"],
+  ["A 2 kg block slides from rest down a frictionless 30° incline through 4 m (g = 10 m/s²). Its speed at the bottom is about…",["6.3 m/s","8.9 m/s","4.0 m/s","12.6 m/s"],0,"a=g·sin30°=5 m/s²; v=√(2·5·4)=√40≈6.3 m/s.","Science · mechanics"],
+  ["In a cross AaBb × AaBb, what fraction of offspring are homozygous recessive at BOTH genes (aabb)?",["1/16","1/4","9/16","1/8"],0,"(1/4)(1/4)=1/16.","Science · genetics"],
+  ["A 1000 kg car traveling 20 m/s brakes to a stop over 40 m. The average braking force is…",["5000 N","2500 N","10000 N","500 N"],0,"KE=½·1000·20²=200,000 J; F=W/d=200000/40=5000 N.","Science · energy"],
+  ["The Calvin cycle uses ATP and NADPH to fix CO₂. How many CO₂ molecules are needed to build ONE glucose?",["6","2","12","1"],0,"Six CO₂ are fixed to make one six-carbon glucose.","Science · photosynthesis"],
+  ["A wave's frequency doubles while its speed stays constant. Its wavelength…",["is halved","doubles","is unchanged","quadruples"],0,"v=fλ is constant, so λ ∝ 1/f: doubling f halves λ.","Science · waves"],
+  ["A 3 Ω and a 6 Ω resistor are in parallel, and that pair is in series with a 4 Ω resistor. The total resistance is…",["6 Ω","13 Ω","9 Ω","2 Ω"],0,"Parallel: (3·6)/(3+6)=2 Ω; series adds 4 → 6 Ω.","Science · electricity"],
+  ["Completa: 'Si yo ___ que venías, ___ la cena.' (had known / would have prepared)",["hubiera sabido, habría preparado","sabía, preparaba","supe, preparé","sabría, prepararía"],0,"Pluscuamperfecto de subjuntivo + condicional compuesto.","Spanish · si clauses"],
+  ["Reescribe con pronombres: 'El profesor explicó la lección a los estudiantes.'",["Se la explicó","Les la explicó","La les explicó","Se lo explicó"],0,"les→se + la (la lección): Se la explicó.","Spanish · object pronouns"],
+  ["Completa: 'Por más rápido que ___ (correr), no llegarás a tiempo.'",["corras","corres","corriste","correrás"],0,"'Por más que' expresa concesión → subjuntivo: corras.","Spanish · subjunctive"],
+  ["¿Cuál oración es completamente correcta?",["Espero que el regalo esté listo para mañana.","Espero que el regalo está listo por mañana.","Espero que el regalo es listo para mañana.","Espero que el regalo sea listo por mañana."],0,"'Espero que' + subjuntivo (esté); estar para una condición; para para un plazo.","Spanish · synthesis"],
+  ["Order these from EARLIEST to latest: (a) Dred Scott decision, (b) Missouri Compromise, (c) Kansas-Nebraska Act, (d) Compromise of 1850.",["b, d, c, a","a, b, c, d","b, c, d, a","d, b, c, a"],0,"1820 (b), 1850 (d), 1854 (c), 1857 (a).","History · chronology"],
+  ["Which Supreme Court case is correctly paired with its principle?",["McCulloch v. Maryland — implied powers","Marbury v. Madison — interstate commerce","Gibbons v. Ogden — judicial review","Dred Scott — abolished slavery"],0,"McCulloch upheld implied powers; the other three are mismatched.","History · judicial"],
+  ["Put these founding documents in chronological order: Declaration of Independence, Constitution, Articles of Confederation, Bill of Rights.",["Declaration, Articles, Constitution, Bill of Rights","Declaration, Constitution, Articles, Bill of Rights","Articles, Declaration, Constitution, Bill of Rights","Declaration, Articles, Bill of Rights, Constitution"],0,"1776 Declaration, 1781 Articles, 1787 Constitution, 1791 Bill of Rights.","History · founding documents"],
+];
+
 /* ===== DIFFICULTY UNLOCK ===== */
 const MASTERY=90; // score needed on a subject's test to unlock its challenge content
 function isMastered(subj){return (DB.tests[subj]||0)>=MASTERY;}
@@ -1342,6 +1757,9 @@ const AP_UNLOCK=100;
 function testPerfect(subj){return (DB.tests[subj]||0)>=AP_UNLOCK;}
 function challengePerfect(subj){return (DB.challengeBest[subj]||0)>=AP_UNLOCK;}
 function apUnlocked(subj){return testPerfect(subj)&&challengePerfect(subj);}
+// The Final Exam unlocks only when EVERY subject's Gauntlet has been scored 100%.
+function gauntletsAced(){return SUBJECTS.filter(s=>(DB.apTests[s.id]||0)>=100).length;}
+function finalUnlocked(){return SUBJECTS.every(s=>(DB.apTests[s.id]||0)>=100);}
 // Announce a freshly-earned AP unlock exactly once.
 function maybeUnlockAP(subj){
   if(!DB.apAnnounced)DB.apAnnounced={};
@@ -1401,6 +1819,9 @@ if(!DB.history)DB.history=[]; // every completed practice-test attempt
 if(!DB.apTests)DB.apTests={}; // best AP Challenge score per subject
 if(!DB.challengeBest)DB.challengeBest={}; // best Challenge-mode score per subject (needed, at 100%, to unlock AP)
 if(!DB.apAnnounced)DB.apAnnounced={}; // subjects whose AP unlock has already been announced
+if(DB.finalBest===undefined)DB.finalBest=0;          // best Final Exam score
+if(DB.finalMastered===undefined)DB.finalMastered=false; // permanently true once you ace the Final
+if(DB.showMasteryMsg===undefined)DB.showMasteryMsg=true; // toggle for the mastery message
 syncChallengeCards(); // add harder flashcards for any already-mastered subjects
 
 // streak update
@@ -1926,6 +2347,12 @@ function renderSettings(){
   document.getElementById('set-provider').value=DB.settings.provider||'none';
   document.getElementById('set-key').value=DB.settings.key||'';
   document.getElementById('set-gcid').value=DB.settings.gcid||'';
+  const mw=document.getElementById('set-mastery-wrap');
+  mw.innerHTML = DB.finalMastered
+    ? `<label class="switchrow"><input type="checkbox" id="set-mastery-toggle" ${DB.showMasteryMsg!==false?'checked':''}> Show the mastery celebration message in My Progress</label>`
+    : `<p class="sub" style="margin:0">🔒 This toggle appears once you score 100% on the Final Exam.</p>`;
+  const mt=document.getElementById('set-mastery-toggle');
+  if(mt)mt.onchange=()=>{DB.showMasteryMsg=mt.checked;save();toast(mt.checked?'Mastery message shown':'Mastery message hidden');};
 }
 document.getElementById('set-save-name').onclick=()=>{DB.name=document.getElementById('set-name').value.trim();save();toast("Saved ✓");};
 document.getElementById('set-save-ai').onclick=()=>{DB.settings.provider=document.getElementById('set-provider').value;DB.settings.key=document.getElementById('set-key').value.trim();save();toast("AI settings saved ✓");};
@@ -1935,6 +2362,17 @@ document.getElementById('set-wipe').onclick=()=>{if(confirm("Erase ALL data and 
 
 /* ============================ PRACTICE & TESTS ============================ */
 const PR_LETTERS=['A','B','C','D','E'];
+// Randomize the position of the answer choices for ONE question, returning a fresh
+// [prompt, shuffledChoices, newCorrectIndex, explanation, topic] array. Used by every
+// quiz builder (practice, test, challenge, gauntlet) so the correct answer is never fixed
+// to a position. Any future problem-based feature should map its questions through this too.
+function randomizeChoices(q){
+  const choices=q[1].slice(), order=choices.map((_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  const newChoices=order.map(i=>choices[i]);
+  const newCorrect=order.indexOf(q[2]);
+  return [q[0],newChoices,newCorrect,q[3],q[4]];
+}
 function prShow(id){['pr-home','pr-practice','pr-setup','pr-test','pr-results'].forEach(x=>document.getElementById(x).style.display=(x===id?'block':'none'));}
 function renderPractice(){
   prShow('pr-home');
@@ -1948,8 +2386,20 @@ function renderPractice(){
     bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong>🔥 Challenge unlocked:</strong> ${masteredNames.join(', ')}<div class="sub" style="margin:4px 0 0">Score 90%+ on a subject's test to unlock its harder questions and flashcards.</div></div>`;
   }
   const apOpen=SUBJECTS.filter(s=>apUnlocked(s.id)).map(s=>s.name);
-  bhtml+=`<div class="card" style="border-left:4px solid var(--ap);margin-bottom:18px"><strong>⚔️ Gauntlet — ${apOpen.length?('unlocked: '+apOpen.join(', ')):'locked'}.</strong><div class="sub" style="margin:4px 0 0">Five brutal, exam-styled <strong>word problems</strong> drawn at random from a deep bank for each subject. <strong>To unlock a subject's Gauntlet you must score 100% on BOTH its practice test AND its Challenge.</strong> Once open, it's timed (10 min) and scored, with extra stats — timing, pace, and a per-topic accuracy breakdown — saved alongside your other tests in <strong>My Progress</strong>.</div></div>`;
+  bhtml+=`<div class="card" style="border-left:4px solid var(--ap);margin-bottom:18px"><strong>⚔️ Gauntlet — ${apOpen.length?('unlocked: '+apOpen.join(', ')):'locked'}.</strong><div class="sub" style="margin:4px 0 0">5 brutal word problems per subject. Unlock by scoring 100% on a subject's test <em>and</em> its Challenge.</div></div>`;
+  // Final Exam card pinned to the top of Practice & Tests.
+  const fAced=gauntletsAced(), fOK=finalUnlocked(), fN=Math.min(FINAL_PULL,FINAL_QUESTIONS.length);
+  let finalCard;
+  if(DB.finalMastered){
+    finalCard=`<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:14px"><div class="between"><div><strong>🏆 Final Exam — MASTERED</strong><div class="sub" style="margin:4px 0 0">Best score ${DB.finalBest}%. You have conquered everything this app can throw at you.</div></div><button class="btn sm" id="pr-final-start">Retake Final</button></div></div>`;
+  } else if(fOK){
+    finalCard=`<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:14px"><div class="between"><div><strong>🏆 Final Exam — UNLOCKED</strong><div class="sub" style="margin:4px 0 0">The ultimate test: ${fN} brutal questions spanning every subject, harder than the Challenge and Gauntlet combined. Score 100% for permanent mastery.</div></div><button class="btn" id="pr-final-start">Start Final Exam</button></div></div>`;
+  } else {
+    finalCard=`<div class="card" style="border-left:4px solid var(--faint);margin-bottom:14px"><strong>🔒 Final Exam — locked</strong><div class="sub" style="margin:4px 0 0">The hardest test of all. Unlock it by scoring <strong>100% on every subject's Gauntlet</strong> — <strong>${fAced}/${SUBJECTS.length}</strong> aced so far.</div></div>`;
+  }
+  bhtml = finalCard + bhtml;
   banner.innerHTML=bhtml;
+  const fbtn=document.getElementById('pr-final-start'); if(fbtn)fbtn.onclick=openFinal;
   const g=document.getElementById('pr-grid');
   g.innerHTML=SUBJECTS.map(s=>{
     const n=(QUESTIONS[s.id]||[]).length;
@@ -1992,7 +2442,7 @@ function renderPractice(){
 let pp={subj:null,qs:[],i:0,score:0,answered:false,challenge:false};
 function startPractice(subj,challenge=false){
   const bank = challenge ? (CHALLENGE_QUESTIONS[subj]||[]) : (QUESTIONS[subj]||[]);
-  pp={subj,qs:shuffle(bank.slice()),i:0,score:0,answered:false,challenge};
+  pp={subj,qs:shuffle(bank.slice()).map(randomizeChoices),i:0,score:0,answered:false,challenge};
   prShow('pr-practice');
   document.getElementById('pr-p-title').textContent=subjById(subj).name+(challenge?' · Challenge 🔥':' · Practice');
   document.getElementById('pr-p-total').textContent=pp.qs.length;
@@ -2053,7 +2503,7 @@ document.getElementById('pr-s-back').onclick=renderPractice;
 document.getElementById('pr-s-start').onclick=()=>{
   const n=+document.getElementById('pr-s-num').value;
   tt.ap=false;
-  tt.qs=shuffle((TEST_QUESTIONS[tt.subj]||[]).slice()).slice(0,n).map(q=>({q,picked:null}));
+  tt.qs=shuffle((TEST_QUESTIONS[tt.subj]||[]).slice()).slice(0,n).map(q=>({q:randomizeChoices(q),picked:null}));
   tt.time=+document.getElementById('pr-s-time').value;
   startTest();
 };
@@ -2062,15 +2512,15 @@ document.getElementById('pr-s-start').onclick=()=>{
 function openAPTest(subj){
   tt.subj=subj; tt.ap=true;
   const bank=(AP_QUESTIONS[subj]||[]).slice();
-  tt.qs=shuffle(bank).slice(0,5).map(q=>({q,picked:null}));
+  tt.qs=shuffle(bank).slice(0,5).map(q=>({q:randomizeChoices(q),picked:null}));
   tt.time=600; // 10-minute AP-styled limit
   startTest();
 }
 function startTest(){
   prShow('pr-test');
   tt.startTime=Date.now();
-  document.getElementById('pr-t-title').textContent=subjById(tt.subj).name+(tt.ap?' · Gauntlet ⚔️':' · Test');
-  document.getElementById('pr-t-count').textContent=tt.qs.length+(tt.ap?' Gauntlet-level questions.':' questions.');
+  document.getElementById('pr-t-title').textContent=tt.final?'Final Exam 🏆':subjById(tt.subj).name+(tt.ap?' · Gauntlet ⚔️':' · Test');
+  document.getElementById('pr-t-count').textContent=tt.qs.length+(tt.final?' brutal questions spanning every subject.':tt.ap?' Gauntlet-level questions.':' questions.');
   const wrap=document.getElementById('pr-t-questions');
   wrap.innerHTML=tt.qs.map((item,qi)=>`
     <div class="qblock" id="q-${qi}">
@@ -2144,8 +2594,50 @@ function gauntletStats(timeUsed,prevBest){
       ${topicRows}
     </div>`;
 }
+// The Final Exam: an ultra-hard, cross-subject test from its own bank. Reuses the test UI.
+function openFinal(){
+  if(!finalUnlocked()){toast("Ace every Gauntlet (100%) to unlock the Final Exam");return;}
+  const pull=Math.min(FINAL_PULL,FINAL_QUESTIONS.length);
+  tt={subj:'final',final:true,ap:false,qs:shuffle(FINAL_QUESTIONS.slice()).slice(0,pull).map(q=>({q:randomizeChoices(q),picked:null})),time:1200,timer:null,remaining:0,startTime:Date.now()};
+  startTest();
+}
+function submitFinal(){
+  let correct=0; const missedTopics=[];
+  tt.qs.forEach(x=>{if(x.picked===x.q[2])correct++;else missedTopics.push(topicOf(tt.subj,x.q));});
+  const pct=Math.round(correct/tt.qs.length*100);
+  const timeUsed=tt.time>0?(tt.time-tt.remaining):Math.round((Date.now()-(tt.startTime||Date.now()))/1000);
+  if(pct>(DB.finalBest||0))DB.finalBest=pct;
+  if(pct===100 && !DB.finalMastered){DB.finalMastered=true; DB.showMasteryMsg=true;}
+  DB.history.push({ts:Date.now(),subj:'final',final:true,correct,total:tt.qs.length,pct,missed:missedTopics,secs:timeUsed});
+  if(DB.history.length>100)DB.history=DB.history.slice(-100);
+  save();
+  prShow('pr-results');
+  document.getElementById('pr-r-pct').textContent=pct+'%';
+  const grade = pct===100?'PERFECT — total mastery 🏆':pct>=80?'Outstanding':pct>=60?'Strong, but the Final is unforgiving':'Regroup and conquer it';
+  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · Final Exam 🏆 · ${grade}`;
+  document.getElementById('pr-r-pct').style.color = pct>=70?'var(--accent2)':pct>=50?'var(--warn)':'var(--bad)';
+  const uniq=[...new Set(missedTopics)];
+  document.getElementById('pr-r-weak').innerHTML = uniq.length
+    ? `<div class="sub" style="margin:0 0 6px">Topics to review:</div>`+uniq.map(t=>`<span class="tag" style="margin:2px;border-color:var(--bad);color:var(--bad)">${esc(t)}</span>`).join(' ')
+    : `<div class="sub" style="margin:0;color:var(--accent2)">Flawless — you missed nothing. 🏆</div>`;
+  document.getElementById('pr-r-extra').innerHTML = pct===100
+    ? `<div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px"><span class="ap-chip" style="background:var(--accent2)">🏆 Mastery achieved</span><div class="sub" style="margin:8px 0 0">You aced the Final Exam. A permanent mastery message now lives in <strong>My Progress</strong> — you can toggle it in <strong>Settings</strong>.</div></div>`
+    : '';
+  document.getElementById('pr-r-review').innerHTML=tt.qs.map((x,i)=>{
+    const ok=x.picked===x.q[2];
+    const your=x.picked===null?'<em>blank</em>':PR_LETTERS[x.picked]+'. '+esc(x.q[1][x.picked]);
+    return `<div class="rev-q ${ok?'ok':'no'}">
+      <div style="font-weight:600;margin-bottom:6px">${i+1}. ${esc(x.q[0])}</div>
+      <div style="font-size:13px;color:var(--muted)">Your answer: ${ok?'✓ ':'✗ '}${your}</div>
+      ${ok?'':`<div style="font-size:13px;color:var(--accent2);margin-top:3px">Correct: ${PR_LETTERS[x.q[2]]}. ${esc(x.q[1][x.q[2]])}</div>`}
+      <div style="font-size:13px;color:var(--faint);margin-top:5px">${esc(x.q[3])}</div>
+    </div>`;
+  }).join('');
+  if(pct===100)setTimeout(()=>toast('🏆 FINAL EXAM ACED — TOTAL MASTERY!'),500);
+}
 function submitTest(){
   clearInterval(tt.timer);
+  if(tt.final){submitFinal();return;}
   const apMode=tt.ap;
   const prevApBest=DB.apTests[tt.subj]||0;
   const timeUsed=tt.time>0?(tt.time-tt.remaining):Math.round((Date.now()-(tt.startTime||Date.now()))/1000);
@@ -2186,13 +2678,16 @@ function submitTest(){
     </div>`;
   }).join('');
 }
-document.getElementById('pr-r-retry').onclick=()=>{ if(tt.ap)openAPTest(tt.subj); else openTestSetup(tt.subj); };
+document.getElementById('pr-r-retry').onclick=()=>{ if(tt.final)openFinal(); else if(tt.ap)openAPTest(tt.subj); else openTestSetup(tt.subj); };
 document.getElementById('pr-r-back').onclick=renderPractice;
 document.getElementById('pr-r-progress').onclick=()=>go('progress');
 
 /* ============================ MY PROGRESS ============================ */
 function fmtDate(ts){const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
 function renderProgress(){
+  document.getElementById('pg-mastery').innerHTML = (DB.finalMastered && DB.showMasteryMsg!==false)
+    ? `<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:18px"><h3 style="margin:0 0 6px">🏆 Total Mastery Achieved</h3><div class="sub" style="margin:0;font-size:14px;line-height:1.6">You aced the Final Exam after conquering every Practice set, Test, Challenge, and Gauntlet across all five subjects. There is nothing left to prove here — you have mastered it all. <em>(You can hide this message in Settings.)</em></div></div>`
+    : '';
   const h=DB.history;
   document.getElementById('pg-empty').style.display=h.length?'none':'block';
   document.getElementById('pg-content').style.display=h.length?'block':'none';
@@ -2222,7 +2717,7 @@ function renderProgress(){
 
   // per-subject averages
   const bySubj={};
-  h.forEach(t=>{(bySubj[t.subj]=bySubj[t.subj]||[]).push(t.pct);});
+  h.forEach(t=>{if(t.final)return;(bySubj[t.subj]=bySubj[t.subj]||[]).push(t.pct);});
   const sEl=document.getElementById('pg-subjects');
   sEl.innerHTML=SUBJECTS.filter(s=>bySubj[s.id]).map(s=>{
     const arr=bySubj[s.id],a=Math.round(arr.reduce((x,y)=>x+y,0)/arr.length);
@@ -2238,7 +2733,7 @@ function renderProgress(){
     const cls=t.pct>=70?'ok':'no';
     const miss=(t.missed&&t.missed.length)?[...new Set(t.missed)].map(x=>esc(x)).join(', '):'none';
     return `<div class="rev-q ${cls}">
-      <div class="row between"><strong>${subjById(t.subj).name}${t.ap?' <span class="ap-chip">Gauntlet</span>':''}</strong><span style="font-weight:700;color:${t.pct>=70?'var(--accent2)':t.pct>=50?'var(--warn)':'var(--bad)'}">${t.pct}%</span></div>
+      <div class="row between"><strong>${t.final?'Final Exam 🏆':subjById(t.subj).name}${t.ap?' <span class="ap-chip">Gauntlet</span>':''}</strong><span style="font-weight:700;color:${t.pct>=70?'var(--accent2)':t.pct>=50?'var(--warn)':'var(--bad)'}">${t.pct}%</span></div>
       <div class="sub" style="margin:4px 0 0">${t.correct}/${t.total} correct · ${fmtDate(t.ts)}</div>
       <div class="sub" style="margin:3px 0 0;font-size:12px">Missed topics: ${miss}</div>
     </div>`;
