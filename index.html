@@ -182,7 +182,6 @@
     <button class="nav-btn" data-page="subjects"><span class="ic">▤</span><span class="lbl">Subjects</span></button>
     <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Learn</span></button>
     <button class="nav-btn" data-page="recall"><span class="ic">⚯</span><span class="lbl">Flashcards</span></button>
-    <button class="nav-btn" data-page="create"><span class="ic">✚</span><span class="lbl">Create Cards</span></button>
     <button class="nav-btn" data-page="pomodoro"><span class="ic">◷</span><span class="lbl">Pomodoro</span></button>
     <button class="nav-btn" data-page="feynman"><span class="ic">✎</span><span class="lbl">Feynman</span></button>
     <button class="nav-btn" data-page="practice"><span class="ic">✓</span><span class="lbl">Practice & Tests</span></button>
@@ -266,79 +265,86 @@
       </div>
     </section>
 
-    <!-- CREATE / IMPORT FLASHCARDS -->
-    <section class="page" id="page-create">
-      <h2 class="title">Create flashcards</h2>
-      <p class="sub">Make your own cards from your notes, or upload a file and let AI build a set for you.</p>
-      <div class="grid g2" style="align-items:start">
-        <div class="card">
-          <label class="fld">Add cards to which subject?</label>
-          <select id="cc-subj"></select>
-
-          <div class="tabs" id="cc-tabs">
-            <button class="active" data-cc="paste">Type / paste</button>
-            <button data-cc="file">Upload a file</button>
-          </div>
-
-          <div id="cc-pane-paste">
-            <label class="fld">Your material</label>
-            <p class="sub" style="margin:0 0 6px;font-size:12px">Two ways: paste notes and let AI build cards, <em>or</em> write one card per line as <kbd>Question | Answer</kbd>.</p>
-            <textarea id="cc-text" style="min-height:170px" placeholder="Paste your notes here for AI to turn into flashcards…&#10;&#10;— or — write your own, one per line:&#10;What is photosynthesis? | How plants make food from light&#10;Capital of France :: Paris"></textarea>
-          </div>
-
-          <div id="cc-pane-file" style="display:none">
-            <label class="fld">Upload a file</label>
-            <input type="file" id="cc-file" accept=".txt,.md,.csv,.pdf,.docx,.doc">
-            <p class="sub" id="cc-filestatus" style="margin:8px 0 0;font-size:12px">Supported: .txt, .md, .csv, .pdf, .docx</p>
-            <label class="fld">Extracted text</label>
-            <textarea id="cc-filetext" style="min-height:130px" placeholder="The file's text will appear here. You can edit it before generating cards."></textarea>
-          </div>
-
-          <div class="row" style="margin-top:16px">
-            <button class="btn" id="cc-ai">Generate with AI ✨</button>
-            <button class="btn sec" id="cc-manual">Make cards from Q | A lines</button>
-          </div>
-          <p class="sub" id="cc-ainote" style="margin-top:10px;font-size:12px"></p>
-        </div>
-
-        <div class="card">
-          <div class="between"><h3 style="margin:0">Preview</h3><span class="pill"><span id="cc-count">0</span> cards</span></div>
-          <p class="sub" style="margin:6px 0 12px">Review and trim before adding. Nothing is saved until you click Add.</p>
-          <div id="cc-preview"><p class="empty">No cards yet — generate or build some on the left.</p></div>
-          <button class="btn" id="cc-add" style="margin-top:14px;display:none">Add <span id="cc-addn">0</span> cards to deck</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- FLASHCARDS / ACTIVE RECALL + SPACED REPETITION -->
+    <!-- FLASHCARDS: Review + Create/Import sub-tabs -->
     <section class="page" id="page-recall">
       <h2 class="title">Flashcards</h2>
-      <p class="sub">Active recall + spaced repetition. Grade yourself honestly — the schedule adapts.</p>
-      <div class="row" style="margin-bottom:14px">
-        <select id="rc-subject" style="max-width:240px"></select>
-        <span class="pill"><span id="rc-due">0</span> due · <span id="rc-new">0</span> new</span>
+      <div class="tabs" id="fc-tabs">
+        <button class="active" data-fc="review">Review</button>
+        <button data-fc="create">Create / Import</button>
       </div>
-      <div id="rc-stage">
-        <div class="flash" id="rc-card">
-          <span class="side-tag" id="rc-tag"></span>
-          <div id="rc-text">Loading…</div>
-          <span class="hint" id="rc-hint">click to flip</span>
+
+      <!-- REVIEW sub-tab -->
+      <div id="fc-pane-review">
+        <p class="sub">Active recall + spaced repetition. Grade yourself honestly — the schedule adapts.</p>
+        <div class="row" style="margin-bottom:14px">
+          <select id="rc-subject" style="max-width:240px"></select>
+          <span class="pill"><span id="rc-due">0</span> due · <span id="rc-new">0</span> new</span>
         </div>
-        <div id="rc-grades" style="display:none">
-          <div class="grade-row">
-            <button class="g-again" data-g="0">Again<small>&lt;1 min</small></button>
-            <button class="g-hard" data-g="1">Hard<small id="lbl-hard"></small></button>
-            <button class="g-good" data-g="2">Good<small id="lbl-good"></small></button>
-            <button class="g-easy" data-g="3">Easy<small id="lbl-easy"></small></button>
+        <div id="rc-stage">
+          <div class="flash" id="rc-card">
+            <span class="side-tag" id="rc-tag"></span>
+            <div id="rc-text">Loading…</div>
+            <span class="hint" id="rc-hint">click to flip</span>
+          </div>
+          <div id="rc-grades" style="display:none">
+            <div class="grade-row">
+              <button class="g-again" data-g="0">Again<small>&lt;1 min</small></button>
+              <button class="g-hard" data-g="1">Hard<small id="lbl-hard"></small></button>
+              <button class="g-good" data-g="2">Good<small id="lbl-good"></small></button>
+              <button class="g-easy" data-g="3">Easy<small id="lbl-easy"></small></button>
+            </div>
+          </div>
+        </div>
+        <div id="rc-done" class="card" style="display:none;text-align:center">
+          <h3>All caught up 🎉</h3>
+          <p class="sub" style="margin:6px 0 14px">No cards due in this deck right now. Spaced repetition will bring them back automatically.</p>
+          <button class="btn sec" id="rc-cram">Cram anyway (ignore schedule)</button>
+        </div>
+        <p class="sub" style="margin-top:16px;font-size:12.5px">Shortcuts: <kbd>space</kbd> flip · <kbd>1</kbd>–<kbd>4</kbd> grade</p>
+      </div>
+
+      <!-- CREATE / IMPORT sub-tab -->
+      <div id="fc-pane-create" style="display:none">
+        <p class="sub">Make your own cards from your notes, or upload a file and let AI build a set for you.</p>
+        <div class="grid g2" style="align-items:start">
+          <div class="card">
+            <label class="fld">Add cards to which subject?</label>
+            <select id="cc-subj"></select>
+
+            <div class="tabs" id="cc-tabs">
+              <button class="active" data-cc="paste">Type / paste</button>
+              <button data-cc="file">Upload a file</button>
+            </div>
+
+            <div id="cc-pane-paste">
+              <label class="fld">Your material</label>
+              <p class="sub" style="margin:0 0 6px;font-size:12px">Two ways: paste notes and let AI build cards, <em>or</em> write one card per line as <kbd>Question | Answer</kbd>.</p>
+              <textarea id="cc-text" style="min-height:170px" placeholder="Paste your notes here for AI to turn into flashcards…&#10;&#10;— or — write your own, one per line:&#10;What is photosynthesis? | How plants make food from light&#10;Capital of France :: Paris"></textarea>
+            </div>
+
+            <div id="cc-pane-file" style="display:none">
+              <label class="fld">Upload a file</label>
+              <input type="file" id="cc-file" accept=".txt,.md,.csv,.pdf,.docx,.doc">
+              <p class="sub" id="cc-filestatus" style="margin:8px 0 0;font-size:12px">Supported: .txt, .md, .csv, .pdf, .docx</p>
+              <label class="fld">Extracted text</label>
+              <textarea id="cc-filetext" style="min-height:130px" placeholder="The file's text will appear here. You can edit it before generating cards."></textarea>
+            </div>
+
+            <div class="row" style="margin-top:16px">
+              <button class="btn" id="cc-ai">Generate with AI ✨</button>
+              <button class="btn sec" id="cc-manual">Make cards from Q | A lines</button>
+            </div>
+            <p class="sub" id="cc-ainote" style="margin-top:10px;font-size:12px"></p>
+          </div>
+
+          <div class="card">
+            <div class="between"><h3 style="margin:0">Preview</h3><span class="pill"><span id="cc-count">0</span> cards</span></div>
+            <p class="sub" style="margin:6px 0 12px">Review and trim before adding. Nothing is saved until you click Add.</p>
+            <div id="cc-preview"><p class="empty">No cards yet — generate or build some on the left.</p></div>
+            <button class="btn" id="cc-add" style="margin-top:14px;display:none">Add <span id="cc-addn">0</span> cards to deck</button>
           </div>
         </div>
       </div>
-      <div id="rc-done" class="card" style="display:none;text-align:center">
-        <h3>All caught up 🎉</h3>
-        <p class="sub" style="margin:6px 0 14px">No cards due in this deck right now. Spaced repetition will bring them back automatically.</p>
-        <button class="btn sec" id="rc-cram">Cram anyway (ignore schedule)</button>
-      </div>
-      <p class="sub" style="margin-top:16px;font-size:12.5px">Shortcuts: <kbd>space</kbd> flip · <kbd>1</kbd>–<kbd>4</kbd> grade</p>
     </section>
 
     <!-- POMODORO -->
@@ -584,8 +590,22 @@
         </div>
       </div>
       <div id="sc-result" style="margin-top:22px;display:none">
-        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Drag not needed — click ✕ to remove, or "Add block" in any cell.</span></div>
+        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Click ✕ to remove a block, or "+ block" in any cell.</span></div>
         <div style="overflow-x:auto;margin-top:12px"><table class="sched-table" id="sc-table"></table></div>
+        <div class="card" style="margin-top:16px;border-left:4px solid var(--accent2)">
+          <div class="between">
+            <div><strong>Add to Google Calendar</strong><div class="sub" style="margin:4px 0 0">Download your week as a calendar file — each block becomes a weekly repeating event.</div></div>
+            <button class="btn sm" id="sc-ics">Download .ics</button>
+          </div>
+          <details style="margin-top:12px"><summary>How to import into Google Calendar</summary>
+            <ol style="color:var(--muted);font-size:13px;line-height:1.8">
+              <li>Click <strong>Download .ics</strong> above to save the file.</li>
+              <li>Open <a href="https://calendar.google.com/calendar/u/0/r/settings/export" target="_blank" rel="noopener noreferrer">Google Calendar → Settings → Import &amp; export</a>.</li>
+              <li>Choose the .ics file, pick which calendar to add it to, and click <strong>Import</strong>.</li>
+              <li>Your study blocks appear as weekly recurring events. (Re-import after you tweak the schedule to refresh.)</li>
+            </ol>
+          </details>
+        </div>
       </div>
     </section>
 
@@ -1306,8 +1326,7 @@ function go(p){
   if(p==='dashboard')renderDash();
   if(p==='subjects')renderSubjects();
   if(p==='resources')renderResources();
-  if(p==='create')renderCreate();
-  if(p==='recall')startRecall();
+  if(p==='recall')openFlashcards();
   if(p==='pomodoro')initPom();
   if(p==='feynman')renderFeynman();
   if(p==='practice')renderPractice();
@@ -1403,6 +1422,22 @@ let rcQueue=[],rcIdx=0,rcFlipped=false,rcCram=false;
 function fillSubjSelect(el,all=true){
   el.innerHTML=(all?'<option value="">All subjects</option>':'')+SUBJECTS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
 }
+// Flashcards page has two sub-tabs: Review and Create / Import.
+function openFlashcards(){
+  const tabs=document.getElementById('fc-tabs');
+  if(!tabs.dataset.init){
+    tabs.dataset.init=1;
+    tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>showFcTab(b.dataset.fc));
+  }
+  showFcTab('review');
+}
+function showFcTab(which){
+  document.querySelectorAll('#fc-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.fc===which));
+  document.getElementById('fc-pane-review').style.display = which==='review'?'block':'none';
+  document.getElementById('fc-pane-create').style.display = which==='create'?'block':'none';
+  if(which==='review')startRecall();
+  else renderCreate();
+}
 function startRecall(){
   const sel=document.getElementById('rc-subject');
   if(!sel.dataset.init){fillSubjSelect(sel);sel.dataset.init=1;sel.onchange=()=>{rcCram=false;buildQueue();};}
@@ -1473,7 +1508,9 @@ document.querySelectorAll('#rc-grades [data-g]').forEach(b=>b.onclick=()=>grade(
 document.getElementById('rc-cram').onclick=()=>{rcCram=true;buildQueue();};
 document.addEventListener('keydown',e=>{
   if(!document.getElementById('page-recall').classList.contains('active'))return;
+  if(document.getElementById('fc-pane-review').style.display==='none')return; // not on Review sub-tab
   if(document.querySelector('.modal-bg.show'))return;
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||'')))return; // don't hijack typing
   if(e.code==='Space'){e.preventDefault();flip();}
   if(rcFlipped&&['1','2','3','4'].includes(e.key))grade(+e.key-1);
 });
@@ -1497,7 +1534,13 @@ function initPom(){
   renderPom();
 }
 const POM_LIMITS={work:[10,1440],brk:[1,60],long:[1,90]}; // long break max = 1.5 h
-function clampN(v,[lo,hi],dflt){v=Math.round(+v);if(!isFinite(v)||!v)v=dflt;return Math.min(hi,Math.max(lo,v));}
+// Empty/NaN → default; any number (including 0) is clamped into [lo,hi], so 0 → the minimum.
+function clampN(raw,[lo,hi],dflt){
+  if(raw===''||raw==null)return dflt;
+  let v=Math.round(+raw);
+  if(!isFinite(v))return dflt;
+  return Math.min(hi,Math.max(lo,v));
+}
 // While typing, never let a field exceed its max (prevents e.g. 300-min break sitting in the box).
 function capMaxLive(e){
   const el=e.target;const lim=el.id==='pt-work'?POM_LIMITS.work:el.id==='pt-break'?POM_LIMITS.brk:POM_LIMITS.long;
@@ -1815,6 +1858,63 @@ function renderSchedule(grid){
     const time=prompt("Time label? e.g. 7:00 PM–7:50 PM","");
     grid[d].push({subj,time:time||''});DB.schedule={grid};save();renderSchedule(grid);
   });
+  document.getElementById('sc-ics').onclick=()=>exportICS(grid);
+}
+/* ---- Google Calendar export via .ics (weekly recurring events) ---- */
+const ICS_BYDAY={Mon:'MO',Tue:'TU',Wed:'WE',Thu:'TH',Fri:'FR',Sat:'SA',Sun:'SU'};
+const ICS_JSDAY={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:0};
+function parseClock(str){
+  // accepts "4:00 PM" / "16:00" / "4 PM"
+  if(!str)return null;
+  const m=str.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([AaPp][Mm])?$/);
+  if(!m)return null;
+  let h=+m[1],min=m[2]?+m[2]:0,ap=m[3]?m[3].toLowerCase():'';
+  if(ap==='pm'&&h<12)h+=12; if(ap==='am'&&h===12)h=0;
+  if(h>23||min>59)return null;
+  return {h,min};
+}
+function nextDateFor(dayName,h,min){
+  const target=ICS_JSDAY[dayName];const now=new Date();
+  const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,min,0);
+  let diff=(target-d.getDay()+7)%7;
+  if(diff===0 && d<=now)diff=7; // if today but time passed, start next week
+  d.setDate(d.getDate()+diff);
+  return d;
+}
+function icsStamp(d){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00';}
+function exportICS(grid){
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Study Buddy//Schedule//EN','CALSCALE:GREGORIAN'];
+  let count=0,skipped=0;
+  Object.keys(grid).forEach(day=>{
+    (grid[day]||[]).forEach((slot,i)=>{
+      const parts=(slot.time||'').split(/[–—-]/); // en/em dash or hyphen
+      const start=parseClock(parts[0]);
+      let end=parts[1]?parseClock(parts[1]):null;
+      if(!start){skipped++;return;}
+      const sd=nextDateFor(day,start.h,start.min);
+      let ed;
+      if(end){ed=nextDateFor(day,end.h,end.min); if(ed<=sd)ed=new Date(sd.getTime()+50*60000);}
+      else ed=new Date(sd.getTime()+50*60000); // default 50 min if no end time
+      const name=subjById(slot.subj)?subjById(slot.subj).name:slot.subj;
+      lines.push('BEGIN:VEVENT',
+        'UID:sb-'+day+'-'+i+'-'+Date.now()+'@studybuddy',
+        'DTSTAMP:'+icsStamp(new Date()),
+        'DTSTART:'+icsStamp(sd),
+        'DTEND:'+icsStamp(ed),
+        'RRULE:FREQ=WEEKLY;BYDAY='+ICS_BYDAY[day],
+        'SUMMARY:Study: '+name,
+        'DESCRIPTION:Study Buddy session',
+        'END:VEVENT');
+      count++;
+    });
+  });
+  lines.push('END:VCALENDAR');
+  if(!count){toast(skipped?"Couldn't read the time labels — use e.g. 4:00 PM–4:50 PM":"No blocks to export yet");return;}
+  const blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='study-buddy-schedule.ics';document.body.appendChild(a);a.click();a.remove();
+  URL.revokeObjectURL(url);
+  toast(`Exported ${count} weekly events${skipped?` (${skipped} skipped — unreadable time)`:''} ✓`);
 }
 
 /* ============================ SETTINGS ============================ */
