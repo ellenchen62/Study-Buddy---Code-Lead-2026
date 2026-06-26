@@ -5,7 +5,14 @@ oh right, so was I
 
 Aiden was here i think
 
+
+[LOW PRIORITY]
 ------------------------------------------------------------------------
 Pomodoro allows smaller study time than break and long break time
 
-Practice tests have the same question bank as practice questions
+Create difficulty differciations for practice section
+
+
+[HIGH PRIORITY]
+------------------------------------------------------------------------
+The "what test?" problem: tests sometimes don't show up in the My Progress section
