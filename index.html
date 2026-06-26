@@ -279,7 +279,7 @@
               <circle cx="120" cy="120" r="110" stroke="var(--line)" stroke-width="12" fill="none"/>
               <circle id="ring" cx="120" cy="120" r="110" stroke="var(--accent)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="691" stroke-dashoffset="0"/>
             </svg>
-            <div class="timer-time"><div class="t" id="pt-time">25:00</div><div class="ph" id="pt-phase">Focus</div></div>
+            <div class="timer-time"><div class="t" id="pt-time">30:00</div><div class="ph" id="pt-phase">Focus</div></div>
           </div>
           <div class="row" style="justify-content:center;margin-top:10px">
             <button class="btn" id="pt-start">Start</button>
@@ -293,10 +293,11 @@
           <label class="fld">What are you working on?</label>
           <select id="pt-subj"></select>
           <div class="grid g3" style="margin-top:4px">
-            <div><label class="fld">Focus (min)</label><input type="number" id="pt-work" value="25" min="1" max="90"></div>
-            <div><label class="fld">Break (min)</label><input type="number" id="pt-break" value="5" min="1" max="30"></div>
-            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="15" min="5" max="40"></div>
+            <div><label class="fld">Focus (min)</label><input type="number" id="pt-work" value="30" min="10" max="1440"></div>
+            <div><label class="fld">Break (min)</label><input type="number" id="pt-break" value="10" min="1" max="60"></div>
+            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="20" min="1" max="120"></div>
           </div>
+          <p class="sub" style="margin:8px 0 0;font-size:12px">Focus: 10 min–24 h · Break: 1–60 min · break is always kept ≤ focus.</p>
           <label class="switchrow" style="margin-top:14px"><input type="checkbox" id="pt-sound" checked> Play a chime when a phase ends</label>
           <div class="section-h">Why it works</div>
           <p style="color:var(--muted);font-size:13px;margin:0">Short, bounded sprints lower the activation cost of starting and protect attention from fatigue. Pair each focus block with one method — e.g. recall cards, or a Feynman write-up.</p>
@@ -341,6 +342,7 @@
 
       <!-- chooser -->
       <div id="pr-home">
+        <div id="pr-banner"></div>
         <div class="section-h">Pick a subject</div>
         <div class="grid g3" id="pr-grid"></div>
       </div>
@@ -1011,6 +1013,124 @@ const TEST_QUESTIONS = {
 // topic lookup: test questions carry their topic at index 4; practice questions use the TOPICS map.
 function topicOf(subj,q){if(q&&q[4])return q[4];const i=QUESTIONS[subj].indexOf(q);return (i>=0&&TOPICS[subj]&&TOPICS[subj][i])||'General';}
 
+/* ===== CHALLENGE BANK — harder questions, unlocked after scoring 90%+ on a subject's test ===== */
+/* format: [question, [choices], correctIndex, explanation, topic] */
+const CHALLENGE_QUESTIONS = {
+  alg:[
+    ["Solve 2x² − 4x − 3 = 0 (round to 2 d.p.).",["x ≈ 2.58 or −0.58","x ≈ 1.58 or −0.58","x ≈ 3.00 or −0.50","x ≈ 2.00 or −1.50"],0,"x = [4 ± √(16+24)]/4 = [4 ± √40]/4 ≈ 2.58 or −0.58.","Quadratic formula"],
+    ["If log₂(x) + log₂(x − 2) = 3, find x.",["x = 4","x = 2","x = 8","x = 6"],0,"log₂[x(x−2)]=3 → x²−2x=8 → (x−4)(x+2)=0; x>2 so x=4.","Logarithms"],
+    ["Simplify (2x²y³)³ ÷ (4x³y²).",["2x³y⁷","8x³y⁷","2x⁹y⁷","2x³y⁵"],0,"(2x²y³)³ = 8x⁶y⁹; ÷ 4x³y² = 2x³y⁷.","Exponent rules"],
+    ["A quadratic has roots 3 and −5. Which equation is it?",["x² + 2x − 15 = 0","x² − 2x − 15 = 0","x² + 2x + 15 = 0","x² − 8x − 15 = 0"],0,"Sum of roots = −2, product = −15 → x² + 2x − 15.","Quadratics"],
+    ["Solve the system y = x² and y = 2x + 3.",["x = 3 or −1","x = 3 only","x = −3 or 1","x = 1 or 2"],0,"x² = 2x+3 → x²−2x−3 = (x−3)(x+1); x = 3 or −1.","Systems"],
+    ["If f(x) = x² and g(x) = x + 1, find f(g(2)).",["9","5","7","4"],0,"g(2)=3, then f(3)=9.","Composite functions"],
+    ["Sum of the first 5 terms of 3, 6, 12, 24, …?",["93","45","96","189"],0,"Geometric: 3+6+12+24+48 = 93.","Series"],
+    ["Rationalize 1 / (√3 − 1).",["(√3 + 1)/2","√3 − 1","(√3 + 1)/3","(√3 − 1)/2"],0,"Multiply by (√3+1): (√3+1)/(3−1) = (√3+1)/2.","Radicals"],
+  ],
+  ela:[
+    ["Calling a corrupt politician 'a real model citizen' is…",["Verbal irony","Dramatic irony","Situational irony","Hyperbole"],0,"Saying the opposite of what's meant is verbal irony.","Irony"],
+    ["'The fog comes on little cat feet' primarily uses…",["Metaphor","Simile","Allusion","Hyperbole"],0,"Fog is equated with a cat, with no 'like/as' — a metaphor.","Figurative language"],
+    ["Which sentence is in the passive voice?",["The committee approved the plan.","The plan was approved by the committee.","The committee will approve it.","Approve the plan."],1,"Passive: the subject receives the action ('was approved').","Grammar"],
+    ["When an author inserts an earlier scene into the story, it's a…",["Flashback","Foreshadowing","Climax","Frame story"],0,"A flashback is an inserted earlier scene.","Narrative structure"],
+    ["'Ask not what your country can do for you…' relies most on…",["Parallelism","Onomatopoeia","Assonance","Hyperbole"],0,"The mirrored grammatical structure is parallelism.","Rhetorical devices"],
+    ["A narrator who misunderstands events creates…",["An unreliable narrator","Dramatic irony for the reader","Both A and B","Neither"],2,"The narrator is unreliable, producing dramatic irony for readers.","Point of view"],
+    ["Which option states a theme rather than a topic?",["War","Loyalty can demand painful sacrifice.","A soldier's life","Friendship"],1,"A theme is a complete insight, not a one-word topic.","Theme"],
+    ["In 'The pen is mightier than the sword,' pen and sword are…",["Metonyms for writing and force","Similes","Personification","Alliteration"],0,"Each stands in for a larger idea (metonymy).","Figurative language"],
+  ],
+  sci:[
+    ["A 2 kg cart accelerates at 3 m/s². The net force is…",["6 N","1.5 N","5 N","0.67 N"],0,"F = ma = 2 × 3 = 6 N.","Newton's laws"],
+    ["A 4 kg object moves at 5 m/s. Its kinetic energy is…",["50 J","20 J","100 J","10 J"],0,"KE = ½mv² = ½ · 4 · 25 = 50 J.","Energy"],
+    ["In a cross Aa × Aa, the dominant : recessive phenotype ratio is…",["3 : 1","1 : 1","9 : 7","1 : 2 : 1"],0,"Aa × Aa → 3 showing dominant : 1 recessive.","Genetics"],
+    ["An object goes 100 m in 4 s then rests 6 s. Average speed over 10 s?",["10 m/s","25 m/s","100 m/s","16.7 m/s"],0,"Average speed = total distance / total time = 100/10 = 10 m/s.","Kinematics"],
+    ["Which step of respiration produces the most ATP?",["Glycolysis","The electron transport chain","Fermentation","The light reactions"],1,"The electron transport chain yields the most ATP.","Cell processes"],
+    ["A ball dropped from rest reaches what speed after 2 s (g ≈ 10 m/s²)?",["20 m/s","10 m/s","5 m/s","40 m/s"],0,"v = gt = 10 × 2 = 20 m/s.","Kinematics"],
+    ["Two equal, opposite forces act on an object. It…",["Has zero net force and constant velocity","Always speeds up","Stops instantly","Gains mass"],0,"Balanced forces → zero net force → constant velocity.","Newton's laws"],
+    ["A DNA strand reads ATGC. Its complementary strand is…",["TACG","ATGC","UACG","CGTA"],0,"A–T, T–A, G–C, C–G → TACG.","DNA & genetics"],
+  ],
+  spa:[
+    ["'Ayer yo ___ (hacer) la tarea.'",["hice","hací","hacía","hizo"],0,"Irregular preterite: yo hice.","Irregular preterite"],
+    ["'Si tuviera dinero, ___ un coche.'",["compraría","compro","compré","compraba"],0,"Hypothetical → conditional: compraría.","Conditional"],
+    ["'Quiero que tú ___ (venir).'",["vengas","vienes","vendrás","veniste"],0,"After 'quiero que', use the subjunctive: vengas.","Subjunctive"],
+    ["'Se me olvidaron las llaves' means…",["I forgot the keys (they slipped my mind)","I forget the key","The keys forgot me","I will forget keys"],0,"The 'se + indirect object' structure: the keys got forgotten on me.","Reflexive / se"],
+    ["'Mientras yo ___ (leer), sonó el teléfono.'",["leía","leí","leeré","lea"],0,"Ongoing background action → imperfect: leía.","Preterite vs imperfect"],
+    ["In 'Lo compré,' the pronoun 'lo' replaces…",["el libro","yo","compré","ayer"],0,"'Lo' replaces the masculine direct object (el libro).","Object pronouns"],
+    ["The tú affirmative command of 'hacer' is…",["haz","hace","haga","hagas"],0,"Irregular tú command: haz.","Commands"],
+    ["'Hace dos años que estudio español' means…",["I have studied Spanish for two years","I studied two years ago","I will study for two years","Two years made me study"],0,"'Hace + time + que + present' = an ongoing action for that time.","Time expressions"],
+  ],
+  his:[
+    ["Marbury v. Madison (1803) established the principle of…",["Judicial review","Popular sovereignty","Manifest Destiny","Nullification"],0,"It established judicial review — courts can strike down laws.","Judicial branch"],
+    ["The Great Compromise (1787) resolved a dispute over…",["Slavery","Representation in Congress","Taxes on tea","Western land"],1,"It created a bicameral Congress balancing large and small states.","Constitution"],
+    ["The colonies operated under an economic system called…",["Capitalism","Mercantilism","Socialism","Feudalism"],1,"Mercantilism: colonies supplied raw goods and bought finished ones.","Colonial economy"],
+    ["The idea that government power comes from the people is…",["Divine right","Consent of the governed","Checks and balances","Federalism"],1,"'Consent of the governed' (Locke) underlies the Declaration.","Enlightenment ideas"],
+    ["Why did the Articles of Confederation fail?",["Congress was too powerful","The national government couldn't tax or enforce laws","States had no rights","There was a king"],1,"A weak central government couldn't tax or enforce laws.","Early republic"],
+    ["The Three-Fifths Compromise primarily benefited…",["Northern free states","Southern slaveholding states","Western territories","Foreign nations"],1,"Counting enslaved people boosted Southern representation.","Sectionalism & slavery"],
+    ["The Emancipation Proclamation (1863) applied to…",["Everywhere in the U.S.","Only Confederate states in rebellion","Only border states","The North only"],1,"It freed enslaved people in rebelling Confederate states, not loyal border states.","Civil War"],
+    ["Sharecropping after the Civil War often led to…",["Land ownership for freedmen","A cycle of debt resembling servitude","Rapid Northern migration","Immediate equality"],1,"Sharecropping trapped many freedpeople in debt.","Reconstruction"],
+  ],
+};
+
+/* harder flashcards, added to a subject's deck once it is mastered (90%+ test) */
+const CHALLENGE_CARDS = {
+  alg:[
+    ["When does a quadratic have exactly one real root?","When the discriminant b² − 4ac = 0 (a repeated root)."],
+    ["State the change-of-base formula for logarithms.","log_b(x) = ln(x)/ln(b) = log(x)/log(b)."],
+    ["Sum of an infinite geometric series with |r| < 1?","S = a / (1 − r)."],
+    ["Factor completely: x³ − 8.","(x − 2)(x² + 2x + 4) — a difference of cubes."],
+    ["If f(x) = x² and g(x) = x − 1, what is (f∘g)(x)?","f(g(x)) = (x − 1)²."],
+    ["Find the vertex of y = 2x² − 8x + 1.","x = −b/2a = 2; y = 2(4) − 16 + 1 = −7 → (2, −7)."],
+  ],
+  ela:[
+    ["Define verbal irony with an example.","Saying the opposite of what you mean, e.g. 'Lovely!' during a disaster."],
+    ["What is parallelism in writing?","Repeating grammatical structure for balance: 'I came, I saw, I conquered.'"],
+    ["What is an unreliable narrator?","A narrator whose account the reader can't fully trust."],
+    ["Difference between a theme and a topic?","A topic is a subject (war); a theme is a complete insight about it."],
+    ["What is metonymy?","Naming something by an associated term, e.g. 'the crown' for the monarchy."],
+    ["Active vs passive voice?","Active: the subject does the action; passive: the subject receives it."],
+  ],
+  sci:[
+    ["Write the full word equation for photosynthesis.","carbon dioxide + water + light energy → glucose + oxygen."],
+    ["Rearrange F = ma to solve for acceleration.","a = F / m."],
+    ["Genotype ratio of a monohybrid cross Aa × Aa?","1 AA : 2 Aa : 1 aa."],
+    ["State the law of conservation of energy.","Energy can't be created or destroyed, only transferred or transformed."],
+    ["Distinguish mitosis from meiosis.","Mitosis → 2 identical cells; meiosis → 4 genetically varied gametes."],
+    ["Newton's 2nd law with SI units?","F = ma; force in newtons, mass in kg, acceleration in m/s²."],
+  ],
+  spa:[
+    ["Conjugate 'hacer' in the preterite (yo, tú, él).","hice, hiciste, hizo."],
+    ["Present subjunctive of 'hablar' (yo)?","hable (use the opposite-vowel ending)."],
+    ["Imperfect vs preterite — when to use each?","Imperfect = ongoing/repeated past; preterite = a completed single action."],
+    ["Give the tú affirmative commands for hacer, ir, ser.","haz, ve, sé."],
+    ["What does 'Hace + time + que + present' express?","An action that has been going on for that length of time."],
+    ["Replace the objects: 'Doy el libro a María.'","Se lo doy. (le → se before lo)."],
+  ],
+  his:[
+    ["What did Marbury v. Madison establish?","Judicial review — courts can strike down unconstitutional laws."],
+    ["What was the Great Compromise?","A bicameral Congress: equal Senate seats plus a House based on population."],
+    ["Why did the Articles of Confederation fail?","The central government couldn't tax or enforce its laws."],
+    ["What was mercantilism?","Colonies supplied raw materials and bought finished goods from the mother country."],
+    ["What was sharecropping and its effect?","Tenant farming that often trapped freedpeople in cycles of debt."],
+    ["Federalists vs Anti-Federalists?","Federalists wanted a strong national government; Anti-Federalists feared it and demanded a Bill of Rights."],
+  ],
+};
+
+/* ===== DIFFICULTY UNLOCK ===== */
+const MASTERY=90; // score needed on a subject's test to unlock its challenge content
+function isMastered(subj){return (DB.tests[subj]||0)>=MASTERY;}
+function allMastered(){return SUBJECTS.every(s=>isMastered(s.id));}
+// Add a mastered subject's harder flashcards into the deck (once), so spaced repetition includes them.
+function syncChallengeCards(){
+  const have=new Set(DB.cards.map(c=>c.subj+'||'+c.front));
+  let id=Date.now()+1,added=0;
+  SUBJECTS.forEach(s=>{
+    if(isMastered(s.id)){
+      (CHALLENGE_CARDS[s.id]||[]).forEach(([f,b])=>{
+        if(!have.has(s.id+'||'+f)){DB.cards.push(newCard(id++,s.id,f,b));added++;}
+      });
+    }
+  });
+  if(added)save();
+  return added;
+}
+
 /* ============================ STATE / STORAGE ============================ */
 const LS="studyhub_v1";
 let DB = load();
@@ -1044,6 +1164,7 @@ const SEED_VERSION=2;
 if((DB.seedVersion||0)<SEED_VERSION){syncSeedCards();DB.seedVersion=SEED_VERSION;save();}
 if(!DB.tests)DB.tests={}; // best practice-test score per subject
 if(!DB.history)DB.history=[]; // every completed practice-test attempt
+syncChallengeCards(); // add harder flashcards for any already-mastered subjects
 
 // streak update
 (function(){
@@ -1239,16 +1360,36 @@ document.addEventListener('keydown',e=>{
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 /* ============================ POMODORO ============================ */
-let pom={running:false,phase:'Focus',remaining:25*60,total:25*60,round:1,timer:null};
+let pom={running:false,phase:'Focus',remaining:30*60,total:30*60,round:1,timer:null};
 function initPom(){
   const sel=document.getElementById('pt-subj');
-  if(!sel.dataset.init){fillSubjSelect(sel);sel.dataset.init=1;}
+  if(!sel.dataset.init){
+    fillSubjSelect(sel);sel.dataset.init=1;
+    // enforce the limits whenever the student edits a field
+    ['pt-work','pt-break','pt-long'].forEach(id=>document.getElementById(id).addEventListener('change',clampPomInputs));
+  }
   document.getElementById('pt-doneToday').textContent=(DB.pomToday.date===dstr()?DB.pomToday.count:0);
   renderPom();
 }
-function workMin(){return Math.max(1,+document.getElementById('pt-work').value||25);}
-function breakMin(){return Math.max(1,+document.getElementById('pt-break').value||5);}
-function longMin(){return Math.max(1,+document.getElementById('pt-long').value||15);}
+const POM_LIMITS={work:[10,1440],brk:[1,60],long:[1,120]};
+function clampN(v,[lo,hi],dflt){v=Math.round(+v);if(!isFinite(v)||!v)v=dflt;return Math.min(hi,Math.max(lo,v));}
+// Focus stays within 10–1440 min, break within 1–60 min, and break can never exceed focus.
+function clampPomInputs(){
+  const wEl=document.getElementById('pt-work'),bEl=document.getElementById('pt-break'),lEl=document.getElementById('pt-long');
+  let w=clampN(wEl.value,POM_LIMITS.work,30);
+  let b=clampN(bEl.value,POM_LIMITS.brk,10);
+  let l=clampN(lEl.value,POM_LIMITS.long,20);
+  let note='';
+  if(b>w){b=w;note='Break can’t be longer than focus — trimmed it to match.';} // study time cannot be less than break
+  if(l>w){l=w;}
+  if(String(w)!==wEl.value)wEl.value=w;
+  bEl.value=b;lEl.value=l;wEl.value=w;
+  if(note)toast(note);
+  return {w,b,l};
+}
+function workMin(){return clampN(document.getElementById('pt-work').value,POM_LIMITS.work,30);}
+function breakMin(){const w=workMin();return Math.min(w,clampN(document.getElementById('pt-break').value,POM_LIMITS.brk,10));}
+function longMin(){const w=workMin();return Math.min(w,clampN(document.getElementById('pt-long').value,POM_LIMITS.long,20));}
 function renderPom(){
   const m=Math.floor(pom.remaining/60),s=pom.remaining%60;
   document.getElementById('pt-time').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
@@ -1558,33 +1699,50 @@ const PR_LETTERS=['A','B','C','D','E'];
 function prShow(id){['pr-home','pr-practice','pr-setup','pr-test','pr-results'].forEach(x=>document.getElementById(x).style.display=(x===id?'block':'none'));}
 function renderPractice(){
   prShow('pr-home');
+  // banner: celebrate unlocked challenge content
+  const masteredNames=SUBJECTS.filter(s=>isMastered(s.id)).map(s=>s.name);
+  const banner=document.getElementById('pr-banner');
+  if(allMastered()){
+    banner.innerHTML=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:18px"><strong>🏆 Challenge mode unlocked everywhere!</strong><div class="sub" style="margin:4px 0 0">You've scored 90%+ on every subject. Harder questions and tougher flashcards are now available across the board.</div></div>`;
+  } else if(masteredNames.length){
+    banner.innerHTML=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:18px"><strong>🔥 Challenge unlocked:</strong> ${masteredNames.join(', ')}<div class="sub" style="margin:4px 0 0">Score 90%+ on a subject's test to unlock its harder questions and flashcards.</div></div>`;
+  } else {
+    banner.innerHTML='';
+  }
   const g=document.getElementById('pr-grid');
   g.innerHTML=SUBJECTS.map(s=>{
     const n=(QUESTIONS[s.id]||[]).length;
     const nt=(TEST_QUESTIONS[s.id]||[]).length;
     const best=DB.tests[s.id];
+    const mastered=isMastered(s.id);
+    const challengeBtn = mastered
+      ? `<button class="btn sm" style="background:var(--warn)" data-mode="challenge" data-s="${s.id}">Challenge 🔥</button>`
+      : `<span class="tag" title="Score 90%+ on this subject's test to unlock">🔒 Challenge</span>`;
     return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
-      <h3>${s.name}</h3>
+      <h3>${s.name}${mastered?' <span class="tag" style="border-color:var(--warn);color:var(--warn)">mastered</span>':''}</h3>
       <p>${n} practice + ${nt} test questions${best?` · best test <strong style="color:${col(s.id)}">${best}%</strong>`:''}</p>
       <div class="row" style="margin-top:12px">
         <button class="btn sm" data-mode="practice" data-s="${s.id}">Practice</button>
         <button class="btn sm sec" data-mode="test" data-s="${s.id}">Take test</button>
+        ${challengeBtn}
       </div>
     </div>`;
   }).join('');
   g.querySelectorAll('[data-mode]').forEach(b=>b.onclick=(e)=>{
     e.stopPropagation();
-    if(b.dataset.mode==='practice')startPractice(b.dataset.s);
+    if(b.dataset.mode==='practice')startPractice(b.dataset.s,false);
+    else if(b.dataset.mode==='challenge')startPractice(b.dataset.s,true);
     else openTestSetup(b.dataset.s);
   });
 }
 
 /* --- PRACTICE MODE (instant feedback) --- */
-let pp={subj:null,qs:[],i:0,score:0,answered:false};
-function startPractice(subj){
-  pp={subj,qs:shuffle((QUESTIONS[subj]||[]).slice()),i:0,score:0,answered:false};
+let pp={subj:null,qs:[],i:0,score:0,answered:false,challenge:false};
+function startPractice(subj,challenge=false){
+  const bank = challenge ? (CHALLENGE_QUESTIONS[subj]||[]) : (QUESTIONS[subj]||[]);
+  pp={subj,qs:shuffle(bank.slice()),i:0,score:0,answered:false,challenge};
   prShow('pr-practice');
-  document.getElementById('pr-p-title').textContent=subjById(subj).name+' · Practice';
+  document.getElementById('pr-p-title').textContent=subjById(subj).name+(challenge?' · Challenge 🔥':' · Practice');
   document.getElementById('pr-p-total').textContent=pp.qs.length;
   ppRender();
 }
@@ -1681,8 +1839,11 @@ function submitTest(){
   const missedTopics=[];
   tt.qs.forEach(x=>{if(x.picked===x.q[2])correct++;else missedTopics.push(topicOf(tt.subj,x.q));});
   const pct=Math.round(correct/tt.qs.length*100);
-  // save best
+  // save best + detect newly-unlocked challenge content
+  const wasMastered=isMastered(tt.subj);
   if(!DB.tests[tt.subj]||pct>DB.tests[tt.subj]){DB.tests[tt.subj]=pct;}
+  const justMastered = !wasMastered && isMastered(tt.subj);
+  if(justMastered){const added=syncChallengeCards();setTimeout(()=>toast(`🔥 Challenge unlocked for ${subjById(tt.subj).name}! ${added} harder flashcards added.`),600);}
   // record this attempt in history (cap at 100 most recent)
   DB.history.push({ts:Date.now(),subj:tt.subj,correct,total:tt.qs.length,pct,missed:missedTopics});
   if(DB.history.length>100)DB.history=DB.history.slice(-100);
