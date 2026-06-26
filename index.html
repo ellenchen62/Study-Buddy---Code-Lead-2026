@@ -9,6 +9,7 @@
     --bg:#1a1d24; --bg2:#21252e; --panel:#272c37; --panel2:#2e3440;
     --line:#363c49; --txt:#e4e7ec; --muted:#9aa4b2; --faint:#6b7480;
     --accent:#7c9cc4; --accent2:#8fb39b; --warn:#cba86b; --bad:#c47c84;
+    --ap:#b07cc4;
     --r:14px; --shadow:0 6px 24px rgba(0,0,0,.28);
     /* subject colors (muted) */
     --s-alg:#7c9cc4; --s-ela:#b39ac4; --s-sci:#8fb39b; --s-spa:#cba86b; --s-his:#c49a8f;
@@ -168,6 +169,8 @@
   .cc-card .ccb{color:var(--muted);font-size:13px;margin-top:3px}
   .cc-card .ccx{float:right;cursor:pointer;color:var(--faint);font-weight:700}
   .cc-card .ccx:hover{color:var(--bad)}
+  .btn.ap{background:var(--ap);color:#11151b}
+  .ap-chip{font-size:10px;background:var(--ap);color:#11151b;padding:2px 7px;border-radius:5px;font-weight:700;letter-spacing:.4px}
 </style>
 </head>
 <body>
@@ -180,8 +183,9 @@
     </div>
     <button class="nav-btn active" data-page="dashboard"><span class="ic">▦</span><span class="lbl">Dashboard</span></button>
     <button class="nav-btn" data-page="subjects"><span class="ic">▤</span><span class="lbl">Subjects</span></button>
-    <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Learn</span></button>
+    <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Resources</span></button>
     <button class="nav-btn" data-page="recall"><span class="ic">⚯</span><span class="lbl">Flashcards</span></button>
+    <button class="nav-btn" data-page="create"><span class="ic">✚</span><span class="lbl">Create Cards</span></button>
     <button class="nav-btn" data-page="pomodoro"><span class="ic">◷</span><span class="lbl">Pomodoro</span></button>
     <button class="nav-btn" data-page="feynman"><span class="ic">✎</span><span class="lbl">Feynman</span></button>
     <button class="nav-btn" data-page="practice"><span class="ic">✓</span><span class="lbl">Practice & Tests</span></button>
@@ -253,7 +257,7 @@
 
     <!-- RESOURCES -->
     <section class="page" id="page-resources">
-      <h2 class="title">Learn</h2>
+      <h2 class="title">External resources</h2>
       <p class="sub">Hand-picked free articles, textbooks, videos, and practice sites. Pick a subject to see its links — all open in a new tab.</p>
       <div class="grid g3" id="res-grid"></div>
 
@@ -265,86 +269,79 @@
       </div>
     </section>
 
-    <!-- FLASHCARDS: Review + Create/Import sub-tabs -->
+    <!-- CREATE / IMPORT FLASHCARDS -->
+    <section class="page" id="page-create">
+      <h2 class="title">Create flashcards</h2>
+      <p class="sub">Make your own cards from your notes, or upload a file and let AI build a set for you.</p>
+      <div class="grid g2" style="align-items:start">
+        <div class="card">
+          <label class="fld">Add cards to which subject?</label>
+          <select id="cc-subj"></select>
+
+          <div class="tabs" id="cc-tabs">
+            <button class="active" data-cc="paste">Type / paste</button>
+            <button data-cc="file">Upload a file</button>
+          </div>
+
+          <div id="cc-pane-paste">
+            <label class="fld">Your material</label>
+            <p class="sub" style="margin:0 0 6px;font-size:12px">Two ways: paste notes and let AI build cards, <em>or</em> write one card per line as <kbd>Question | Answer</kbd>.</p>
+            <textarea id="cc-text" style="min-height:170px" placeholder="Paste your notes here for AI to turn into flashcards…&#10;&#10;— or — write your own, one per line:&#10;What is photosynthesis? | How plants make food from light&#10;Capital of France :: Paris"></textarea>
+          </div>
+
+          <div id="cc-pane-file" style="display:none">
+            <label class="fld">Upload a file</label>
+            <input type="file" id="cc-file" accept=".txt,.md,.csv,.pdf,.docx,.doc">
+            <p class="sub" id="cc-filestatus" style="margin:8px 0 0;font-size:12px">Supported: .txt, .md, .csv, .pdf, .docx</p>
+            <label class="fld">Extracted text</label>
+            <textarea id="cc-filetext" style="min-height:130px" placeholder="The file's text will appear here. You can edit it before generating cards."></textarea>
+          </div>
+
+          <div class="row" style="margin-top:16px">
+            <button class="btn" id="cc-ai">Generate with AI ✨</button>
+            <button class="btn sec" id="cc-manual">Make cards from Q | A lines</button>
+          </div>
+          <p class="sub" id="cc-ainote" style="margin-top:10px;font-size:12px"></p>
+        </div>
+
+        <div class="card">
+          <div class="between"><h3 style="margin:0">Preview</h3><span class="pill"><span id="cc-count">0</span> cards</span></div>
+          <p class="sub" style="margin:6px 0 12px">Review and trim before adding. Nothing is saved until you click Add.</p>
+          <div id="cc-preview"><p class="empty">No cards yet — generate or build some on the left.</p></div>
+          <button class="btn" id="cc-add" style="margin-top:14px;display:none">Add <span id="cc-addn">0</span> cards to deck</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLASHCARDS / ACTIVE RECALL + SPACED REPETITION -->
     <section class="page" id="page-recall">
       <h2 class="title">Flashcards</h2>
-      <div class="tabs" id="fc-tabs">
-        <button class="active" data-fc="review">Review</button>
-        <button data-fc="create">Create / Import</button>
+      <p class="sub">Active recall + spaced repetition. Grade yourself honestly — the schedule adapts.</p>
+      <div class="row" style="margin-bottom:14px">
+        <select id="rc-subject" style="max-width:240px"></select>
+        <span class="pill"><span id="rc-due">0</span> due · <span id="rc-new">0</span> new</span>
       </div>
-
-      <!-- REVIEW sub-tab -->
-      <div id="fc-pane-review">
-        <p class="sub">Active recall + spaced repetition. Grade yourself honestly — the schedule adapts.</p>
-        <div class="row" style="margin-bottom:14px">
-          <select id="rc-subject" style="max-width:240px"></select>
-          <span class="pill"><span id="rc-due">0</span> due · <span id="rc-new">0</span> new</span>
+      <div id="rc-stage">
+        <div class="flash" id="rc-card">
+          <span class="side-tag" id="rc-tag"></span>
+          <div id="rc-text">Loading…</div>
+          <span class="hint" id="rc-hint">click to flip</span>
         </div>
-        <div id="rc-stage">
-          <div class="flash" id="rc-card">
-            <span class="side-tag" id="rc-tag"></span>
-            <div id="rc-text">Loading…</div>
-            <span class="hint" id="rc-hint">click to flip</span>
-          </div>
-          <div id="rc-grades" style="display:none">
-            <div class="grade-row">
-              <button class="g-again" data-g="0">Again<small>&lt;1 min</small></button>
-              <button class="g-hard" data-g="1">Hard<small id="lbl-hard"></small></button>
-              <button class="g-good" data-g="2">Good<small id="lbl-good"></small></button>
-              <button class="g-easy" data-g="3">Easy<small id="lbl-easy"></small></button>
-            </div>
-          </div>
-        </div>
-        <div id="rc-done" class="card" style="display:none;text-align:center">
-          <h3>All caught up 🎉</h3>
-          <p class="sub" style="margin:6px 0 14px">No cards due in this deck right now. Spaced repetition will bring them back automatically.</p>
-          <button class="btn sec" id="rc-cram">Cram anyway (ignore schedule)</button>
-        </div>
-        <p class="sub" style="margin-top:16px;font-size:12.5px">Shortcuts: <kbd>space</kbd> flip · <kbd>1</kbd>–<kbd>4</kbd> grade</p>
-      </div>
-
-      <!-- CREATE / IMPORT sub-tab -->
-      <div id="fc-pane-create" style="display:none">
-        <p class="sub">Make your own cards from your notes, or upload a file and let AI build a set for you.</p>
-        <div class="grid g2" style="align-items:start">
-          <div class="card">
-            <label class="fld">Add cards to which subject?</label>
-            <select id="cc-subj"></select>
-
-            <div class="tabs" id="cc-tabs">
-              <button class="active" data-cc="paste">Type / paste</button>
-              <button data-cc="file">Upload a file</button>
-            </div>
-
-            <div id="cc-pane-paste">
-              <label class="fld">Your material</label>
-              <p class="sub" style="margin:0 0 6px;font-size:12px">Two ways: paste notes and let AI build cards, <em>or</em> write one card per line as <kbd>Question | Answer</kbd>.</p>
-              <textarea id="cc-text" style="min-height:170px" placeholder="Paste your notes here for AI to turn into flashcards…&#10;&#10;— or — write your own, one per line:&#10;What is photosynthesis? | How plants make food from light&#10;Capital of France :: Paris"></textarea>
-            </div>
-
-            <div id="cc-pane-file" style="display:none">
-              <label class="fld">Upload a file</label>
-              <input type="file" id="cc-file" accept=".txt,.md,.csv,.pdf,.docx,.doc">
-              <p class="sub" id="cc-filestatus" style="margin:8px 0 0;font-size:12px">Supported: .txt, .md, .csv, .pdf, .docx</p>
-              <label class="fld">Extracted text</label>
-              <textarea id="cc-filetext" style="min-height:130px" placeholder="The file's text will appear here. You can edit it before generating cards."></textarea>
-            </div>
-
-            <div class="row" style="margin-top:16px">
-              <button class="btn" id="cc-ai">Generate with AI ✨</button>
-              <button class="btn sec" id="cc-manual">Make cards from Q | A lines</button>
-            </div>
-            <p class="sub" id="cc-ainote" style="margin-top:10px;font-size:12px"></p>
-          </div>
-
-          <div class="card">
-            <div class="between"><h3 style="margin:0">Preview</h3><span class="pill"><span id="cc-count">0</span> cards</span></div>
-            <p class="sub" style="margin:6px 0 12px">Review and trim before adding. Nothing is saved until you click Add.</p>
-            <div id="cc-preview"><p class="empty">No cards yet — generate or build some on the left.</p></div>
-            <button class="btn" id="cc-add" style="margin-top:14px;display:none">Add <span id="cc-addn">0</span> cards to deck</button>
+        <div id="rc-grades" style="display:none">
+          <div class="grade-row">
+            <button class="g-again" data-g="0">Again<small>&lt;1 min</small></button>
+            <button class="g-hard" data-g="1">Hard<small id="lbl-hard"></small></button>
+            <button class="g-good" data-g="2">Good<small id="lbl-good"></small></button>
+            <button class="g-easy" data-g="3">Easy<small id="lbl-easy"></small></button>
           </div>
         </div>
       </div>
+      <div id="rc-done" class="card" style="display:none;text-align:center">
+        <h3>All caught up 🎉</h3>
+        <p class="sub" style="margin:6px 0 14px">No cards due in this deck right now. Spaced repetition will bring them back automatically.</p>
+        <button class="btn sec" id="rc-cram">Cram anyway (ignore schedule)</button>
+      </div>
+      <p class="sub" style="margin-top:16px;font-size:12.5px">Shortcuts: <kbd>space</kbd> flip · <kbd>1</kbd>–<kbd>4</kbd> grade</p>
     </section>
 
     <!-- POMODORO -->
@@ -374,9 +371,9 @@
           <div class="grid g3" style="margin-top:4px">
             <div><label class="fld">Focus (min)</label><input type="number" id="pt-work" value="30" min="10" max="1440"></div>
             <div><label class="fld">Break (min)</label><input type="number" id="pt-break" value="10" min="1" max="60"></div>
-            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="20" min="1" max="90"></div>
+            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="20" min="1" max="120"></div>
           </div>
-          <p class="sub" style="margin:8px 0 0;font-size:12px">Focus: 10 min–24 h · Break: 1–60 min · Long break: up to 1.5 h · break is always kept ≤ focus.</p>
+          <p class="sub" style="margin:8px 0 0;font-size:12px">Focus: 10 min–24 h · Break: 1–60 min · break is always kept ≤ focus.</p>
           <label class="switchrow" style="margin-top:14px"><input type="checkbox" id="pt-sound" checked> Play a chime when a phase ends</label>
           <div class="section-h">Why it works</div>
           <p style="color:var(--muted);font-size:13px;margin:0">Short, bounded sprints lower the activation cost of starting and protect attention from fatigue. Pair each focus block with one method — e.g. recall cards, or a Feynman write-up.</p>
@@ -417,7 +414,7 @@
     <!-- PRACTICE & TESTS -->
     <section class="page" id="page-practice">
       <h2 class="title">Practice & Tests</h2>
-      <p class="sub">Practice mode gives instant feedback per question. Test mode is timed and scored like the real thing.</p>
+      <p class="sub">Practice mode gives instant feedback per question. Test mode is timed and scored like the real thing. The Gauntlet pulls 5 brutal, exam-style word problems from a deep bank — and gives you extra stats when you finish.</p>
 
       <!-- chooser -->
       <div id="pr-home">
@@ -482,6 +479,7 @@
         <div class="card" style="text-align:center;margin-bottom:18px">
           <div class="n" id="pr-r-pct" style="font-size:46px;font-weight:700"></div>
           <div class="l" style="color:var(--muted)" id="pr-r-line"></div>
+          <div id="pr-r-extra" style="margin-top:14px"></div>
           <div id="pr-r-weak" style="margin-top:14px"></div>
           <div class="row" style="justify-content:center;margin-top:14px">
             <button class="btn" id="pr-r-retry">Retake</button>
@@ -590,22 +588,8 @@
         </div>
       </div>
       <div id="sc-result" style="margin-top:22px;display:none">
-        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Click ✕ to remove a block, or "+ block" in any cell.</span></div>
+        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Drag not needed — click ✕ to remove, or "Add block" in any cell.</span></div>
         <div style="overflow-x:auto;margin-top:12px"><table class="sched-table" id="sc-table"></table></div>
-        <div class="card" style="margin-top:16px;border-left:4px solid var(--accent2)">
-          <div class="between">
-            <div><strong>Add to Google Calendar</strong><div class="sub" style="margin:4px 0 0">Download your week as a calendar file — each block becomes a weekly repeating event.</div></div>
-            <button class="btn sm" id="sc-ics">Download .ics</button>
-          </div>
-          <details style="margin-top:12px"><summary>How to import into Google Calendar</summary>
-            <ol style="color:var(--muted);font-size:13px;line-height:1.8">
-              <li>Click <strong>Download .ics</strong> above to save the file.</li>
-              <li>Open <a href="https://calendar.google.com/calendar/u/0/r/settings/export" target="_blank" rel="noopener noreferrer">Google Calendar → Settings → Import &amp; export</a>.</li>
-              <li>Choose the .ics file, pick which calendar to add it to, and click <strong>Import</strong>.</li>
-              <li>Your study blocks appear as weekly recurring events. (Re-import after you tweak the schedule to refresh.)</li>
-            </ol>
-          </details>
-        </div>
       </div>
     </section>
 
@@ -1250,10 +1234,122 @@ const CHALLENGE_CARDS = {
   ],
 };
 
+/* ===== AP CHALLENGE BANK — a large pool of incredibly hard, AP-exam-styled questions. =====
+   Each AP Challenge test pulls 5 questions at random from this bank for the chosen subject.
+   format: [question, [choices], correctIndex, explanation, topic] */
+const AP_QUESTIONS = {
+  alg:[
+    ["A roller-coaster's track height (in meters) along its run is modeled by h(x) = 2x³ − 3x² − 12x + 5, where x is the horizontal position. The designers need the position where the track reaches a local maximum (a crest). At which x does that local maximum occur?",["x = −1","x = 2","x = 0","x = 1"],0,"h'(x) = 6x² − 6x − 12 = 6(x−2)(x+1). The curve rises, then falls, then rises, so the local max is at the smaller critical value, x = −1.","Calculus / extrema"],
+    ["Two bacterial cultures are being compared. After x hours, culture A contains 3^(2x) cells and culture B contains 7^(x+1) cells. A lab tech wants to know the time x at which the two populations are exactly equal. Solve for x.",["≈ 7.74","≈ 1.21","≈ 3.50","≈ 0.41"],0,"Set 3^(2x) = 7^(x+1): 2x·ln3 = (x+1)·ln7 → x(2ln3 − ln7) = ln7 → x = ln7/(2ln3 − ln7) ≈ 7.74.","Exponential equations"],
+    ["An electrical engineer analyzing an AC circuit reduces it to the equation x² + bx + c = 0, where b and c are real numbers. Testing reveals that 2 + i is one of the roots. What must (b, c) be?",["(−4, 5)","(4, 5)","(−4, 3)","(4, −5)"],0,"Real coefficients force the conjugate 2 − i to also be a root. Sum of roots = 4 = −b → b = −4; product = (2+i)(2−i) = 5 = c.","Complex roots"],
+    ["A company's quarterly profit (in thousands of dollars) is modeled by P(x) = x⁴ − 3x² + 2x − 5. To check the model at a value, an analyst divides P(x) by (x − 2). Using the Remainder Theorem, what remainder results?",["3","−5","7","0"],0,"By the Remainder Theorem the remainder is P(2) = 16 − 12 + 4 − 5 = 3.","Polynomial division"],
+    ["While building a probability model, a statistics student must expand the binomial (2x − 1)⁵ and report the coefficient of the x³ term for the next step. What is that coefficient?",["80","−80","40","10"],0,"Term = C(5,3)(2x)³(−1)² = 10·8x³·1 = 80x³.","Binomial theorem"],
+    ["A ball is dropped and bounces forever. Its first arc covers 3 meters of horizontal travel, and each successive arc is 2/3 as long as the one before. What is the total horizontal distance, the sum of the infinite geometric series 3·(2/3)ⁿ from n = 0?",["9","6","4.5","∞"],0,"Geometric with a = 3, r = 2/3: S = a/(1−r) = 3/(1/3) = 9.","Infinite series"],
+    ["A measuring instrument converts an input x to an output using f(x) = (x + 1)/(x − 2). A technician reads an output of 3 and needs to recover the original input, i.e. f⁻¹(3). What is it?",["7/2","3","5/2","−1"],0,"Solve (x+1)/(x−2) = 3 → x + 1 = 3x − 6 → 2x = 7 → x = 7/2.","Inverse functions"],
+    ["The vertical displacement of an oscillating mass is governed by the equation 2sin²θ − sinθ − 1 = 0. Find every angle θ in the interval [0, 2π) that satisfies it.",["θ = π/2, 7π/6, 11π/6","θ = π/2 only","θ = π/6, 5π/6","θ = 0, π"],0,"Factor: (2sinθ + 1)(sinθ − 1) = 0 → sinθ = 1 (π/2) or sinθ = −1/2 (7π/6, 11π/6).","Trig equations"],
+    ["An engineer adjusts a single design parameter k so that the projectile equation kx² + 4x + 1 = 0 has exactly one real solution (the path just grazes the ground at one point). What value of k accomplishes this?",["k = 4","k = 2","k = 16","k = 1/4"],0,"One real solution means the discriminant is zero: 16 − 4k = 0 → k = 4.","Discriminant"],
+    ["A sample of a radioactive isotope decays according to N = N₀e^(−0.05t), where t is measured in years. A health physicist needs the half-life — the time for the amount to fall to half of N₀. Approximately how many years is that?",["≈ 13.9 years","≈ 20.0 years","≈ 6.9 years","≈ 3.5 years"],0,"Half-life t = ln2/0.05 = 0.693/0.05 ≈ 13.86 years.","Exponential decay"],
+    ["A chemist models a reactant's concentration with the rational function C(x) = (x² − 4)/(x² − x − 6). She needs the single x-value where the model has a vertical asymptote (where concentration blows up). At what x is it?",["x = 3","x = −2","x = 2","x = −3"],0,"Factor: (x−2)(x+2)/[(x−3)(x+2)]. The (x+2) cancels (a hole), leaving a vertical asymptote only at x = 3.","Rational functions"],
+    ["An acoustics formula relating two sound intensities reduces to log₂(x) − log₂(x − 3) = 2. Solve for x.",["x = 4","x = 3","x = 6","x = 12"],0,"Combine: log₂[x/(x−3)] = 2 → x/(x−3) = 4 → x = 4x − 12 → 3x = 12 → x = 4.","Logarithms"],
+    ["A signal-processing engineer determines that a system's monic characteristic polynomial has roots 1, 2i, and −2i. Which polynomial matches those roots?",["x³ − x² + 4x − 4","x³ + x² + 4x + 4","x³ − x² − 4x − 4","x³ − 4x² + x − 4"],0,"(x − 1)(x − 2i)(x + 2i) = (x − 1)(x² + 4) = x³ − x² + 4x − 4.","Polynomials & complex roots"],
+    ["A thermostat is designed to hold a control value x within tolerance, defined by the inequality |2x − 3| < 5. What is the full range of allowed values of x?",["−1 < x < 4","x < −1 or x > 4","1 < x < 4","−4 < x < 1"],0,"−5 < 2x − 3 < 5 → −2 < 2x < 8 → −1 < x < 4.","Absolute-value inequalities"],
+    ["A social-media post is shared 5 times in its first hour, and the number of shares doubles every hour after that (5, 10, 20, …). How many shares occur during the 12th hour — the 12th term of the sequence?",["10240","5120","20480","2048"],0,"aₙ = 5·2^(n−1), so a₁₂ = 5·2¹¹ = 5·2048 = 10240.","Geometric sequences"],
+    ["A scaling law in an experiment is written logₓ(8) = 3/2, where x is an unknown base. Determine the base x.",["4","2","6","16"],0,"x^(3/2) = 8 → x = 8^(2/3) = (8^(1/3))² = 2² = 4.","Logarithms"],
+    ["A business finds that its two break-even production levels are the roots of 2x² − 5x + 3 = 0. Without solving for each root, use Vieta's formulas to find the sum of the two break-even levels.",["5/2","3/2","−5/2","1"],0,"Sum of roots = −b/a = 5/2.","Vieta's formulas"],
+  ],
+  ela:[
+    ["At a graduation ceremony, the keynote speaker opens four sentences in a row with the identical phrase 'We will rise.' This deliberate repetition of words at the BEGINNING of successive clauses is called…",["Anaphora","Epistrophe","Chiasmus","Zeugma"],0,"Anaphora repeats words at the start of successive clauses; epistrophe repeats them at the end.","Rhetorical schemes"],
+    ["In an inaugural address, a president urges, 'Ask not what your country can do for you — ask what you can do for your country,' reversing the order of the key words across the two halves. This balanced reversal is…",["Antimetabole","Anaphora","Hyperbole","Synecdoche"],0,"Antimetabole (a form of chiasmus) reverses the order of repeated words across two clauses.","Rhetorical schemes"],
+    ["During a storm, a ship's captain bellows 'All hands on deck!', using the word 'hands' to mean the entire crew of sailors. Using a part to stand for the whole is the device of…",["Synecdoche","Metonymy","Personification","Litotes"],0,"Synecdoche uses a part ('hands') to represent the whole (the sailors).","Figurative language"],
+    ["A novelist writes that after the argument 'he lost his coat and his temper,' letting the single verb 'lost' govern two very different objects. This device is…",["Zeugma","Anaphora","Oxymoron","Allusion"],0,"Zeugma yokes two unlike objects to one verb that applies to each in a different sense.","Rhetorical devices"],
+    ["Reviewing a film, a critic calls the lead character 'not the friendliest person you'll ever meet,' making a point by negating its opposite rather than stating it directly. This ironic understatement is…",["Litotes","Hyperbole","Apostrophe","Paradox"],0,"Litotes affirms something by negating its contrary, creating understatement.","Rhetorical devices"],
+    ["A student scanning a line from a Shakespeare play counts five rhythmic feet, each an unstressed syllable followed by a stressed one. The meter of that line is…",["Iambic pentameter","Trochaic tetrameter","Dactylic hexameter","Anapestic trimeter"],0,"Five iambs (unstressed–stressed) per line is iambic pentameter.","Meter & prosody"],
+    ["In a poem about an empty house, the writer describes a 'deafening silence,' joining two words whose meanings flatly contradict each other. This figure of speech is an…",["Oxymoron","Hyperbole","Metonymy","Allusion"],0,"An oxymoron pairs two contradictory terms for effect.","Figurative language"],
+    ["In a televised debate, one candidate ignores his opponent's actual argument and instead spends his time attacking her character and motives. The logical fallacy he commits is…",["Ad hominem","Straw man","False dilemma","Begging the question"],0,"Ad hominem attacks the person rather than refuting the argument.","Logical fallacies"],
+    ["A newspaper editorial declares that 'the pen is mightier than the sword,' letting the word 'pen' stand in for the written word and persuasion. Substituting a closely associated object for the idea is…",["Metonymy","Synecdoche","Simile","Hyperbole"],0,"Metonymy replaces a concept with something closely associated with it ('pen' for writing).","Figurative language"],
+    ["A short novel about a barnyard of farm animals can be read on two levels at once: every animal and event also stands for a real political figure or moment in a revolution, sustained from start to finish. This kind of work is an…",["Allegory","Anecdote","Aphorism","Apostrophe"],0,"An allegory is an extended narrative whose elements consistently represent abstract or historical ideas.","Literary forms"],
+    ["During a debate, a speaker restates her opponent's careful, qualified position as a ridiculous extreme version, then easily knocks that version down. The fallacy she has used is the…",["Straw man fallacy","Red herring","Slippery slope","Ad populum"],0,"The straw-man fallacy distorts an opponent's view, then refutes the distortion.","Logical fallacies"],
+    ["A campaign advertisement ends three consecutive sentences with the very same phrase, '…for the people.' Repeating words at the END of successive clauses is the device of…",["Epistrophe","Anaphora","Assonance","Caesura"],0,"Epistrophe (epiphora) repeats the same words at the end of successive clauses.","Rhetorical schemes"],
+    ["In an elegy, the grieving poet cries out, 'O Death, where is thy sting?', directly addressing an abstraction as though it could hear and answer. This device is…",["Apostrophe","Allusion","Anaphora","Analogy"],0,"Apostrophe directly addresses an absent person or an abstraction as if present.","Rhetorical devices"],
+    ["A self-help essayist builds her whole argument around the claim that 'less is more' — a statement that at first sounds self-contradictory yet, on reflection, reveals a genuine truth. This is a…",["Paradox","Pun","Hyperbole","Cliché"],0,"A paradox is a seemingly self-contradictory statement that contains an underlying truth.","Literary devices"],
+    ["Reading a poem aloud in class, a student notices a strong, deliberate pause built into the middle of a line, breaking its rhythm before it continues. This mid-line break is best called a…",["Caesura","Enjambment","Anaphora","Volta"],0,"A caesura is a deliberate pause within a line of verse.","Poetic structure"],
+    ["In a memorial speech, the orator balances the line 'To err is human; to forgive, divine,' setting two contrasting ideas against each other in mirrored, parallel phrasing. This device is…",["Antithesis","Anaphora","Hyperbole","Synecdoche"],0,"Antithesis places contrasting ideas in balanced, parallel grammatical structure.","Rhetorical schemes"],
+  ],
+  sci:[
+    ["In a lab, a 2 kg block is placed on a frictionless ramp that makes a 30° angle with the horizontal and then released from rest. Taking g = 9.8 m/s², what is the magnitude of the block's acceleration as it slides down the ramp?",["4.9 m/s²","9.8 m/s²","2.5 m/s²","5.7 m/s²"],0,"Along a frictionless incline, a = g·sinθ = 9.8 × sin30° = 9.8 × 0.5 = 4.9 m/s².","Dynamics on inclines"],
+    ["A student sets up an Atwood machine: two masses, 3 kg and 5 kg, hang from the ends of a light string draped over a frictionless pulley. When the system is released, what is the magnitude of its acceleration? (g = 9.8 m/s²)",["2.45 m/s²","4.9 m/s²","1.96 m/s²","9.8 m/s²"],0,"a = (m₂ − m₁)g/(m₁ + m₂) = (5−3)(9.8)/(5+3) = 19.6/8 = 2.45 m/s².","Atwood machine"],
+    ["A soccer ball is kicked from level ground with a speed of 20 m/s at an angle of 30° above the horizontal. Using g = 10 m/s² and ignoring air resistance, how long does the ball stay in the air before it lands?",["2 s","1 s","4 s","0.5 s"],0,"Time of flight t = 2v·sinθ/g = 2·20·sin30°/10 = 2·20·0.5/10 = 2 s.","Projectile motion"],
+    ["On a frictionless air track, a 2 kg cart moving at 3 m/s slams into a stationary 1 kg cart, and the two stick together and move off as one. What is the speed of the combined carts immediately after the collision?",["2 m/s","1.5 m/s","3 m/s","1 m/s"],0,"Conserve momentum: (2·3 + 1·0)/(2 + 1) = 6/3 = 2 m/s.","Inelastic collisions"],
+    ["A 0.5 kg ball is dropped from rest off a balcony 10 m above the ground. Ignoring air resistance and taking g = 10 m/s², about how fast is the ball moving just before it hits the ground?",["≈ 14.1 m/s","10 m/s","20 m/s","≈ 7.1 m/s"],0,"Energy conservation: v = √(2gh) = √(2·10·10) = √200 ≈ 14.1 m/s.","Energy conservation"],
+    ["A car drives around a flat circular test track of radius 5 m at a constant speed of 10 m/s. What is the magnitude of the car's centripetal acceleration?",["20 m/s²","2 m/s²","50 m/s²","5 m/s²"],0,"a_c = v²/r = 10²/5 = 100/5 = 20 m/s².","Circular motion"],
+    ["A biology student follows a glucose molecule through every stage of aerobic respiration and asks which stage produces the greatest quantity of ATP. Which stage is it?",["Oxidative phosphorylation","Glycolysis","The Krebs cycle","Fermentation"],0,"Oxidative phosphorylation (the electron transport chain plus chemiosmosis) yields by far the most ATP.","Cellular respiration"],
+    ["As a cell begins to copy its DNA, one specific enzyme must first unwind and separate the two strands of the double helix so they can be read. Which enzyme performs this unwinding?",["Helicase","DNA polymerase","Ligase","Primase"],0,"Helicase unwinds and separates the two parental DNA strands at the replication fork.","DNA replication"],
+    ["Two pea plants are crossed, and each parent is heterozygous for two genes that assort independently (genotype AaBb). What phenotypic ratio should the gardener expect among the offspring?",["9 : 3 : 3 : 1","3 : 1","1 : 1 : 1 : 1","9 : 7"],0,"A dihybrid cross of two AaBb parents gives the classic 9:3:3:1 phenotypic ratio.","Genetics"],
+    ["While studying how sex cells form, a student looks for the stage in which homologous chromosomes pair up as tetrads and physically exchange segments. During which phase does this crossing over take place?",["Prophase I of meiosis","Metaphase II","Mitotic anaphase","Interphase"],0,"Crossing over occurs in prophase I, when homologous chromosomes pair as tetrads.","Meiosis"],
+    ["A pharmacology lab tests a drug that binds directly to an enzyme's active site, competing with the normal substrate. The data show the apparent Km increases while Vmax stays the same. This molecule is best described as a…",["Competitive inhibitor that raises apparent Km","Noncompetitive inhibitor that lowers Vmax","Permanent allosteric activator","Denaturing agent"],0,"A competitive inhibitor competes for the active site, raising apparent Km while leaving Vmax unchanged.","Enzyme kinetics"],
+    ["Inside a chloroplast, the first stage of photosynthesis takes place in the thylakoid membrane and supplies the energy carriers that the Calvin cycle then uses. What two products do these light-dependent reactions generate?",["ATP and NADPH","Glucose and O₂ only","CO₂ and water","Pyruvate"],0,"The light-dependent reactions produce ATP and NADPH (and release O₂), powering the Calvin cycle.","Photosynthesis"],
+    ["In a large population that is in Hardy–Weinberg equilibrium, exactly 16% of individuals display the recessive phenotype, so q² = 0.16. What fraction of the population is heterozygous (2pq)?",["0.48","0.16","0.36","0.24"],0,"q = √0.16 = 0.4, so p = 0.6 and 2pq = 2(0.6)(0.4) = 0.48.","Hardy–Weinberg"],
+    ["A buoy floating at sea bobs up and down as water waves pass beneath it. The waves have a frequency of 50 Hz and a wavelength of 4 m. What is the speed of the waves?",["200 m/s","12.5 m/s","54 m/s","0.08 m/s"],0,"Wave speed v = fλ = 50 × 4 = 200 m/s.","Waves"],
+    ["Two satellites orbiting Earth exert a gravitational pull on each other. If a maneuver doubles the distance between them, by what factor does the gravitational force between them change?",["1/4","1/2","2","4"],0,"Gravitational force varies as 1/r², so doubling r multiplies the force by 1/2² = 1/4.","Gravitation"],
+    ["A 1000 kg car traveling at 20 m/s slams on its brakes and comes to a complete stop. Using the work–energy theorem, how much work do the brakes do on the car?",["−2.0 × 10⁵ J","−4.0 × 10⁵ J","−1.0 × 10⁵ J","−2.0 × 10⁴ J"],0,"Work = ΔKE = 0 − ½(1000)(20²) = −200,000 J = −2.0 × 10⁵ J.","Work–energy theorem"],
+  ],
+  spa:[
+    ["Tu mejor amigo está organizando una fiesta y tú de verdad deseas que él te acompañe. Completa la oración correctamente: 'Quiero que tú ___ (venir) a la fiesta conmigo.'",["vengas","vienes","vendrás","viniste"],0,"Después de una expresión de deseo ('quiero que') se usa el presente de subjuntivo: vengas.","Present subjunctive"],
+    ["Sueñas con ayudar a un amigo a estudiar, pero en realidad no tienes ni un minuto libre. Completa esta oración hipotética contraria a la realidad: 'Si yo ___ más tiempo, te ayudaría.'",["tuviera","tengo","tendré","tenga"],0,"Una cláusula 'si' contraria a la realidad con resultado en condicional pide el imperfecto de subjuntivo: tuviera.","Si clauses"],
+    ["Estás esperando en el aeropuerto y crees que tus amigos probablemente ya aterrizaron, aunque no lo has confirmado. Completa: 'Espero que ellos ya ___ llegado.'",["hayan","han","habrán","hubieran"],0,"La esperanza sobre una acción ya completada usa el pretérito perfecto de subjuntivo: hayan llegado.","Perfect subjunctive"],
+    ["Le pides a tu hermana que, en cuanto regrese a casa más tarde esta noche, te avise. Completa: 'Cuando ___ a casa esta noche, llámame.'",["llegues","llegas","llegaste","llegarás"],0,"Una acción futura todavía pendiente después de 'cuando' lleva el subjuntivo: llegues.","Subjunctive w/ conjunctions"],
+    ["Un compañero te pregunta por qué estudias tantas horas, y tú le explicas tu meta de llegar a ser médico. Completa: 'Estudio mucho ___ ser médico.'",["para","por","a","de"],0,"Para expresar propósito o meta ('con el fin de') se usa para.","Por vs para"],
+    ["Durante una discusión, tu rival insiste en algo, pero tú no estás nada convencido de que él tenga la razón. Completa: 'Dudo que él ___ razón.'",["tenga","tiene","tendrá","tuvo"],0,"La duda exige el subjuntivo: dudo que él tenga razón.","Subjunctive of doubt"],
+    ["En la clase de literatura comentan quién creó cierta novela famosa. Completa la oración en voz pasiva: 'Cien años de soledad ___ por Gabriel García Márquez.'",["fue escrito","fue escrita","estuvo escrito","es escribido"],0,"Voz pasiva con ser + participio que concuerda con el sujeto masculino ('el libro'): fue escrito.","Passive voice"],
+    ["Mañana hay un partido importante y tú realmente quieres que haga buen clima. Completa expresando ese deseo: 'Ojalá que mañana ___ buen tiempo.'",["haga","hace","hará","hizo"],0,"'Ojalá que' siempre va seguido del subjuntivo: haga buen tiempo.","Subjunctive w/ ojalá"],
+    ["Cuentas que, anoche, cerraron la puerta justo antes de que los invitados se fueran. Completa: 'Cerramos la puerta antes de que ellos ___ (salir).'",["salieran","salían","salieron","salen"],0,"'Antes de que' siempre pide subjuntivo; en contexto pasado, el imperfecto de subjuntivo: salieran.","Adverbial subjunctive"],
+    ["Recuerdas que ayer le exigiste a tu amigo que fuera honesto contigo. Completa: 'Le pedí que me ___ la verdad.'",["dijera","dijo","dice","diga"],0,"Una petición en el pasado activa el imperfecto de subjuntivo: que me dijera.","Sequence of tenses"],
+    ["Describes una escena del pasado: tú estabas en medio de la lectura cuando, de repente, ella entró. Completa: 'Mientras yo ___ (leer), ella entró.'",["leía","leí","leeré","lea"],0,"La acción de fondo en curso interrumpida por una acción puntual va en imperfecto: leía.","Preterite vs imperfect"],
+    ["Quieres entregarle el libro a María, pero esta vez reemplazando ambos objetos por pronombres. ¿Cómo se reescribe 'Doy el libro a María'?",["Se lo doy","Le lo doy","Lo le doy","Me lo doy"],0,"El objeto indirecto 'le' se convierte en 'se' delante del objeto directo 'lo': Se lo doy.","Double object pronouns"],
+    ["Tu hermano menor no ha terminado su tarea y tú le das una orden directa. ¿Cuál es el mandato afirmativo de 'hacer' para 'tú'?",["haz","hace","haga","hagas"],0,"'Hacer' tiene un mandato afirmativo irregular de tú: haz.","Commands"],
+    ["El plazo del proyecto se acabó y tú dudas que el equipo lo haya completado a tiempo. Completa: 'No creo que ellos ___ (haber) terminado.'",["hayan","han","habían","habrán"],0,"La creencia negada sobre una acción completada usa el pretérito perfecto de subjuntivo: hayan terminado.","Perfect subjunctive"],
+    ["Llevas exactamente dos horas estudiando español y todavía sigues haciéndolo en este momento. Completa: 'Hace dos horas que ___ español.'",["estudio","estudié","estudiaba","estudiaré"],0,"'Hace + tiempo + que + presente' expresa una acción que aún continúa: estudio.","Time expressions"],
+    ["Cuentas tu paseo de ayer: ustedes atravesaron el parque caminando de un lado al otro. Completa: 'Caminamos ___ el parque.'",["por","para","a","en"],0,"El movimiento a través de un lugar usa por: por el parque.","Por vs para"],
+  ],
+  his:[
+    ["A student examines an 1803 Supreme Court ruling in which the Court, for the first time, declared an act of Congress unconstitutional and refused to enforce it. This landmark case (Marbury v. Madison) established which principle?",["Judicial review","Popular sovereignty","Implied powers","Dual federalism"],0,"Marbury v. Madison established judicial review — the courts' power to strike down unconstitutional laws.","Judicial review"],
+    ["A merchant in the 1700s explains that the colonies exist mainly to ship raw materials to the mother country and to buy back its finished goods, all to enrich the home nation. This economic theory is known as…",["Mercantilism","Laissez-faire","Capitalism","Physiocracy"],0,"Mercantilism treated colonies as suppliers of raw materials and captive markets for the mother country.","Colonial economy"],
+    ["In 1798–99, Jefferson and Madison secretly authored resolutions in Virginia and Kentucky arguing that the states themselves could judge a federal law unconstitutional and refuse to follow it. These resolutions advanced the doctrine of…",["States' rights / nullification","Judicial review","Manifest Destiny","Popular sovereignty"],0,"They argued states could nullify federal laws they judged unconstitutional — the states'-rights/nullification doctrine.","Early republic"],
+    ["An 1820 agreement admitted Missouri as a slave state but drew a line across the rest of the Louisiana Territory, banning slavery north of one specific line of latitude. What was that latitude?",["36°30′","40°","49°","32°"],0,"The Missouri Compromise barred slavery north of latitude 36°30′ (except in Missouri itself).","Sectionalism"],
+    ["In an 1819 case over whether a state could tax the national bank, the Supreme Court ruled that Congress possessed implied powers and that no state could tax a federal institution. McCulloch v. Maryland thereby affirmed…",["Implied powers and federal supremacy","Judicial review","Nullification","Strict construction"],0,"McCulloch v. Maryland upheld implied powers and federal supremacy over the states.","Federalism"],
+    ["After delegates from New England met in 1814–15 and openly floated the idea of secession during the War of 1812, the resulting backlash destroyed one political party. Which party collapsed in the aftermath?",["The Federalist Party","The Democratic-Republicans","The Whigs","The Know-Nothings"],0,"The Hartford Convention discredited the Federalist Party, hastening its demise.","First party system"],
+    ["In the deadlocked election of 1824, the House of Representatives chose John Quincy Adams as president, and he promptly named as Secretary of State the very man whose support had handed him the win. Who was that man?",["Henry Clay","Andrew Jackson","John C. Calhoun","Martin Van Buren"],0,"Critics called it the 'Corrupt Bargain': Clay backed Adams and was then made Secretary of State.","Jacksonian era"],
+    ["During the Mexican-American War, a congressman introduced a measure aimed at any land the U.S. might win from Mexico. What did this proposal — the Wilmot Proviso — seek to do?",["Ban slavery in any territory gained from Mexico","Annex all of Texas","Repeal the Missouri Compromise","Admit California as a slave state"],0,"The Wilmot Proviso sought to prohibit slavery in any territory acquired from Mexico.","Sectionalism & slavery"],
+    ["In an 1857 decision, the Supreme Court declared that an enslaved man who had lived in free territory was not a citizen and could not sue, and that Congress had no power to ban slavery in the territories. The Dred Scott decision thus ruled that…",["Enslaved people were not citizens and Congress could not bar slavery in territories","Slavery was unconstitutional","Popular sovereignty was illegal","States could secede"],0,"Dred Scott denied Black citizenship and struck down congressional limits on slavery in the territories.","Road to Civil War"],
+    ["An 1854 law organizing two new territories let the settlers there vote for themselves on whether to permit slavery, in effect repealing an earlier compromise line. The Kansas-Nebraska Act introduced which principle?",["Popular sovereignty","Nullification","Judicial review","Free soil"],0,"The Kansas-Nebraska Act let territorial settlers decide on slavery by popular sovereignty.","Sectionalism"],
+    ["A civics teacher lists three central guarantees of one Reconstruction-era amendment: citizenship for all born in the U.S., due process of law, and one more clause requiring states to treat people equally. What is that third clause of the Fourteenth Amendment?",["Equal protection","Free exercise","Just compensation","Double jeopardy"],0,"The 14th Amendment guarantees citizenship, due process, and equal protection of the laws.","Reconstruction amendments"],
+    ["After the Civil War, many freedpeople and poor whites in the South farmed land they did not own, borrowing supplies on credit against future crops and seldom earning enough to escape what they owed. This crop-lien and sharecropping system mainly produced…",["Cycles of debt for freedpeople and poor whites","Rapid industrialization","Widespread land ownership","Free public universities"],0,"Sharecropping and the crop-lien system trapped tenants in chronic, inescapable debt.","Reconstruction"],
+    ["To settle the bitterly disputed 1876 presidential election, leaders struck a bargain that, among other things, pulled the last federal troops out of the South. This Compromise of 1877 effectively ended Reconstruction by…",["Withdrawing federal troops from the South","Granting Black suffrage","Impeaching the president","Passing the 15th Amendment"],0,"The Compromise of 1877 removed federal troops from the South, ending Reconstruction.","End of Reconstruction"],
+    ["In a famous essay, James Madison argues that the larger and more diverse a republic is, the better it can guard against one persistent danger to good government. According to Federalist No. 10, a large republic best…",["Controls the effects of faction","Prevents judicial review","Guarantees direct democracy","Eliminates political parties"],0,"In Federalist No. 10, Madison contends that a large, diverse republic best controls the effects of faction.","Founding documents"],
+    ["Throughout the mid-1800s, politicians and settlers invoked an almost religious belief that the United States was destined to spread across the entire continent. This doctrine of Manifest Destiny was most directly used to justify…",["Westward territorial expansion","Abolition of slavery","Industrial tariffs","Naval blockades"],0,"Manifest Destiny framed continental westward expansion as a providential, inevitable mission.","Westward expansion"],
+    ["At the 1787 Constitutional Convention, Northern and Southern delegates clashed bitterly over how enslaved people would be counted, finally settling on a fraction used for both House seats and direct taxes. The Three-Fifths Compromise determined…",["How enslaved persons counted toward representation and taxation","The number of Supreme Court justices","The terms of senators","The date slavery would end"],0,"Each enslaved person counted as three-fifths of a person for both representation and direct taxation.","Constitutional Convention"],
+  ],
+};
+
 /* ===== DIFFICULTY UNLOCK ===== */
 const MASTERY=90; // score needed on a subject's test to unlock its challenge content
 function isMastered(subj){return (DB.tests[subj]||0)>=MASTERY;}
 function allMastered(){return SUBJECTS.every(s=>isMastered(s.id));}
+/* ===== AP CHALLENGE UNLOCK =====
+   The AP Challenge is locked just like Challenge mode, but it demands perfection:
+   100% on BOTH the subject's practice test (DB.tests) AND its Challenge (DB.challengeBest). */
+const AP_UNLOCK=100;
+function testPerfect(subj){return (DB.tests[subj]||0)>=AP_UNLOCK;}
+function challengePerfect(subj){return (DB.challengeBest[subj]||0)>=AP_UNLOCK;}
+function apUnlocked(subj){return testPerfect(subj)&&challengePerfect(subj);}
+// Announce a freshly-earned AP unlock exactly once.
+function maybeUnlockAP(subj){
+  if(!DB.apAnnounced)DB.apAnnounced={};
+  if(apUnlocked(subj)&&!DB.apAnnounced[subj]){
+    DB.apAnnounced[subj]=1;save();
+    setTimeout(()=>toast(`⚔️ Gauntlet unlocked for ${subjById(subj).name}! Perfect on both the test and Challenge.`),700);
+  }
+}
 // Add a mastered subject's harder flashcards into the deck (once), so spaced repetition includes them.
 function syncChallengeCards(){
   const have=new Set(DB.cards.map(c=>c.subj+'||'+c.front));
@@ -1302,6 +1398,9 @@ const SEED_VERSION=2;
 if((DB.seedVersion||0)<SEED_VERSION){syncSeedCards();DB.seedVersion=SEED_VERSION;save();}
 if(!DB.tests)DB.tests={}; // best practice-test score per subject
 if(!DB.history)DB.history=[]; // every completed practice-test attempt
+if(!DB.apTests)DB.apTests={}; // best AP Challenge score per subject
+if(!DB.challengeBest)DB.challengeBest={}; // best Challenge-mode score per subject (needed, at 100%, to unlock AP)
+if(!DB.apAnnounced)DB.apAnnounced={}; // subjects whose AP unlock has already been announced
 syncChallengeCards(); // add harder flashcards for any already-mastered subjects
 
 // streak update
@@ -1326,7 +1425,8 @@ function go(p){
   if(p==='dashboard')renderDash();
   if(p==='subjects')renderSubjects();
   if(p==='resources')renderResources();
-  if(p==='recall')openFlashcards();
+  if(p==='create')renderCreate();
+  if(p==='recall')startRecall();
   if(p==='pomodoro')initPom();
   if(p==='feynman')renderFeynman();
   if(p==='practice')renderPractice();
@@ -1422,22 +1522,6 @@ let rcQueue=[],rcIdx=0,rcFlipped=false,rcCram=false;
 function fillSubjSelect(el,all=true){
   el.innerHTML=(all?'<option value="">All subjects</option>':'')+SUBJECTS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
 }
-// Flashcards page has two sub-tabs: Review and Create / Import.
-function openFlashcards(){
-  const tabs=document.getElementById('fc-tabs');
-  if(!tabs.dataset.init){
-    tabs.dataset.init=1;
-    tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>showFcTab(b.dataset.fc));
-  }
-  showFcTab('review');
-}
-function showFcTab(which){
-  document.querySelectorAll('#fc-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.fc===which));
-  document.getElementById('fc-pane-review').style.display = which==='review'?'block':'none';
-  document.getElementById('fc-pane-create').style.display = which==='create'?'block':'none';
-  if(which==='review')startRecall();
-  else renderCreate();
-}
 function startRecall(){
   const sel=document.getElementById('rc-subject');
   if(!sel.dataset.init){fillSubjSelect(sel);sel.dataset.init=1;sel.onchange=()=>{rcCram=false;buildQueue();};}
@@ -1508,9 +1592,7 @@ document.querySelectorAll('#rc-grades [data-g]').forEach(b=>b.onclick=()=>grade(
 document.getElementById('rc-cram').onclick=()=>{rcCram=true;buildQueue();};
 document.addEventListener('keydown',e=>{
   if(!document.getElementById('page-recall').classList.contains('active'))return;
-  if(document.getElementById('fc-pane-review').style.display==='none')return; // not on Review sub-tab
   if(document.querySelector('.modal-bg.show'))return;
-  if(/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||'')))return; // don't hijack typing
   if(e.code==='Space'){e.preventDefault();flip();}
   if(rcFlipped&&['1','2','3','4'].includes(e.key))grade(+e.key-1);
 });
@@ -1522,33 +1604,16 @@ function initPom(){
   const sel=document.getElementById('pt-subj');
   if(!sel.dataset.init){
     fillSubjSelect(sel);sel.dataset.init=1;
-    // enforce the limits as the student types (live cap), and fully on blur/change
-    ['pt-work','pt-break','pt-long'].forEach(id=>{
-      const el=document.getElementById(id);
-      el.addEventListener('input',capMaxLive);            // stop values going over the max as they type
-      el.addEventListener('change',()=>clampPomInputs(true));
-      el.addEventListener('blur',()=>clampPomInputs(true));
-    });
+    // enforce the limits whenever the student edits a field
+    ['pt-work','pt-break','pt-long'].forEach(id=>document.getElementById(id).addEventListener('change',clampPomInputs));
   }
   document.getElementById('pt-doneToday').textContent=(DB.pomToday.date===dstr()?DB.pomToday.count:0);
   renderPom();
 }
-const POM_LIMITS={work:[10,1440],brk:[1,60],long:[1,90]}; // long break max = 1.5 h
-// Empty/NaN → default; any number (including 0) is clamped into [lo,hi], so 0 → the minimum.
-function clampN(raw,[lo,hi],dflt){
-  if(raw===''||raw==null)return dflt;
-  let v=Math.round(+raw);
-  if(!isFinite(v))return dflt;
-  return Math.min(hi,Math.max(lo,v));
-}
-// While typing, never let a field exceed its max (prevents e.g. 300-min break sitting in the box).
-function capMaxLive(e){
-  const el=e.target;const lim=el.id==='pt-work'?POM_LIMITS.work:el.id==='pt-break'?POM_LIMITS.brk:POM_LIMITS.long;
-  if(el.value!==''&&+el.value>lim[1])el.value=lim[1];
-}
-// Full enforcement: focus 10–1440, break 1–60, long 1–90, and break/long can never exceed focus.
-// syncIdle: if the timer isn't running and we're on Focus, update the displayed countdown to the new focus length.
-function clampPomInputs(syncIdle){
+const POM_LIMITS={work:[10,1440],brk:[1,60],long:[1,120]};
+function clampN(v,[lo,hi],dflt){v=Math.round(+v);if(!isFinite(v)||!v)v=dflt;return Math.min(hi,Math.max(lo,v));}
+// Focus stays within 10–1440 min, break within 1–60 min, and break can never exceed focus.
+function clampPomInputs(){
   const wEl=document.getElementById('pt-work'),bEl=document.getElementById('pt-break'),lEl=document.getElementById('pt-long');
   let w=clampN(wEl.value,POM_LIMITS.work,30);
   let b=clampN(bEl.value,POM_LIMITS.brk,10);
@@ -1556,9 +1621,9 @@ function clampPomInputs(syncIdle){
   let note='';
   if(b>w){b=w;note='Break can’t be longer than focus — trimmed it to match.';} // study time cannot be less than break
   if(l>w){l=w;}
-  wEl.value=w;bEl.value=b;lEl.value=l;
+  if(String(w)!==wEl.value)wEl.value=w;
+  bEl.value=b;lEl.value=l;wEl.value=w;
   if(note)toast(note);
-  if(syncIdle && !pom.running && pom.phase==='Focus'){pom.total=pom.remaining=w*60;renderPom();}
   return {w,b,l};
 }
 function workMin(){return clampN(document.getElementById('pt-work').value,POM_LIMITS.work,30);}
@@ -1582,10 +1647,6 @@ function renderPom(){
 }
 document.getElementById('pt-start').onclick=function(){
   if(pom.running){pom.running=false;clearInterval(pom.timer);this.textContent='Start';return;}
-  clampPomInputs(false); // make sure typed values are valid before counting down
-  // if we're starting a fresh Focus block, lock in the (clamped) focus length
-  if(pom.phase==='Focus' && pom.remaining===pom.total && !pom.started){pom.total=pom.remaining=workMin()*60;}
-  pom.started=true;
   pom.running=true;this.textContent='Pause';
   pom.timer=setInterval(()=>{
     pom.remaining--;
@@ -1594,8 +1655,7 @@ document.getElementById('pt-start').onclick=function(){
   },1000);
 };
 document.getElementById('pt-reset').onclick=()=>{
-  clampPomInputs(false);
-  clearInterval(pom.timer);pom.running=false;pom.started=false;pom.phase='Focus';pom.total=pom.remaining=workMin()*60;pom.round=1;
+  clearInterval(pom.timer);pom.running=false;pom.phase='Focus';pom.total=pom.remaining=workMin()*60;pom.round=1;
   document.getElementById('pt-start').textContent='Start';renderPom();
 };
 document.getElementById('pt-skip').onclick=()=>{
@@ -1858,63 +1918,6 @@ function renderSchedule(grid){
     const time=prompt("Time label? e.g. 7:00 PM–7:50 PM","");
     grid[d].push({subj,time:time||''});DB.schedule={grid};save();renderSchedule(grid);
   });
-  document.getElementById('sc-ics').onclick=()=>exportICS(grid);
-}
-/* ---- Google Calendar export via .ics (weekly recurring events) ---- */
-const ICS_BYDAY={Mon:'MO',Tue:'TU',Wed:'WE',Thu:'TH',Fri:'FR',Sat:'SA',Sun:'SU'};
-const ICS_JSDAY={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:0};
-function parseClock(str){
-  // accepts "4:00 PM" / "16:00" / "4 PM"
-  if(!str)return null;
-  const m=str.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([AaPp][Mm])?$/);
-  if(!m)return null;
-  let h=+m[1],min=m[2]?+m[2]:0,ap=m[3]?m[3].toLowerCase():'';
-  if(ap==='pm'&&h<12)h+=12; if(ap==='am'&&h===12)h=0;
-  if(h>23||min>59)return null;
-  return {h,min};
-}
-function nextDateFor(dayName,h,min){
-  const target=ICS_JSDAY[dayName];const now=new Date();
-  const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,min,0);
-  let diff=(target-d.getDay()+7)%7;
-  if(diff===0 && d<=now)diff=7; // if today but time passed, start next week
-  d.setDate(d.getDate()+diff);
-  return d;
-}
-function icsStamp(d){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00';}
-function exportICS(grid){
-  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Study Buddy//Schedule//EN','CALSCALE:GREGORIAN'];
-  let count=0,skipped=0;
-  Object.keys(grid).forEach(day=>{
-    (grid[day]||[]).forEach((slot,i)=>{
-      const parts=(slot.time||'').split(/[–—-]/); // en/em dash or hyphen
-      const start=parseClock(parts[0]);
-      let end=parts[1]?parseClock(parts[1]):null;
-      if(!start){skipped++;return;}
-      const sd=nextDateFor(day,start.h,start.min);
-      let ed;
-      if(end){ed=nextDateFor(day,end.h,end.min); if(ed<=sd)ed=new Date(sd.getTime()+50*60000);}
-      else ed=new Date(sd.getTime()+50*60000); // default 50 min if no end time
-      const name=subjById(slot.subj)?subjById(slot.subj).name:slot.subj;
-      lines.push('BEGIN:VEVENT',
-        'UID:sb-'+day+'-'+i+'-'+Date.now()+'@studybuddy',
-        'DTSTAMP:'+icsStamp(new Date()),
-        'DTSTART:'+icsStamp(sd),
-        'DTEND:'+icsStamp(ed),
-        'RRULE:FREQ=WEEKLY;BYDAY='+ICS_BYDAY[day],
-        'SUMMARY:Study: '+name,
-        'DESCRIPTION:Study Buddy session',
-        'END:VEVENT');
-      count++;
-    });
-  });
-  lines.push('END:VCALENDAR');
-  if(!count){toast(skipped?"Couldn't read the time labels — use e.g. 4:00 PM–4:50 PM":"No blocks to export yet");return;}
-  const blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='study-buddy-schedule.ics';document.body.appendChild(a);a.click();a.remove();
-  URL.revokeObjectURL(url);
-  toast(`Exported ${count} weekly events${skipped?` (${skipped} skipped — unreadable time)`:''} ✓`);
 }
 
 /* ============================ SETTINGS ============================ */
@@ -1935,32 +1938,44 @@ const PR_LETTERS=['A','B','C','D','E'];
 function prShow(id){['pr-home','pr-practice','pr-setup','pr-test','pr-results'].forEach(x=>document.getElementById(x).style.display=(x===id?'block':'none'));}
 function renderPractice(){
   prShow('pr-home');
-  // banner: celebrate unlocked challenge content
+  // banner: celebrate unlocked challenge content + explain AP Challenge
   const masteredNames=SUBJECTS.filter(s=>isMastered(s.id)).map(s=>s.name);
   const banner=document.getElementById('pr-banner');
+  let bhtml='';
   if(allMastered()){
-    banner.innerHTML=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:18px"><strong>🏆 Challenge mode unlocked everywhere!</strong><div class="sub" style="margin:4px 0 0">You've scored 90%+ on every subject. Harder questions and tougher flashcards are now available across the board.</div></div>`;
+    bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong>🏆 Challenge mode unlocked everywhere!</strong><div class="sub" style="margin:4px 0 0">You've scored 90%+ on every subject. Harder questions and tougher flashcards are now available across the board.</div></div>`;
   } else if(masteredNames.length){
-    banner.innerHTML=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:18px"><strong>🔥 Challenge unlocked:</strong> ${masteredNames.join(', ')}<div class="sub" style="margin:4px 0 0">Score 90%+ on a subject's test to unlock its harder questions and flashcards.</div></div>`;
-  } else {
-    banner.innerHTML='';
+    bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong>🔥 Challenge unlocked:</strong> ${masteredNames.join(', ')}<div class="sub" style="margin:4px 0 0">Score 90%+ on a subject's test to unlock its harder questions and flashcards.</div></div>`;
   }
+  const apOpen=SUBJECTS.filter(s=>apUnlocked(s.id)).map(s=>s.name);
+  bhtml+=`<div class="card" style="border-left:4px solid var(--ap);margin-bottom:18px"><strong>⚔️ Gauntlet — ${apOpen.length?('unlocked: '+apOpen.join(', ')):'locked'}.</strong><div class="sub" style="margin:4px 0 0">Five brutal, exam-styled <strong>word problems</strong> drawn at random from a deep bank for each subject. <strong>To unlock a subject's Gauntlet you must score 100% on BOTH its practice test AND its Challenge.</strong> Once open, it's timed (10 min) and scored, with extra stats — timing, pace, and a per-topic accuracy breakdown — saved alongside your other tests in <strong>My Progress</strong>.</div></div>`;
+  banner.innerHTML=bhtml;
   const g=document.getElementById('pr-grid');
   g.innerHTML=SUBJECTS.map(s=>{
     const n=(QUESTIONS[s.id]||[]).length;
     const nt=(TEST_QUESTIONS[s.id]||[]).length;
+    const nap=(AP_QUESTIONS[s.id]||[]).length;
     const best=DB.tests[s.id];
+    const apBest=DB.apTests[s.id];
     const mastered=isMastered(s.id);
+    const apOK=apUnlocked(s.id);
+    const cBest=DB.challengeBest[s.id];
     const challengeBtn = mastered
       ? `<button class="btn sm" style="background:var(--warn)" data-mode="challenge" data-s="${s.id}">Challenge 🔥</button>`
       : `<span class="tag" title="Score 90%+ on this subject's test to unlock">🔒 Challenge</span>`;
+    // AP Challenge is locked until BOTH the practice test and the Challenge are scored 100%.
+    const apBtn = apOK
+      ? `<button class="btn sm ap" data-mode="ap" data-s="${s.id}">Gauntlet ⚔️</button>`
+      : `<span class="tag" title="Score 100% on BOTH this subject's practice test AND its Challenge to unlock the Gauntlet">🔒 Gauntlet</span>`;
+    const apGate = apOK ? '' : ` · <span class="sub" style="font-size:11px">Gauntlet needs 100% test ${testPerfect(s.id)?'✓':'✗'} &amp; 100% challenge ${challengePerfect(s.id)?'✓':'✗'}</span>`;
     return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
-      <h3>${s.name}${mastered?' <span class="tag" style="border-color:var(--warn);color:var(--warn)">mastered</span>':''}</h3>
-      <p>${n} practice + ${nt} test questions${best?` · best test <strong style="color:${col(s.id)}">${best}%</strong>`:''}</p>
+      <h3>${s.name}${mastered?' <span class="tag" style="border-color:var(--warn);color:var(--warn)">mastered</span>':''}${apOK?' <span class="ap-chip">Gauntlet unlocked</span>':''}</h3>
+      <p>${n} practice + ${nt} test + ${nap} Gauntlet questions${best?` · best test <strong style="color:${col(s.id)}">${best}%</strong>`:''}${apBest?` · <span class="ap-chip">Gauntlet best ${apBest}%</span>`:''}${apGate}</p>
       <div class="row" style="margin-top:12px">
         <button class="btn sm" data-mode="practice" data-s="${s.id}">Practice</button>
         <button class="btn sm sec" data-mode="test" data-s="${s.id}">Take test</button>
         ${challengeBtn}
+        ${apBtn}
       </div>
     </div>`;
   }).join('');
@@ -1968,6 +1983,7 @@ function renderPractice(){
     e.stopPropagation();
     if(b.dataset.mode==='practice')startPractice(b.dataset.s,false);
     else if(b.dataset.mode==='challenge')startPractice(b.dataset.s,true);
+    else if(b.dataset.mode==='ap')openAPTest(b.dataset.s);
     else openTestSetup(b.dataset.s);
   });
 }
@@ -2011,16 +2027,22 @@ function ppAnswer(idx){
 }
 document.getElementById('pr-p-next').onclick=()=>{
   if(pp.i+1>=pp.qs.length){
-    toast(`Practice done — ${pp.score}/${pp.qs.length} correct`);
+    // Challenge runs record a best score; a 100% here is one of the two keys to the AP Challenge.
+    if(pp.challenge){
+      const cpct=Math.round(pp.score/pp.qs.length*100);
+      if(!DB.challengeBest[pp.subj]||cpct>DB.challengeBest[pp.subj]){DB.challengeBest[pp.subj]=cpct;save();}
+      maybeUnlockAP(pp.subj);
+    }
+    toast(`${pp.challenge?'Challenge':'Practice'} done — ${pp.score}/${pp.qs.length} correct`);
     renderPractice();
   } else {pp.i++;ppRender();}
 };
 document.getElementById('pr-p-back').onclick=renderPractice;
 
-/* --- TEST MODE (timed + scored) --- */
-let tt={subj:null,qs:[],time:0,timer:null,remaining:0};
+/* --- TEST MODE (timed + scored). Also drives the AP Challenge via tt.ap. --- */
+let tt={subj:null,qs:[],time:0,timer:null,remaining:0,ap:false};
 function openTestSetup(subj){
-  tt.subj=subj;
+  tt.subj=subj; tt.ap=false;
   prShow('pr-setup');
   document.getElementById('pr-s-title').textContent=subjById(subj).name+' · Practice Test';
   const max=(TEST_QUESTIONS[subj]||[]).length;
@@ -2030,14 +2052,25 @@ function openTestSetup(subj){
 document.getElementById('pr-s-back').onclick=renderPractice;
 document.getElementById('pr-s-start').onclick=()=>{
   const n=+document.getElementById('pr-s-num').value;
+  tt.ap=false;
   tt.qs=shuffle((TEST_QUESTIONS[tt.subj]||[]).slice()).slice(0,n).map(q=>({q,picked:null}));
   tt.time=+document.getElementById('pr-s-time').value;
   startTest();
 };
+// AP Challenge: pull 5 random questions from the deep AP bank, fixed 10-minute timer,
+// then run through the exact same scoring/storage path as a normal test.
+function openAPTest(subj){
+  tt.subj=subj; tt.ap=true;
+  const bank=(AP_QUESTIONS[subj]||[]).slice();
+  tt.qs=shuffle(bank).slice(0,5).map(q=>({q,picked:null}));
+  tt.time=600; // 10-minute AP-styled limit
+  startTest();
+}
 function startTest(){
   prShow('pr-test');
-  document.getElementById('pr-t-title').textContent=subjById(tt.subj).name+' · Test';
-  document.getElementById('pr-t-count').textContent=tt.qs.length+' questions.';
+  tt.startTime=Date.now();
+  document.getElementById('pr-t-title').textContent=subjById(tt.subj).name+(tt.ap?' · Gauntlet ⚔️':' · Test');
+  document.getElementById('pr-t-count').textContent=tt.qs.length+(tt.ap?' Gauntlet-level questions.':' questions.');
   const wrap=document.getElementById('pr-t-questions');
   wrap.innerHTML=tt.qs.map((item,qi)=>`
     <div class="qblock" id="q-${qi}">
@@ -2069,31 +2102,79 @@ document.getElementById('pr-t-submit').onclick=()=>{
   if(unanswered>0 && !confirm(`${unanswered} question(s) still blank. Submit anyway?`))return;
   submitTest();
 };
+/* Gauntlet-only rich stats: timing, pace, attempt history, and per-topic accuracy. */
+function fmtSecs(s){const m=Math.floor(s/60);return (m?m+'m ':'')+(s%60)+'s';}
+function gauntletStats(timeUsed,prevBest){
+  const subj=tt.subj;
+  const hist=DB.history.filter(h=>h.ap&&h.subj===subj);
+  const attempts=hist.length;
+  const cur=hist[hist.length-1];
+  const best=Math.max(...hist.map(h=>h.pct));
+  const avg=Math.round(hist.reduce((a,h)=>a+h.pct,0)/attempts);
+  const perQ=timeUsed/cur.total;
+  // accuracy by topic for THIS attempt
+  const tstat={};
+  tt.qs.forEach(x=>{const tp=topicOf(subj,x.q);(tstat[tp]=tstat[tp]||{c:0,n:0});tstat[tp].n++;if(x.picked===x.q[2])tstat[tp].c++;});
+  const topicRows=Object.entries(tstat).map(([tp,o])=>{
+    const p=Math.round(o.c/o.n*100), cc=p>=70?'var(--accent2)':p>=40?'var(--warn)':'var(--bad)';
+    return `<div style="margin-bottom:7px"><div class="row between" style="margin-bottom:3px"><span style="font-size:12.5px">${esc(tp)}</span><span class="sub" style="margin:0;font-size:12px">${o.c}/${o.n} · ${p}%</span></div><div class="progress"><div style="width:${p}%;background:${cc}"></div></div></div>`;
+  }).join('');
+  const imp = attempts<2 ? null : (cur.pct - prevBest);
+  const impHtml = imp===null
+    ? `<div class="n" style="font-size:20px">—</div>`
+    : `<div class="n" style="font-size:20px;color:${imp>0?'var(--accent2)':imp<0?'var(--bad)':'var(--muted)'}">${imp>0?'+':''}${imp}%</div>`;
+  const pace = perQ<=45?'Fast ⚡':perQ<=90?'Steady':'Deliberate';
+  const blank=tt.qs.filter(x=>x.picked===null).length;
+  return `
+    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px;text-align:left">
+      <span class="ap-chip" style="display:inline-block;margin-bottom:10px">⚔️ Gauntlet stats</span>
+      <div class="grid g4" style="gap:10px;margin-bottom:12px">
+        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${fmtSecs(timeUsed)}</div><div class="l">Time used</div></div>
+        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${perQ.toFixed(1)}s</div><div class="l">Per question · ${pace}</div></div>
+        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${attempts}</div><div class="l">Gauntlets taken</div></div>
+        <div class="stat" style="padding:12px">${impHtml}<div class="l">vs previous best</div></div>
+      </div>
+      <div class="grid g4" style="gap:10px;margin-bottom:14px">
+        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px;color:${col(subj)}">${best}%</div><div class="l">Gauntlet best</div></div>
+        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${avg}%</div><div class="l">Gauntlet average</div></div>
+        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${cur.correct}/${cur.total}</div><div class="l">This attempt</div></div>
+        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${blank}</div><div class="l">Left blank</div></div>
+      </div>
+      <div class="sub" style="margin:0 0 8px;font-weight:600;color:var(--txt)">Accuracy by topic (this attempt)</div>
+      ${topicRows}
+    </div>`;
+}
 function submitTest(){
   clearInterval(tt.timer);
+  const apMode=tt.ap;
+  const prevApBest=DB.apTests[tt.subj]||0;
+  const timeUsed=tt.time>0?(tt.time-tt.remaining):Math.round((Date.now()-(tt.startTime||Date.now()))/1000);
   let correct=0;
   const missedTopics=[];
   tt.qs.forEach(x=>{if(x.picked===x.q[2])correct++;else missedTopics.push(topicOf(tt.subj,x.q));});
   const pct=Math.round(correct/tt.qs.length*100);
-  // save best + detect newly-unlocked challenge content
+  // save best + detect newly-unlocked challenge content (AP scores count just like a normal test)
   const wasMastered=isMastered(tt.subj);
   if(!DB.tests[tt.subj]||pct>DB.tests[tt.subj]){DB.tests[tt.subj]=pct;}
+  if(apMode && (!DB.apTests[tt.subj]||pct>DB.apTests[tt.subj])){DB.apTests[tt.subj]=pct;}
   const justMastered = !wasMastered && isMastered(tt.subj);
   if(justMastered){const added=syncChallengeCards();setTimeout(()=>toast(`🔥 Challenge unlocked for ${subjById(tt.subj).name}! ${added} harder flashcards added.`),600);}
-  // record this attempt in history (cap at 100 most recent)
-  DB.history.push({ts:Date.now(),subj:tt.subj,correct,total:tt.qs.length,pct,missed:missedTopics});
+  // record this attempt in history (cap at 100 most recent) — AP attempts are flagged but stored identically
+  DB.history.push({ts:Date.now(),subj:tt.subj,correct,total:tt.qs.length,pct,missed:missedTopics,ap:apMode,secs:timeUsed});
   if(DB.history.length>100)DB.history=DB.history.slice(-100);
   save();
+  maybeUnlockAP(tt.subj); // a perfect practice test may complete the AP unlock (if the Challenge is also 100%)
   prShow('pr-results');
   document.getElementById('pr-r-pct').textContent=pct+'%';
   const grade=pct>=90?'Excellent 🎉':pct>=80?'Great work':pct>=70?'Solid — keep going':pct>=60?'Passing, review the misses':'Keep practicing';
-  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · ${subjById(tt.subj).name} · ${grade}`;
+  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · ${subjById(tt.subj).name}${apMode?' · Gauntlet ⚔️':''} · ${grade}`;
   document.getElementById('pr-r-pct').style.color = pct>=70?'var(--accent2)':pct>=50?'var(--warn)':'var(--bad)';
   // weak-topic chips on the results card
   const uniqMissed=[...new Set(missedTopics)];
   document.getElementById('pr-r-weak').innerHTML = uniqMissed.length
     ? `<div class="sub" style="margin:0 0 6px">Topics to review:</div>`+uniqMissed.map(t=>`<span class="tag" style="margin:2px;border-color:var(--bad);color:var(--bad)">${esc(t)}</span>`).join(' ')
     : `<div class="sub" style="margin:0;color:var(--accent2)">Perfect — no weak topics this time! 🎯</div>`;
+  document.getElementById('pr-r-extra').innerHTML = apMode ? gauntletStats(timeUsed,prevApBest) : '';
   document.getElementById('pr-r-review').innerHTML=tt.qs.map((x,i)=>{
     const ok=x.picked===x.q[2];
     const your=x.picked===null?'<em>blank</em>':PR_LETTERS[x.picked]+'. '+esc(x.q[1][x.picked]);
@@ -2105,7 +2186,7 @@ function submitTest(){
     </div>`;
   }).join('');
 }
-document.getElementById('pr-r-retry').onclick=()=>openTestSetup(tt.subj);
+document.getElementById('pr-r-retry').onclick=()=>{ if(tt.ap)openAPTest(tt.subj); else openTestSetup(tt.subj); };
 document.getElementById('pr-r-back').onclick=renderPractice;
 document.getElementById('pr-r-progress').onclick=()=>go('progress');
 
@@ -2157,7 +2238,7 @@ function renderProgress(){
     const cls=t.pct>=70?'ok':'no';
     const miss=(t.missed&&t.missed.length)?[...new Set(t.missed)].map(x=>esc(x)).join(', '):'none';
     return `<div class="rev-q ${cls}">
-      <div class="row between"><strong>${subjById(t.subj).name}</strong><span style="font-weight:700;color:${t.pct>=70?'var(--accent2)':t.pct>=50?'var(--warn)':'var(--bad)'}">${t.pct}%</span></div>
+      <div class="row between"><strong>${subjById(t.subj).name}${t.ap?' <span class="ap-chip">Gauntlet</span>':''}</strong><span style="font-weight:700;color:${t.pct>=70?'var(--accent2)':t.pct>=50?'var(--warn)':'var(--bad)'}">${t.pct}%</span></div>
       <div class="sub" style="margin:4px 0 0">${t.correct}/${t.total} correct · ${fmtDate(t.ts)}</div>
       <div class="sub" style="margin:3px 0 0;font-size:12px">Missed topics: ${miss}</div>
     </div>`;
@@ -2182,7 +2263,7 @@ function coachFeedback(h,bySubj,weak,avg,trend){
     const top3=weak.slice(0,3).map(w=>w[0]);
     parts.push(`Focus your next study block on: <strong>${top3.join(', ')}</strong>. Make flashcards for these and use the Feynman page to explain each one in your own words.`);
   } else {
-    parts.push(`No recurring weak topics — try raising the difficulty by taking longer, full-length tests.`);
+    parts.push(`No recurring weak topics — try raising the difficulty with the <strong>Gauntlet ⚔️</strong> or longer, full-length tests.`);
   }
   return parts.map(p=>`<p style="margin:0 0 8px">${p}</p>`).join('');
 }
