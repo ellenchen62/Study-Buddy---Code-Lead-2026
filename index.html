@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Study Hub — Focus Mode</title>
+<title>Study Buddy — Focus Mode</title>
 <style>
   :root{
     --bg:#1a1d24; --bg2:#21252e; --panel:#272c37; --panel2:#2e3440;
@@ -162,7 +162,7 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="dot">◐</div>
-      <div><h1>Study Hub</h1><small>focus mode</small></div>
+      <div><h1>Study Buddy</h1><small>focus mode</small></div>
     </div>
     <button class="nav-btn active" data-page="dashboard"><span class="ic">▦</span><span class="lbl">Dashboard</span></button>
     <button class="nav-btn" data-page="subjects"><span class="ic">▤</span><span class="lbl">Subjects</span></button>
@@ -621,6 +621,19 @@ const QUESTIONS = {
     ["Expand (x + 2)².",["x² + 4","x² + 2x + 4","x² + 4x + 4","x² + 4x + 2"],2,"(x+2)² = x² + 2·2·x + 4 = x²+4x+4."],
     ["What is the domain of f(x) = √(x − 4)?",["x ≤ 4","x ≥ 4","x ≠ 4","all reals"],1,"The inside must be ≥ 0: x−4 ≥ 0 → x ≥ 4."],
     ["Simplify (x⁶)/(x²).",["x³","x⁴","x⁸","x¹²"],1,"Divide same base: subtract exponents → x^(6−2)=x⁴."],
+    ["Solve x² + 2x − 8 = 0.",["x = −4 or 2","x = 4 or −2","x = −8 or 1","x = 2 or 4"],0,"(x+4)(x−2)=0 → x = −4 or 2."],
+    ["Simplify √50.",["25√2","5√2","2√5","10√5"],1,"√50 = √(25·2) = 5√2."],
+    ["What is i²?",["1","−1","i","−i"],1,"By definition of the imaginary unit, i² = −1."],
+    ["Multiply (2x²)(3x³).",["5x⁵","6x⁶","6x⁵","5x⁶"],2,"Multiply coefficients (6), add exponents (x⁵)."],
+    ["Evaluate log₁₀(100).",["1","2","10","100"],1,"10² = 100, so the log is 2."],
+    ["Factor 2x² + 7x + 3.",["(2x+1)(x+3)","(2x+3)(x+1)","(x+1)(x+3)","(2x−1)(x−3)"],0,"(2x+1)(x+3) expands to 2x²+7x+3."],
+    ["Solve |x| = 5.",["x = 5","x = −5","x = 5 or −5","no solution"],2,"Absolute value gives both x = 5 and x = −5."],
+    ["The inverse of f(x) = x + 3 is…",["f⁻¹(x)=x+3","f⁻¹(x)=x−3","f⁻¹(x)=3x","f⁻¹(x)=−x+3"],1,"Swap and solve: y=x+3 → x=y−3, so f⁻¹(x)=x−3."],
+    ["What is the common difference of 2, 5, 8, 11, …?",["2","3","5","8"],1,"Each term increases by 3."],
+    ["Evaluate (1/2)⁻².",["1/4","−4","4","2"],2,"Negative exponent flips it: (1/2)⁻² = 2² = 4."],
+    ["The midpoint of (2, 4) and (6, 8) is…",["(4, 6)","(8, 12)","(2, 2)","(4, 12)"],0,"Average each coordinate: ((2+6)/2, (4+8)/2) = (4, 6)."],
+    ["The range of y = x² is…",["all reals","y ≤ 0","y ≥ 0","y > 0"],2,"A square is never negative, so y ≥ 0."],
+    ["A parabola y = ax² + bx + c opens downward when…",["a > 0","a < 0","a = 0","c < 0"],1,"A negative leading coefficient (a < 0) opens it downward."],
   ],
   ela:[
     ["What is a thesis statement?",["The first sentence of any paragraph","A specific, arguable claim the essay proves","A summary of the plot","A famous quotation"],1,"A thesis is the central, arguable claim your whole essay supports."],
@@ -635,6 +648,19 @@ const QUESTIONS = {
     ["Foreshadowing is when an author…",["Repeats a phrase","Hints at events to come","Describes the setting","Ends with a twist"],1,"Foreshadowing plants clues about what will happen later."],
     ["The 'connotation' of a word is its…",["Dictionary definition","Emotional or implied meaning","Number of syllables","Origin language"],1,"Connotation is the feeling/association; denotation is the literal definition."],
     ["A strong piece of textual evidence should be…",["Long and general","Specific and relevant to your claim","Your own opinion","From any book"],1,"Evidence must be specific and directly support the claim you're making."],
+    ["An antagonist is…",["The main hero","The character or force opposing the protagonist","The narrator","A minor background character"],1,"The antagonist works against the protagonist."],
+    ["Which is an example of hyperbole?",["She was a little tired.","I've told you a million times.","The cat sat down.","It was raining."],1,"Hyperbole is deliberate, obvious exaggeration."],
+    ["A narrator who uses 'I' is writing in…",["Third person","Second person","First person","Omniscient"],2,"'I' signals a first-person narrator."],
+    ["Alliteration is the repetition of…",["Vowel sounds","Initial consonant sounds","Whole words","Rhymes at line ends"],1,"Alliteration repeats initial consonant sounds, e.g. 'big brown bear'."],
+    ["A claim in an argument must be…",["A proven fact","Debatable","A question","A quotation"],1,"A claim is an arguable position, not an undisputed fact."],
+    ["The 'climax' of a plot is…",["The opening","The turning point of greatest tension","The resolution","The setting"],1,"The climax is the peak of conflict or tension."],
+    ["'Mood' refers to…",["The author's attitude","The feeling created in the reader","The plot order","The narrator's identity"],1,"Mood is the atmosphere the reader feels; tone is the author's attitude."],
+    ["Which transition best signals a contrast?",["Furthermore","However","Therefore","For example"],1,"'However' introduces a contrasting idea."],
+    ["An 'inference' is…",["A direct quote","A conclusion drawn from evidence and reasoning","A plot summary","The title"],1,"You infer by combining textual clues with your own reasoning."],
+    ["Symbolism is when an object…",["Is described in detail","Represents a larger idea","Is the protagonist","Rhymes"],1,"A symbol stands for something beyond its literal self."],
+    ["In MLA format, the list of sources at the end is called the…",["Bibliography","Works Cited","Index","Footnotes"],1,"MLA labels it the 'Works Cited' page."],
+    ["Which sentence has correct subject-verb agreement?",["The dogs runs fast.","She walk home.","The students were ready.","He go to school."],2,"Plural subject 'students' takes 'were'."],
+    ["'Imagery' appeals primarily to the reader's…",["Logic","Five senses","Memory of plot","Vocabulary size"],1,"Imagery uses sensory detail — sight, sound, smell, taste, touch."],
   ],
   sci:[
     ["Newton's second law is best written as…",["F = mv","F = ma","E = mc²","p = mv"],1,"Force = mass × acceleration (F = ma)."],
@@ -649,6 +675,19 @@ const QUESTIONS = {
     ["The main job of the cell membrane is to…",["Make energy","Control what enters and leaves the cell","Store DNA","Build proteins"],1,"The membrane is selectively permeable, regulating transport."],
     ["Natural selection means that…",["All organisms evolve equally","Traits that aid survival become more common","Animals choose their traits","Mutations never happen"],1,"Individuals better suited to their environment survive and reproduce more."],
     ["In a food chain, producers are usually…",["Carnivores","Decomposers","Plants","Herbivores"],2,"Producers (plants) make their own food via photosynthesis."],
+    ["Newton's third law states that…",["Energy is always conserved","For every action there is an equal and opposite reaction","Objects fall at the same rate","Force equals mass times acceleration"],1,"Third law: forces come in equal, opposite action–reaction pairs."],
+    ["The SI unit of energy is the…",["Newton","Joule","Watt","Ampere"],1,"Energy and work are measured in joules."],
+    ["Speed is calculated as…",["distance × time","distance ÷ time","time ÷ distance","mass × velocity"],1,"Speed = distance / time."],
+    ["Gravitational potential energy depends on…",["mass, gravity, and height","only speed","only mass","temperature"],0,"PE = mgh — mass, gravitational field strength, and height."],
+    ["Which is a vector quantity?",["Speed","Distance","Velocity","Time"],2,"Velocity has magnitude and direction; the others are scalars."],
+    ["Photosynthesis mainly occurs in the…",["Mitochondria","Nucleus","Chloroplast","Ribosome"],2,"Chloroplasts contain chlorophyll and carry out photosynthesis."],
+    ["The process that releases energy from glucose in cells is…",["Photosynthesis","Cellular respiration","Digestion","Diffusion"],1,"Cellular respiration breaks glucose down to make ATP."],
+    ["A genotype refers to an organism's…",["Physical traits","Genetic makeup","Cell type","Proteins"],1,"Genotype = the genes; phenotype = the physical traits."],
+    ["Which organelle contains the cell's DNA?",["Nucleus","Cytoplasm","Cell wall","Vacuole"],0,"The nucleus houses the cell's genetic material."],
+    ["The acceleration due to gravity near Earth's surface is about…",["1 m/s²","9.8 m/s²","100 m/s²","0 m/s²"],1,"Roughly 9.8 m/s² downward."],
+    ["Diffusion is the movement of molecules from…",["low to high concentration","high to low concentration","cell to cell only","cold to hot"],1,"Diffusion moves substances down the gradient: high → low."],
+    ["DNA's overall structure is a…",["Single strand","Double helix","Triangle","Flat sheet"],1,"Watson and Crick described DNA as a double helix."],
+    ["Work is done when…",["An object stays still","A force moves an object a distance","Mass increases","Temperature rises"],1,"Work = force × distance; it requires motion in the force's direction."],
   ],
   spa:[
     ["Conjugate 'hablar' for 'yo' (present tense).",["hablas","hablo","habla","hablan"],1,"-ar verbs: yo form ends in -o → hablo."],
@@ -663,6 +702,19 @@ const QUESTIONS = {
     ["The question word 'cuándo' means…",["where","when","how","why"],1,"Cuándo = when."],
     ["Translate 'I am from Spain.'",["Estoy de España","Soy de España","Tengo de España","Voy de España"],1,"Origin uses ser: Soy de España."],
     ["Which article is correct: '___ problema' (a masculine exception)?",["la","las","el","una"],2,"'Problema' is masculine despite the -a: el problema."],
+    ["Conjugate 'vivir' for 'nosotros'.",["vivimos","viven","vives","vivo"],0,"-ir verbs, nosotros form: vivimos."],
+    ["Translate 'the books' (masculine plural).",["la libro","los libros","las libros","el libros"],1,"Masculine plural article: los libros."],
+    ["Which means 'I like it' (one thing)?",["Me gustan","Me gusta","Te gusta","Yo gusto"],1,"'Me gusta' is used with a singular noun."],
+    ["The 'tú' present form of 'comer' is…",["como","comes","come","comen"],1,"-er verb, tú form: comes."],
+    ["Translate 'How are you?' (informal).",["¿Qué hora es?","¿Cómo estás?","¿Dónde estás?","¿Quién eres?"],1,"¿Cómo estás? = How are you?"],
+    ["What number is 'veinte'?",["12","15","20","30"],2,"Veinte = 20."],
+    ["Choose the correct word: 'Ella ___ alta.' (a description)",["es","está","tiene","va"],0,"A permanent description uses ser: ella es alta."],
+    ["The preterite 'yo' form of 'comer' is…",["como","comí","comía","comeré"],1,"-er/-ir preterite yo ends in -í: comí."],
+    ["Translate 'my house'.",["mi casa","tu casa","su casa","mis casa"],0,"'Mi' means my (singular): mi casa."],
+    ["Which is a reflexive verb form?",["lavar","me lavo","lava","lavando"],1,"'Me lavo' (I wash myself) uses a reflexive pronoun."],
+    ["'Hace frío' means…",["It's hot","It's cold","It's sunny","It's raining"],1,"Hace frío = it's cold."],
+    ["The plural of 'el profesor' is…",["los profesores","las profesoras","el profesores","los profesor"],0,"los profesores."],
+    ["Translate 'They are happy' (a feeling, right now).",["Ellos son felices","Ellos están contentos","Ellos tienen contentos","Ellos van contentos"],1,"A temporary feeling uses estar: están contentos."],
   ],
   his:[
     ["In what year was the Declaration of Independence adopted?",["1492","1776","1787","1812"],1,"The Declaration of Independence was adopted July 4, 1776."],
@@ -677,6 +729,19 @@ const QUESTIONS = {
     ["'No taxation without representation' was a rallying cry of the…",["British Parliament","American colonists","French monarchy","Confederacy"],1,"Colonists objected to being taxed without a voice in Parliament."],
     ["Who was the first President of the United States?",["Thomas Jefferson","John Adams","George Washington","James Madison"],2,"George Washington, inaugurated in 1789."],
     ["'Manifest Destiny' was the belief that the U.S. should…",["Abolish slavery","Expand across the continent","Stay neutral in wars","Join the British Empire"],1,"It held that the U.S. was destined to expand westward across North America."],
+    ["The Constitutional Convention was held in…",["1776","1787","1800","1812"],1,"The Constitution was drafted in 1787 in Philadelphia."],
+    ["The system of dividing government power among three branches is called…",["Federalism","Separation of powers","Manifest Destiny","Mercantilism"],1,"Separation of powers splits authority among legislative, executive, judicial."],
+    ["The Federalist Papers argued for…",["Ratifying the Constitution","Independence from Britain","Ending slavery","Westward expansion"],0,"They urged the states to ratify the new Constitution."],
+    ["The Missouri Compromise (1820) dealt with…",["Trade with France","The balance of free and slave states","Native American land","British taxes"],1,"It tried to keep the number of free and slave states balanced."],
+    ["Who led the Continental Army during the Revolution?",["Thomas Jefferson","George Washington","Alexander Hamilton","Paul Revere"],1,"Washington commanded the Continental Army."],
+    ["The Declaration of Independence drew heavily on the ideas of…",["Karl Marx","John Locke","Adam Smith","Napoleon"],1,"Locke's ideas on natural rights shaped Jefferson's writing."],
+    ["The Bill of Rights was ratified in…",["1776","1787","1791","1865"],2,"The first ten amendments were ratified in 1791."],
+    ["The Civil War took place from…",["1776–1783","1812–1815","1861–1865","1898–1902"],2,"The Civil War lasted from 1861 to 1865."],
+    ["The 13th Amendment…",["Gave women the vote","Abolished slavery","Created the income tax","Set presidential term limits"],1,"The 13th Amendment (1865) abolished slavery."],
+    ["The Underground Railroad was…",["An actual railroad","A secret network helping enslaved people escape","A trade route","A mining operation"],1,"It was a covert network of routes and safe houses aiding escapes to freedom."],
+    ["'Checks and balances' exist to…",["Speed up new laws","Keep any one branch from gaining too much power","Collect taxes","Expand territory"],1,"Each branch can limit the powers of the others."],
+    ["The Battle of Gettysburg (1863) was a turning point in the…",["Revolutionary War","War of 1812","Civil War","Mexican-American War"],2,"Gettysburg was a pivotal Union victory in the Civil War."],
+    ["The Three-Fifths Compromise concerned…",["Voting age","How enslaved people were counted for representation","Trade tariffs","State borders"],1,"It counted three-fifths of the enslaved population for representation and taxation."],
   ],
 };
 
