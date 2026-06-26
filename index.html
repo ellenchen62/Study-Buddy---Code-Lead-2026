@@ -171,6 +171,7 @@
     <button class="nav-btn" data-page="pomodoro"><span class="ic">◷</span><span class="lbl">Pomodoro</span></button>
     <button class="nav-btn" data-page="feynman"><span class="ic">✎</span><span class="lbl">Feynman</span></button>
     <button class="nav-btn" data-page="practice"><span class="ic">✓</span><span class="lbl">Practice & Tests</span></button>
+    <button class="nav-btn" data-page="progress"><span class="ic">▰</span><span class="lbl">My Progress</span></button>
     <button class="nav-btn" data-page="classroom"><span class="ic">◫</span><span class="lbl">Classroom</span></button>
     <button class="nav-btn" data-page="schedule"><span class="ic">◵</span><span class="lbl">Schedule</span></button>
     <button class="nav-btn" data-page="settings"><span class="ic">⚙</span><span class="lbl">Settings</span></button>
@@ -400,13 +401,54 @@
         <div class="card" style="text-align:center;margin-bottom:18px">
           <div class="n" id="pr-r-pct" style="font-size:46px;font-weight:700"></div>
           <div class="l" style="color:var(--muted)" id="pr-r-line"></div>
+          <div id="pr-r-weak" style="margin-top:14px"></div>
           <div class="row" style="justify-content:center;margin-top:14px">
             <button class="btn" id="pr-r-retry">Retake</button>
+            <button class="btn sec" id="pr-r-progress">View progress</button>
             <button class="btn sec" id="pr-r-back">Back to subjects</button>
           </div>
         </div>
         <div class="section-h">Review every question</div>
         <div id="pr-r-review"></div>
+      </div>
+    </section>
+
+    <!-- MY PROGRESS -->
+    <section class="page" id="page-progress">
+      <h2 class="title">My Progress</h2>
+      <p class="sub">Every practice test you take is recorded here, with feedback on what to study next.</p>
+      <div id="pg-empty" class="empty" style="display:none">No tests yet. Head to <strong>Practice &amp; Tests</strong>, take a test, and your results will show up here.</div>
+      <div id="pg-content" style="display:none">
+        <div class="grid g4" style="margin-bottom:18px">
+          <div class="stat"><div class="n" id="pg-taken">0</div><div class="l">Tests taken</div></div>
+          <div class="stat"><div class="n" id="pg-avg">0%</div><div class="l">Average score</div></div>
+          <div class="stat"><div class="n" id="pg-best">0%</div><div class="l">Best score</div></div>
+          <div class="stat"><div class="n" id="pg-trend">—</div><div class="l">Recent trend</div></div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+          <h3 style="margin:0 0 4px">Coach's feedback</h3>
+          <div id="pg-feedback" style="font-size:14px;line-height:1.6;color:var(--muted)"></div>
+        </div>
+
+        <div class="grid g2" style="align-items:start">
+          <div class="card">
+            <h3 style="margin:0 0 4px">Topics to work on</h3>
+            <p class="sub" style="margin:0 0 12px">Pulled from the questions you've missed — most-missed first.</p>
+            <div id="pg-weak"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin:0 0 4px">Strength by subject</h3>
+            <p class="sub" style="margin:0 0 12px">Average score across your tests in each subject.</p>
+            <div id="pg-subjects"></div>
+          </div>
+        </div>
+
+        <div class="between" style="margin-top:24px">
+          <h3 style="margin:0">Test history</h3>
+          <button class="btn ghost sm" id="pg-clear">Clear history</button>
+        </div>
+        <div id="pg-history" style="margin-top:12px"></div>
       </div>
     </section>
 
@@ -746,6 +788,16 @@ const QUESTIONS = {
   ],
 };
 
+/* topic tag for each question, in the SAME order as QUESTIONS above */
+const TOPICS = {
+  alg:["Factoring quadratics","Discriminant","Exponent rules","Logarithms","Quadratic graphs","Factoring quadratics","Functions","Exponential equations","Linear functions","Polynomial expansion","Domain & range","Exponent rules","Factoring quadratics","Radicals","Complex numbers","Exponent rules","Logarithms","Factoring quadratics","Absolute value","Inverse functions","Sequences","Exponent rules","Coordinate geometry","Domain & range","Quadratic graphs"],
+  ela:["Thesis statements","Figurative language","Figurative language","Paragraph structure","Rhetorical appeals","Theme","MLA citation","Tone & mood","Character","Literary devices","Diction","Using evidence","Character","Figurative language","Point of view","Literary devices","Argument writing","Plot structure","Tone & mood","Transitions","Reading comprehension","Literary devices","MLA citation","Grammar","Literary devices"],
+  sci:["Newton's laws","Energy","Units & measurement","Kinematics","Kinematics","Newton's laws","Cell organelles","Photosynthesis","DNA & genetics","Cell organelles","Evolution","Ecosystems","Newton's laws","Units & measurement","Kinematics","Energy","Kinematics","Photosynthesis","Cell processes","DNA & genetics","Cell organelles","Kinematics","Cell processes","DNA & genetics","Energy"],
+  spa:["Present tense","Ser vs estar","Present tense","Question words","Irregular verbs","Adjective agreement","Greetings & vocabulary","Preterite tense","Numbers","Question words","Ser vs estar","Articles & gender","Present tense","Articles & gender","Gustar (likes)","Present tense","Greetings & vocabulary","Numbers","Ser vs estar","Preterite tense","Possessives","Reflexive verbs","Weather & vocabulary","Articles & gender","Ser vs estar"],
+  his:["Declaration of Independence","Constitution","Civil War","Westward expansion","Road to Revolution","Declaration of Independence","Constitution","Reconstruction","Civil War","Road to Revolution","Early republic","Westward expansion","Constitution","Constitution","Constitution","Sectionalism & slavery","American Revolution","Enlightenment ideas","Constitution","Civil War","Reconstruction","Sectionalism & slavery","Constitution","Civil War","Constitution"],
+};
+function topicOf(subj,q){const i=QUESTIONS[subj].indexOf(q);return (i>=0&&TOPICS[subj]&&TOPICS[subj][i])||'General';}
+
 /* ============================ STATE / STORAGE ============================ */
 const LS="studyhub_v1";
 let DB = load();
@@ -773,6 +825,7 @@ function newCard(id,subj,front,back){
 }
 seedCards();
 if(!DB.tests)DB.tests={}; // best practice-test score per subject
+if(!DB.history)DB.history=[]; // every completed practice-test attempt
 
 // streak update
 (function(){
@@ -799,6 +852,7 @@ function go(p){
   if(p==='pomodoro')initPom();
   if(p==='feynman')renderFeynman();
   if(p==='practice')renderPractice();
+  if(p==='progress')renderProgress();
   if(p==='classroom')renderClassroom();
   if(p==='schedule')initSchedule();
   if(p==='settings')renderSettings();
@@ -1405,16 +1459,25 @@ document.getElementById('pr-t-submit').onclick=()=>{
 function submitTest(){
   clearInterval(tt.timer);
   let correct=0;
-  tt.qs.forEach(x=>{if(x.picked===x.q[2])correct++;});
+  const missedTopics=[];
+  tt.qs.forEach(x=>{if(x.picked===x.q[2])correct++;else missedTopics.push(topicOf(tt.subj,x.q));});
   const pct=Math.round(correct/tt.qs.length*100);
   // save best
   if(!DB.tests[tt.subj]||pct>DB.tests[tt.subj]){DB.tests[tt.subj]=pct;}
+  // record this attempt in history (cap at 100 most recent)
+  DB.history.push({ts:Date.now(),subj:tt.subj,correct,total:tt.qs.length,pct,missed:missedTopics});
+  if(DB.history.length>100)DB.history=DB.history.slice(-100);
   save();
   prShow('pr-results');
   document.getElementById('pr-r-pct').textContent=pct+'%';
   const grade=pct>=90?'Excellent 🎉':pct>=80?'Great work':pct>=70?'Solid — keep going':pct>=60?'Passing, review the misses':'Keep practicing';
   document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · ${subjById(tt.subj).name} · ${grade}`;
   document.getElementById('pr-r-pct').style.color = pct>=70?'var(--accent2)':pct>=50?'var(--warn)':'var(--bad)';
+  // weak-topic chips on the results card
+  const uniqMissed=[...new Set(missedTopics)];
+  document.getElementById('pr-r-weak').innerHTML = uniqMissed.length
+    ? `<div class="sub" style="margin:0 0 6px">Topics to review:</div>`+uniqMissed.map(t=>`<span class="tag" style="margin:2px;border-color:var(--bad);color:var(--bad)">${esc(t)}</span>`).join(' ')
+    : `<div class="sub" style="margin:0;color:var(--accent2)">Perfect — no weak topics this time! 🎯</div>`;
   document.getElementById('pr-r-review').innerHTML=tt.qs.map((x,i)=>{
     const ok=x.picked===x.q[2];
     const your=x.picked===null?'<em>blank</em>':PR_LETTERS[x.picked]+'. '+esc(x.q[1][x.picked]);
@@ -1428,6 +1491,86 @@ function submitTest(){
 }
 document.getElementById('pr-r-retry').onclick=()=>openTestSetup(tt.subj);
 document.getElementById('pr-r-back').onclick=renderPractice;
+document.getElementById('pr-r-progress').onclick=()=>go('progress');
+
+/* ============================ MY PROGRESS ============================ */
+function fmtDate(ts){const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
+function renderProgress(){
+  const h=DB.history;
+  document.getElementById('pg-empty').style.display=h.length?'none':'block';
+  document.getElementById('pg-content').style.display=h.length?'block':'none';
+  if(!h.length)return;
+
+  // headline stats
+  const pcts=h.map(t=>t.pct);
+  const avg=Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length);
+  const best=Math.max(...pcts);
+  document.getElementById('pg-taken').textContent=h.length;
+  document.getElementById('pg-avg').textContent=avg+'%';
+  document.getElementById('pg-best').textContent=best+'%';
+  // trend: compare last test vs the one before
+  let trend='—';
+  if(h.length>=2){const d=h[h.length-1].pct-h[h.length-2].pct;trend=(d>0?'▲ +':d<0?'▼ ':'■ ')+Math.abs(d)+'%';}
+  const tEl=document.getElementById('pg-trend');tEl.textContent=trend;
+  tEl.style.color = trend.startsWith('▲')?'var(--accent2)':trend.startsWith('▼')?'var(--bad)':'var(--muted)';
+
+  // weak topics aggregated across all history
+  const counts={};
+  h.forEach(t=>(t.missed||[]).forEach(top=>{counts[top]=(counts[top]||0)+1;}));
+  const weak=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const wEl=document.getElementById('pg-weak');
+  wEl.innerHTML = weak.length
+    ? weak.map(([t,c])=>`<div class="row between" style="margin-bottom:8px"><span class="tag" style="border-color:var(--bad);color:var(--bad)">${esc(t)}</span><span class="sub" style="margin:0">missed ${c}×</span></div>`).join('')
+    : '<p class="sub" style="margin:0;color:var(--accent2)">No weak spots yet — great work!</p>';
+
+  // per-subject averages
+  const bySubj={};
+  h.forEach(t=>{(bySubj[t.subj]=bySubj[t.subj]||[]).push(t.pct);});
+  const sEl=document.getElementById('pg-subjects');
+  sEl.innerHTML=SUBJECTS.filter(s=>bySubj[s.id]).map(s=>{
+    const arr=bySubj[s.id],a=Math.round(arr.reduce((x,y)=>x+y,0)/arr.length);
+    return `<div style="margin-bottom:12px"><div class="row between"><span style="font-size:13px">${s.name}</span><span class="sub" style="margin:0">${a}% · ${arr.length} test${arr.length>1?'s':''}</span></div>
+      <div class="progress"><div style="width:${a}%;background:${col(s.id)}"></div></div></div>`;
+  }).join('') || '<p class="sub" style="margin:0">No subjects tested yet.</p>';
+
+  // coach feedback
+  document.getElementById('pg-feedback').innerHTML=coachFeedback(h,bySubj,weak,avg,trend);
+
+  // history list (newest first)
+  document.getElementById('pg-history').innerHTML=h.slice().reverse().map(t=>{
+    const cls=t.pct>=70?'ok':'no';
+    const miss=(t.missed&&t.missed.length)?[...new Set(t.missed)].map(x=>esc(x)).join(', '):'none';
+    return `<div class="rev-q ${cls}">
+      <div class="row between"><strong>${subjById(t.subj).name}</strong><span style="font-weight:700;color:${t.pct>=70?'var(--accent2)':t.pct>=50?'var(--warn)':'var(--bad)'}">${t.pct}%</span></div>
+      <div class="sub" style="margin:4px 0 0">${t.correct}/${t.total} correct · ${fmtDate(t.ts)}</div>
+      <div class="sub" style="margin:3px 0 0;font-size:12px">Missed topics: ${miss}</div>
+    </div>`;
+  }).join('');
+}
+function coachFeedback(h,bySubj,weak,avg,trend){
+  const parts=[];
+  const last=h[h.length-1];
+  parts.push(`You've completed <strong>${h.length}</strong> test${h.length>1?'s':''} with an average of <strong>${avg}%</strong>.`);
+  if(h.length>=2){
+    if(trend.startsWith('▲'))parts.push(`Nice — your most recent score is up from last time. Keep the momentum going.`);
+    else if(trend.startsWith('▼'))parts.push(`Your last score dipped a bit. Try a focused review session before the next test.`);
+    else parts.push(`You're holding steady. Pushing into a weaker topic could lift your average.`);
+  }
+  // strongest & weakest subject
+  const subjAvgs=Object.entries(bySubj).map(([id,arr])=>[id,arr.reduce((a,b)=>a+b,0)/arr.length]);
+  if(subjAvgs.length>1){
+    subjAvgs.sort((a,b)=>b[1]-a[1]);
+    parts.push(`Strongest subject: <strong>${subjById(subjAvgs[0][0]).name}</strong> (${Math.round(subjAvgs[0][1])}%). Needs the most attention: <strong>${subjById(subjAvgs[subjAvgs.length-1][0]).name}</strong> (${Math.round(subjAvgs[subjAvgs.length-1][1])}%).`);
+  }
+  if(weak.length){
+    const top3=weak.slice(0,3).map(w=>w[0]);
+    parts.push(`Focus your next study block on: <strong>${top3.join(', ')}</strong>. Make flashcards for these and use the Feynman page to explain each one in your own words.`);
+  } else {
+    parts.push(`No recurring weak topics — try raising the difficulty by taking longer, full-length tests.`);
+  }
+  return parts.map(p=>`<p style="margin:0 0 8px">${p}</p>`).join('');
+}
+document.getElementById('pg-clear').onclick=()=>{if(confirm("Clear all test history? (Best scores are kept.)")){DB.history=[];save();renderProgress();toast("History cleared");}};
 
 /* ============================ UTIL ============================ */
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
