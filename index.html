@@ -2420,7 +2420,7 @@ function renderPractice(){
     const apGate = apOK ? '' : ` · <span class="sub" style="font-size:11px">Gauntlet needs 100% test ${testPerfect(s.id)?'✓':'✗'} &amp; 100% challenge ${challengePerfect(s.id)?'✓':'✗'}</span>`;
     return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
       <h3>${s.name}${mastered?' <span class="tag" style="border-color:var(--warn);color:var(--warn)">mastered</span>':''}${apOK?' <span class="ap-chip">Gauntlet unlocked</span>':''}</h3>
-      <p>${n} practice + ${nt} test + ${nap} Gauntlet questions${best?` · best test <strong style="color:${col(s.id)}">${best}%</strong>`:''}${apBest?` · <span class="ap-chip">Gauntlet best ${apBest}%</span>`:''}${apGate}</p>
+      <p>${best?`Best test <strong style="color:${col(s.id)}">${best}%</strong>`:'Practice, test, and challenge yourself.'}${apBest?` · <span class="ap-chip">Gauntlet best ${apBest}%</span>`:''}${apGate}</p>
       <div class="row" style="margin-top:12px">
         <button class="btn sm" data-mode="practice" data-s="${s.id}">Practice</button>
         <button class="btn sm sec" data-mode="test" data-s="${s.id}">Take test</button>
