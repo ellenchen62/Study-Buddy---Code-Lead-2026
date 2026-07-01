@@ -396,12 +396,15 @@
       <p class="sub">If you can explain it simply, you understand it. Work through the four steps; gaps will surface.</p>
       <div class="grid g2">
         <div class="card">
-          <label class="fld">1 · Pick a concept</label>
+          <label class="fld">1 · Pick a subject, then a specific topic</label>
           <div class="row">
-            <select id="fy-subj" style="max-width:200px"></select>
-            <input type="text" id="fy-concept" placeholder="e.g. Why factoring works" style="flex:1;min-width:160px">
+            <select id="fy-subj" style="max-width:180px"></select>
+            <select id="fy-topic" style="flex:1;min-width:150px"></select>
+            <button class="btn sec sm" id="fy-random" title="Give me a random topic">🎲 Surprise me</button>
           </div>
-          <label class="fld">2 · Explain it like you're teaching a 10-year-old</label>
+          <label class="fld" style="margin-top:10px">Topic to explain</label>
+          <input type="text" id="fy-concept" placeholder="Pick one above, or type your own — e.g. 'How to solve quadratics'">
+          <label class="fld">2 · Explain it simply, like you're teaching a younger kid</label>
           <textarea id="fy-explain" placeholder="Plain words only. No jargon. Use an everyday analogy."></textarea>
           <label class="fld">3 · Where did you get stuck or vague?</label>
           <textarea id="fy-gaps" placeholder="The spots where you reached for jargon or hand-waved — those are your gaps. Go review them."></textarea>
@@ -1658,9 +1661,40 @@ function phaseEnd(){
 function chime(){try{const a=new(window.AudioContext||window.webkitAudioContext)();const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=660;g.gain.setValueAtTime(.001,a.currentTime);g.gain.exponentialRampToValueAtTime(.3,a.currentTime+.05);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1);o.start();o.stop(a.currentTime+1);}catch(e){}}
 
 /* ============================ FEYNMAN ============================ */
+/* concrete, specific topics per subject to make "explain it simply" meaningful */
+const FEYNMAN_TOPICS={
+  alg:["How to solve quadratics by factoring","Why the quadratic formula works","What logarithms actually are","How to complete the square","What a function's domain and range mean","Why you can't divide by zero","How the exponent rules work","What imaginary numbers are","How to find the vertex of a parabola","What an inverse function does"],
+  ela:["When to use an Oxford comma","The difference between its and it's","How to write a strong thesis statement","Metaphor vs simile","Active voice vs passive voice","How to cite a source in MLA","The difference between tone and mood","What makes a run-on sentence","How to structure a body paragraph","Semicolons vs colons"],
+  sci:["Newton's second law (F = ma)","Why heavy and light objects fall at the same rate","How photosynthesis works","What DNA does","The difference between speed and velocity","How natural selection works","Kinetic vs potential energy","Why the cell membrane is selectively permeable","How mitosis works","What momentum is"],
+  spa:["When to use ser vs estar","How to conjugate -ar verbs in the present","Preterite vs imperfect past tense","How the subjunctive works","Why nouns are masculine or feminine","How the verb 'gustar' works","Reflexive verbs (me, te, se)","When to use por vs para","How to form a question in Spanish","Adjective agreement"],
+  his:["How checks and balances work","What caused the American Revolution","Why the Bill of Rights exists","What the Three-Fifths Compromise was","The main causes of the Civil War","What federalism means","Why the Articles of Confederation failed","What Manifest Destiny was","What Reconstruction tried to do","Judicial review (Marbury v. Madison)"],
+};
+function fyFillTopics(){
+  const subj=document.getElementById('fy-subj').value;
+  const sel=document.getElementById('fy-topic');
+  const list=FEYNMAN_TOPICS[subj]||[];
+  sel.innerHTML='<option value="">— pick a topic —</option>'+list.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')+'<option value="__own">✎ Type my own…</option>';
+}
 function renderFeynman(){
   const sel=document.getElementById('fy-subj');
-  if(!sel.dataset.init){fillSubjSelect(sel,false);sel.dataset.init=1;}
+  if(!sel.dataset.init){
+    fillSubjSelect(sel,false);sel.dataset.init=1;
+    fyFillTopics();
+    sel.addEventListener('change',fyFillTopics);
+    document.getElementById('fy-topic').addEventListener('change',e=>{
+      const v=e.target.value;
+      if(v==='__own'){document.getElementById('fy-concept').value='';document.getElementById('fy-concept').focus();}
+      else if(v){document.getElementById('fy-concept').value=v;}
+    });
+    document.getElementById('fy-random').onclick=()=>{
+      const subj=document.getElementById('fy-subj').value;const list=FEYNMAN_TOPICS[subj]||[];
+      if(!list.length)return;
+      const t=list[Math.floor(Math.random()*list.length)];
+      document.getElementById('fy-topic').value=t;
+      document.getElementById('fy-concept').value=t;
+      toast('Try explaining: '+t);
+    };
+  }
   const list=document.getElementById('fy-list');
   list.innerHTML=DB.feynman.length? DB.feynman.slice().reverse().map(f=>`
     <details><summary>${esc(f.concept)} <span class="tag" style="margin-left:6px">${subjById(f.subj)?.name||''}</span></summary>
@@ -1680,6 +1714,7 @@ document.getElementById('fy-save').onclick=()=>{
     refine:document.getElementById('fy-refine').value.trim()});
   save();toast("Saved ✓");
   ['fy-concept','fy-explain','fy-gaps','fy-refine'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('fy-topic').value='';
   renderFeynman();
 };
 document.getElementById('fy-prompt').onclick=()=>{
