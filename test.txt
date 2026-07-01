@@ -10,16 +10,9 @@ Aiden was here i think
 ------------------------------------------------------------------------
 Pomodoro allows smaller study time than break and long break time
 
-Create difficulty differciations for practice section
-
 Add a section for external resources
 
-Allow user to upload/create own flashcards
-
 Put Create Cards as a section in Flashcards
-
-Link Schedule to Google Calendar
-
 
 [HIGH PRIORITY]
 ------------------------------------------------------------------------
