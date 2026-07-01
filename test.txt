@@ -5,15 +5,3 @@ oh right, so was I
 
 Aiden was here i think
 
-
-[LOW PRIORITY]
-------------------------------------------------------------------------
-Pomodoro allows smaller study time than break and long break time
-
-Add a section for external resources
-
-Put Create Cards as a section in Flashcards
-
-[HIGH PRIORITY]
-------------------------------------------------------------------------
-The "what test?" problem: tests sometimes don't show up in the My Progress section
