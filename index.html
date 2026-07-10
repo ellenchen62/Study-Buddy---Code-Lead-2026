@@ -121,6 +121,28 @@
   .commit-row .cdays label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:6px;padding:2px 5px;cursor:pointer}
   .commit-row .cdays input{width:auto}
   @media(max-width:700px){.commit-row{grid-template-columns:1fr 1fr}}
+  /* badges for priority/status */
+  .badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.3px;padding:2px 7px;border-radius:6px;text-transform:uppercase}
+  .b-high{background:var(--bad);color:#11151b}.b-med{background:var(--warn);color:#11151b}.b-low{background:var(--accent2);color:#11151b}.b-none{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .s-done{background:var(--accent2);color:#11151b}.s-prog{background:var(--accent);color:#11151b}.s-stuck{background:var(--bad);color:#11151b}.s-todo{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  /* kanban */
+  .kanban{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:start}
+  .kcol{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:120px}
+  .kcol.dragover{border-color:var(--accent);background:var(--panel2)}
+  .kcol h4{margin:0 0 10px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+  .kcol h4 .cnt{color:var(--faint);font-weight:500}
+  .kcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:10px;cursor:pointer;border-left:4px solid var(--line);transition:.12s}
+  .kcard:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+  .kcard.dragging{opacity:.4}
+  .kcard .kt{font-weight:600;font-size:14px;margin-bottom:5px}
+  .kcard .kmeta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .kcard .kdue{font-size:12px;color:var(--muted)}
+  .kcard .kdue.over{color:var(--bad);font-weight:600}
+  .kcard .knote{font-size:12px;color:var(--faint);margin-top:6px;white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .modal.wide{max-width:520px}
+  .fld-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.fld-row{grid-template-columns:1fr}}
+  .sched-slot .badge{display:block;margin-top:3px;font-size:9px}
   /* Classroom */
   .assign{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:.15s;border-left:4px solid var(--line)}
   .assign:hover{background:var(--panel2)}
@@ -193,6 +215,7 @@
     <button class="nav-btn" data-page="practice"><span class="ic">✓</span><span class="lbl">Practice & Tests</span></button>
     <button class="nav-btn" data-page="progress"><span class="ic">▰</span><span class="lbl">My Progress</span></button>
     <button class="nav-btn" data-page="classroom"><span class="ic">◫</span><span class="lbl">Classroom</span></button>
+    <button class="nav-btn" data-page="assignments"><span class="ic">◨</span><span class="lbl">Assignments</span></button>
     <button class="nav-btn" data-page="schedule"><span class="ic">◵</span><span class="lbl">Schedule</span></button>
     <button class="nav-btn" data-page="settings"><span class="ic">⚙</span><span class="lbl">Settings</span></button>
     <div class="side-foot">Runs locally · your data stays in this browser</div>
@@ -576,6 +599,16 @@
       </div>
     </section>
 
+    <!-- ASSIGNMENTS (KANBAN) -->
+    <section class="page" id="page-assignments">
+      <div class="between">
+        <div><h2 class="title">Assignments</h2>
+        <p class="sub" style="margin:4px 0 0">Track homework and projects like a board — drag cards between columns as you go.</p></div>
+        <button class="btn sm" id="as-add">+ Add assignment</button>
+      </div>
+      <div class="kanban" id="as-board" style="margin-top:20px"></div>
+    </section>
+
     <!-- SCHEDULE -->
     <section class="page" id="page-schedule">
       <h2 class="title">Study schedule builder</h2>
@@ -630,7 +663,7 @@
         </div>
       </div>
       <div id="sc-result" style="margin-top:22px;display:none">
-        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Click ✕ to remove a block, or "+ block" in any cell.</span></div>
+        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Click a study block to edit its time, priority, status &amp; notes · ✕ removes · "+ block" adds.</span></div>
         <div style="overflow-x:auto;margin-top:12px"><table class="sched-table" id="sc-table"></table></div>
         <div class="card" style="margin-top:16px;border-left:4px solid var(--accent2)">
           <div class="between">
@@ -714,6 +747,40 @@
     <div class="row" style="margin-top:16px;justify-content:flex-end">
       <button class="btn sec sm" id="ac-cancel">Cancel</button>
       <button class="btn sm" id="ac-save">Add card</button>
+    </div>
+  </div>
+</div>
+
+<!-- Event editor (assignments + schedule blocks) -->
+<div class="modal-bg" id="modal-event">
+  <div class="modal wide">
+    <h3 style="margin:0 0 12px" id="ev-title">Assignment</h3>
+    <div id="ev-titlewrap">
+      <label class="fld" style="margin-top:0">Title</label>
+      <input type="text" id="ev-name" placeholder="e.g. Water Erosion Science Project">
+    </div>
+    <div class="fld-row">
+      <div><label class="fld">Subject</label><select id="ev-subj"></select></div>
+      <div id="ev-duewrap"><label class="fld">Due date</label><input type="date" id="ev-due"></div>
+    </div>
+    <div id="ev-timewrap" style="display:none">
+      <div class="fld-row">
+        <div><label class="fld">Start time</label><input type="time" id="ev-start"></div>
+        <div><label class="fld">End time</label><input type="time" id="ev-end"></div>
+      </div>
+    </div>
+    <div class="fld-row">
+      <div><label class="fld">Priority</label><select id="ev-priority"></select></div>
+      <div><label class="fld">Status</label><select id="ev-status"></select></div>
+    </div>
+    <label class="fld">Notes</label>
+    <textarea id="ev-notes" style="min-height:70px" placeholder="e.g. Work on memorizing vocab; cite 3 sources"></textarea>
+    <div class="between" style="margin-top:16px">
+      <button class="btn ghost sm" id="ev-delete">Delete</button>
+      <div class="row">
+        <button class="btn sec sm" id="ev-cancel">Cancel</button>
+        <button class="btn sm" id="ev-save">Save</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1342,6 +1409,9 @@ const SEED_VERSION=2;
 if((DB.seedVersion||0)<SEED_VERSION){syncSeedCards();DB.seedVersion=SEED_VERSION;save();}
 if(!DB.tests)DB.tests={}; // best practice-test score per subject
 if(!DB.history)DB.history=[]; // every completed practice-test attempt
+if(!DB.assignments)DB.assignments=[]; // kanban assignments
+if(!DB.priorities)DB.priorities=["Low","Medium","High"]; // customizable
+if(!DB.statuses)DB.statuses=["Not started","In progress","Stumped","Finished"]; // customizable (kanban columns)
 syncChallengeCards(); // add harder flashcards for any already-mastered subjects
 
 // streak update
@@ -1372,6 +1442,7 @@ function go(p){
   if(p==='practice')renderPractice();
   if(p==='progress')renderProgress();
   if(p==='classroom')renderClassroom();
+  if(p==='assignments')renderAssignments();
   if(p==='schedule')initSchedule();
   if(p==='settings')renderSettings();
   window.scrollTo(0,0);
@@ -2050,14 +2121,16 @@ function renderSchedule(grid){
         return `<td><div class="sched-slot busy"><span class="x" data-d="${d}" data-r="${r}">✕</span>${esc(slot.label||'Busy')}<br><span style="font-weight:400">${slot.time}</span></div></td>`;
       }
       const nm=subjById(slot.subj)?subjById(slot.subj).name:slot.subj;
-      return `<td><div class="sched-slot" style="background:${col(slot.subj)}">
-        <span class="x" data-d="${d}" data-r="${r}">✕</span>${esc(nm)}<br><span style="font-weight:400">${slot.time}</span></div></td>`;
+      const badges=(slot.priority?`<span class="badge ${prioClass(slot.priority)}">${esc(slot.priority)}</span>`:'')+(slot.status?`<span class="badge ${statusClass(slot.status)}">${esc(slot.status)}</span>`:'');
+      return `<td><div class="sched-slot" data-edit="${d}|${r}" title="Click to edit" style="background:${col(slot.subj)}">
+        <span class="x" data-d="${d}" data-r="${r}">✕</span>${esc(nm)}${slot.notes?' 📝':''}<br><span style="font-weight:400">${slot.time}</span>${badges}</div></td>`;
     }).join('')+'</tr>';
   }
   // add-block row
   html+='<tr>'+days.map(d=>`<td><button class="btn ghost sm" data-add="${d}" style="font-size:11px;padding:4px 8px">+ block</button></td>`).join('')+'</tr>';
   const t=document.getElementById('sc-table');t.innerHTML=html;
-  t.querySelectorAll('.x').forEach(x=>x.onclick=()=>{grid[x.dataset.d].splice(+x.dataset.r,1);DB.schedule={grid};save();renderSchedule(grid);});
+  t.querySelectorAll('.x').forEach(x=>x.onclick=(e)=>{e.stopPropagation();grid[x.dataset.d].splice(+x.dataset.r,1);DB.schedule={grid};save();renderSchedule(grid);});
+  t.querySelectorAll('[data-edit]').forEach(el=>el.onclick=(e)=>{if(e.target.classList.contains('x'))return;const [d,r]=el.dataset.edit.split('|');openScheduleEditor(d,+r);});
   t.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
     const d=b.dataset.add;const subj=prompt("Subject? Type: "+SUBJECTS.map(s=>s.id).join(', '));
     if(!subj||!subjById(subj))return;
@@ -2110,7 +2183,7 @@ function exportICS(grid){
         'DTEND:'+icsStamp(ed),
         'RRULE:FREQ=WEEKLY;BYDAY='+ICS_BYDAY[day],
         'SUMMARY:Study: '+name,
-        'DESCRIPTION:Study Buddy session',
+        'DESCRIPTION:'+((slot.priority?'Priority: '+slot.priority+'. ':'')+(slot.status?'Status: '+slot.status+'. ':'')+(slot.notes?slot.notes:'Study Buddy session')).replace(/[\r\n,;]/g,' '),
         'END:VEVENT');
       count++;
     });
@@ -2546,6 +2619,129 @@ async function callAIFlashcards(material){
   let arr;try{arr=JSON.parse(raw);}catch(e){throw new Error('could not parse AI output');}
   return (Array.isArray(arr)?arr:[]).map(o=>({front:o.front||o.q||o.question||'',back:o.back||o.a||o.answer||''})).filter(c=>c.front&&c.back);
 }
+
+/* ============================ ASSIGNMENTS (KANBAN) + EVENT EDITOR ============================ */
+function prioClass(p){p=(p||'').toLowerCase();if(p.includes('high')||p.includes('urgent'))return 'b-high';if(p.includes('med'))return 'b-med';if(p.includes('low'))return 'b-low';return 'b-none';}
+function statusClass(s){s=(s||'').toLowerCase();if(s.includes('finish')||s.includes('done')||s.includes('complete'))return 's-done';if(s.includes('prog'))return 's-prog';if(s.includes('stump')||s.includes('stuck'))return 's-stuck';return 's-todo';}
+function prioBadge(p){return p?`<span class="badge ${prioClass(p)}">${esc(p)}</span>`:'';}
+function statusBadge(s){return s?`<span class="badge ${statusClass(s)}">${esc(s)}</span>`:'';}
+function dueInfo(d){
+  if(!d)return null;
+  const date=new Date(d+'T00:00:00'),today=new Date();today.setHours(0,0,0,0);
+  const days=Math.round((date-today)/86400000);
+  const label=date.toLocaleDateString(undefined,{month:'short',day:'numeric'})+(days===0?' · today':days<0?` · ${-days}d overdue`:days<=7?` · in ${days}d`:'');
+  return {over:days<0,label};
+}
+function renderAssignments(){
+  const board=document.getElementById('as-board');
+  board.innerHTML=DB.statuses.map(st=>{
+    const cards=DB.assignments.filter(a=>(a.status||DB.statuses[0])===st);
+    const inner=cards.length?cards.map(cardHTML).join(''):'<p class="sub" style="margin:0;font-size:12px;color:var(--faint)">Drop cards here</p>';
+    return `<div class="kcol" data-status="${esc(st)}"><h4>${esc(st)} <span class="cnt">${cards.length}</span></h4><div class="kcards">${inner}</div></div>`;
+  }).join('');
+  board.querySelectorAll('.kcard').forEach(c=>{
+    c.onclick=()=>openAssignmentEditor(DB.assignments.find(a=>a.id===c.dataset.id));
+    c.setAttribute('draggable','true');
+    c.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',c.dataset.id);c.classList.add('dragging');});
+    c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+  });
+  board.querySelectorAll('.kcol').forEach(col=>{
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('dragover');});
+    col.addEventListener('dragleave',()=>col.classList.remove('dragover'));
+    col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('dragover');
+      const id=e.dataTransfer.getData('text/plain'),a=DB.assignments.find(x=>x.id===id);
+      if(a&&a.status!==col.dataset.status){a.status=col.dataset.status;save();renderAssignments();}
+    });
+  });
+}
+function cardHTML(a){
+  const s=subjById(a.subj),due=dueInfo(a.due);
+  return `<div class="kcard" data-id="${a.id}" style="border-left-color:${s?col(a.subj):'var(--line)'}">
+    <div class="kt">${esc(a.title)}</div>
+    <div class="kmeta">${s?`<span class="tag">${esc(s.name)}</span>`:''}${prioBadge(a.priority)}</div>
+    ${due?`<div class="kdue ${due.over?'over':''}">📅 ${esc(due.label)}</div>`:''}
+    ${a.notes?`<div class="knote">${esc(a.notes)}</div>`:''}
+  </div>`;
+}
+document.getElementById('as-add').onclick=()=>openAssignmentEditor(null);
+
+/* ---- shared event editor ---- */
+let evCtx=null;
+function fillChoiceSelect(sel,list,current,kind){
+  sel.innerHTML='<option value="">— none —</option>'+list.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')+'<option value="__add">➕ Add custom…</option>';
+  sel.value=current||'';
+  sel.onchange=()=>{
+    if(sel.value==='__add'){
+      const name=prompt('Name your custom '+kind+':');
+      if(name&&name.trim()){
+        const v=name.trim(),arr=(kind==='priority'?DB.priorities:DB.statuses);
+        if(!arr.includes(v))arr.push(v);save();
+        fillChoiceSelect(sel,arr,v,kind);
+      } else sel.value=current||'';
+    }
+  };
+}
+function fillEvSelects(pr,st){
+  document.getElementById('ev-subj').innerHTML=SUBJECTS.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  fillChoiceSelect(document.getElementById('ev-priority'),DB.priorities,pr,'priority');
+  fillChoiceSelect(document.getElementById('ev-status'),DB.statuses,st,'status');
+}
+function openAssignmentEditor(a){
+  evCtx={mode:'assignment',id:a?a.id:null};
+  document.getElementById('ev-title').textContent=a?'Edit assignment':'New assignment';
+  document.getElementById('ev-titlewrap').style.display='block';
+  document.getElementById('ev-duewrap').style.display='block';
+  document.getElementById('ev-timewrap').style.display='none';
+  document.getElementById('ev-delete').style.display=a?'inline-block':'none';
+  document.getElementById('ev-name').value=a?a.title:'';
+  fillEvSelects(a?a.priority:'', a?a.status:(DB.statuses[0]||''));
+  document.getElementById('ev-subj').value=a?a.subj:SUBJECTS[0].id;
+  document.getElementById('ev-due').value=a?(a.due||''):'';
+  document.getElementById('ev-notes').value=a?(a.notes||''):'';
+  document.getElementById('modal-event').classList.add('show');
+}
+function to24(str){const c=parseClock(str);return c?String(c.h).padStart(2,'0')+':'+String(c.min).padStart(2,'0'):'';}
+function openScheduleEditor(day,index){
+  const slot=DB.schedule.grid[day][index];if(!slot)return;
+  evCtx={mode:'schedule',day,index};
+  document.getElementById('ev-title').textContent='Edit study block · '+day;
+  document.getElementById('ev-titlewrap').style.display='none';
+  document.getElementById('ev-duewrap').style.display='block';
+  document.getElementById('ev-timewrap').style.display='block';
+  document.getElementById('ev-delete').style.display='inline-block';
+  const parts=(slot.time||'').split(/[–—-]/);
+  document.getElementById('ev-start').value=to24(parts[0]||'');
+  document.getElementById('ev-end').value=to24(parts[1]||'');
+  fillEvSelects(slot.priority||'', slot.status||'');
+  document.getElementById('ev-subj').value=(slot.subj&&subjById(slot.subj))?slot.subj:SUBJECTS[0].id;
+  document.getElementById('ev-due').value=slot.due||'';
+  document.getElementById('ev-notes').value=slot.notes||'';
+  document.getElementById('modal-event').classList.add('show');
+}
+function evVal(id){const v=document.getElementById(id).value;return v==='__add'?'':v;}
+function closeEvent(){document.getElementById('modal-event').classList.remove('show');}
+document.getElementById('ev-cancel').onclick=closeEvent;
+document.getElementById('ev-save').onclick=()=>{
+  const subj=document.getElementById('ev-subj').value;
+  const priority=evVal('ev-priority'),status=evVal('ev-status');
+  const due=document.getElementById('ev-due').value,notes=document.getElementById('ev-notes').value.trim();
+  if(evCtx.mode==='assignment'){
+    const title=document.getElementById('ev-name').value.trim()||'Untitled';
+    if(evCtx.id){Object.assign(DB.assignments.find(x=>x.id===evCtx.id),{title,subj,due,priority,status,notes});}
+    else DB.assignments.push({id:'as'+Date.now(),title,subj,due,priority,status:status||DB.statuses[0],notes,ts:Date.now()});
+    save();closeEvent();renderAssignments();toast('Saved ✓');
+  } else {
+    const slot=DB.schedule.grid[evCtx.day][evCtx.index];
+    const s=document.getElementById('ev-start').value,e=document.getElementById('ev-end').value;
+    if(s&&e)slot.time=fmtTime(hm2min(s))+'–'+fmtTime(hm2min(e));
+    slot.kind='study';slot.subj=subj;slot.priority=priority;slot.status=status;slot.due=due;slot.notes=notes;
+    save();closeEvent();renderSchedule(DB.schedule.grid);toast('Block updated ✓');
+  }
+};
+document.getElementById('ev-delete').onclick=()=>{
+  if(evCtx.mode==='assignment'){DB.assignments=DB.assignments.filter(x=>x.id!==evCtx.id);save();closeEvent();renderAssignments();toast('Deleted');}
+  else {DB.schedule.grid[evCtx.day].splice(evCtx.index,1);save();closeEvent();renderSchedule(DB.schedule.grid);toast('Removed');}
+};
 
 /* ============================ UTIL ============================ */
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
