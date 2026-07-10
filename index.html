@@ -392,9 +392,13 @@
 
     <!-- FEYNMAN -->
     <section class="page" id="page-feynman">
-      <h2 class="title">Feynman technique</h2>
-      <p class="sub">If you can explain it simply, you understand it. Work through the four steps; gaps will surface.</p>
-      <div class="grid g2">
+      <div class="between">
+        <div><h2 class="title">Feynman technique</h2>
+        <p class="sub" style="margin:4px 0 0">If you can explain it simply, you understand it. Work through the four steps; gaps will surface.</p></div>
+        <button class="btn sec sm" id="fy-example-btn">📖 See a worked example</button>
+      </div>
+      <div id="fy-example-panel" class="card" style="display:none;margin:16px 0 6px;border-left:4px solid var(--accent2)"></div>
+      <div class="grid g2" style="margin-top:16px">
         <div class="card">
           <label class="fld">1 · Pick a subject, then choose or type a topic</label>
           <div class="row">
@@ -1675,6 +1679,60 @@ function fyFillTopics(){
   const list=FEYNMAN_TOPICS[subj]||[];
   sel.innerHTML='<option value="">— suggested topics —</option>'+list.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
 }
+/* Fully worked examples so students have a target to aim for */
+const FEYNMAN_EXAMPLES=[
+  {subj:"alg",concept:"How to solve quadratics by factoring",
+    explain:"A quadratic like x² − 5x + 6 is a puzzle. Factoring is like un-multiplying it back into two smaller pieces. I look for two numbers that multiply to +6 and add to −5 — those are −2 and −3. So it becomes (x − 2)(x − 3). Here's the trick: if two things multiply to zero, at least one of them HAS to be zero. So either x − 2 = 0 or x − 3 = 0, which gives x = 2 or x = 3.",
+    gaps:"At first I just said 'set it to zero' without knowing why. My gap was the Zero Product Property — it only works when the product equals 0, not any other number. I also had to slow down on finding the two numbers, so I practiced a few (add to b, multiply to c).",
+    refine:"To factor x² + bx + c: find two numbers that multiply to c and add to b, write (x + m)(x + n), set each factor to 0, and solve. Example: x² − 5x + 6 → −2 and −3 → (x − 2)(x − 3) → x = 2 or x = 3."},
+  {subj:"sci",concept:"How photosynthesis works",
+    explain:"A plant is a tiny food factory. It takes in sunlight, water from its roots, and carbon dioxide from the air. Inside its leaves — in little parts called chloroplasts — a green pigment called chlorophyll catches the sunlight's energy and uses it to combine the water and CO₂ into sugar, which is the plant's food. Oxygen is released as the leftover. It's like baking: sunlight is the oven's heat, water and CO₂ are the ingredients, sugar is the cake, and oxygen is what drifts out.",
+    gaps:"I first said the plant 'uses energy' but couldn't say where it's captured — my gap was that chlorophyll in the chloroplast does the catching. I also mixed up inputs and outputs, so I nailed them down: IN = CO₂ + water + light; OUT = glucose + oxygen.",
+    refine:"Photosynthesis: in chloroplasts, chlorophyll captures light energy and converts CO₂ + water into glucose (food) + oxygen. Equation: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂."},
+  {subj:"ela",concept:"When to use an Oxford comma",
+    explain:"The Oxford comma is the comma right before 'and' (or 'or') in a list of three or more things. Take 'I invited my parents, Batman, and Spider-Man.' With that last comma, it's clearly three separate groups. Without it — 'I invited my parents, Batman and Spider-Man' — it can suddenly read like your parents ARE Batman and Spider-Man. The extra comma keeps every item separate so there's no mix-up.",
+    gaps:"I knew what it looked like but not why it actually matters. The 'parents = Batman' example showed me it prevents real ambiguity. I also learned it's a style choice: MLA and Chicago use it, but AP style usually drops it.",
+    refine:"Oxford comma = the comma before 'and'/'or' in a list of 3+ items. Use it to prevent confusion: 'eggs, toast, and juice.' MLA and Chicago recommend it; AP style omits it unless the sentence would be unclear."},
+];
+const FEYNMAN_CHECKLIST=[
+  "Start with a one-sentence, jargon-free definition a younger kid would get.",
+  "Use a concrete everyday analogy or a worked example — don't stay abstract.",
+  "Name the gaps honestly: the exact spot you hand-waved or reached for a term you couldn't define.",
+  "In the refine step, write the tightest true version, ideally with one clean example or formula.",
+  "Read it aloud — if you stumble or need a big word, that's a gap to go review."
+];
+let fyExIdx=0;
+function renderFyExample(){
+  const ex=FEYNMAN_EXAMPLES[fyExIdx%FEYNMAN_EXAMPLES.length];
+  const p=document.getElementById('fy-example-panel');
+  p.innerHTML=`
+    <div class="between"><h3 style="margin:0">Worked example <span class="tag" style="border-color:${col(ex.subj)};color:${col(ex.subj)}">${subjById(ex.subj).name}</span></h3>
+      <div class="row"><button class="btn ghost sm" id="fy-ex-next">↻ Another example</button><button class="btn ghost sm" id="fy-ex-hide">Hide</button></div></div>
+    <p class="sub" style="margin:6px 0 14px">This is what a complete, high-quality Feynman looks like. Aim for this level of plainness and honesty about gaps.</p>
+    <div style="border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--bg2)">
+      <div style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px">1 · Concept</div>
+      <div style="font-weight:600;margin:2px 0 12px">${esc(ex.concept)}</div>
+      <div style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px">2 · Explain it simply</div>
+      <div style="margin:2px 0 12px;line-height:1.6">${esc(ex.explain)}</div>
+      <div style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px">3 · Gaps I found</div>
+      <div style="margin:2px 0 12px;line-height:1.6;color:var(--muted)">${esc(ex.gaps)}</div>
+      <div style="font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px">4 · Refined version</div>
+      <div style="margin:2px 0 0;line-height:1.6">${esc(ex.refine)}</div>
+    </div>
+    <div class="section-h">✅ What a strong Feynman explanation includes</div>
+    <ul style="margin:0;color:var(--muted);font-size:13.5px;line-height:1.7">${FEYNMAN_CHECKLIST.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+    <button class="btn sm" id="fy-ex-try" style="margin-top:14px">Try this topic myself</button>`;
+  document.getElementById('fy-ex-next').onclick=()=>{fyExIdx++;renderFyExample();};
+  document.getElementById('fy-ex-hide').onclick=()=>{p.style.display='none';};
+  document.getElementById('fy-ex-try').onclick=()=>{
+    document.getElementById('fy-subj').value=ex.subj;fyFillTopics();
+    document.getElementById('fy-concept').value=ex.concept;
+    document.getElementById('fy-topic').value='';
+    p.style.display='none';
+    document.getElementById('fy-explain').focus();
+    toast('Loaded the topic — now write your own explanation!');
+  };
+}
 function renderFeynman(){
   const sel=document.getElementById('fy-subj');
   if(!sel.dataset.init){
@@ -1694,6 +1752,11 @@ function renderFeynman(){
       document.getElementById('fy-topic').value=t;
       document.getElementById('fy-concept').value=t;
       toast('Try explaining: '+t);
+    };
+    document.getElementById('fy-example-btn').onclick=()=>{
+      const p=document.getElementById('fy-example-panel');
+      if(p.style.display==='none'){renderFyExample();p.style.display='block';}
+      else p.style.display='none';
     };
   }
   const list=document.getElementById('fy-list');
