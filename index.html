@@ -2524,6 +2524,25 @@ document.getElementById('res-back').onclick=renderResources;
 /* ============================ SOURCE FINDER + MY SOURCES ============================ */
 let resCurrentSubj=null;
 const enc=encodeURIComponent;
+// Strip request filler ("I want an article on…") down to the actual topic ("imaginary numbers").
+function cleanQuery(raw){
+  let q=(raw||'').trim(),prev;
+  const lead=/^(please|can you|could you|would you|i want|i wanna|i need|i'd like|i would like|give me|find me|show me|get me|look for|searching for|search for|help me find|do you have|are there|is there|find|search|looking for)\b[\s,:-]*/i;
+  do{prev=q;q=q.replace(lead,'').trim();}while(q!==prev);
+  const artType=/^(a|an|the|some|any)\b\s*/i;
+  const typeWord=/^(videos?|articles?|resources?|sources?|practice|practices?|textbooks?|books?|courses?|tutorials?|lessons?|websites?|webpages?|pages?|links?|explainers?|guides?|worksheets?)\b\s*/i;
+  const conn=/^(on|about|for|of|regarding|covering|related to|to learn|to study|to practice|with)\b\s*/i;
+  do{prev=q;q=q.replace(artType,'').replace(typeWord,'').replace(conn,'').trim();}while(q!==prev);
+  return q||(raw||'').trim();
+}
+function inferType(raw){
+  const s=(raw||'').toLowerCase();
+  if(/\bvideos?\b|\bwatch\b/.test(s))return 'video';
+  if(/\bpractice|worksheet|problems?|quiz\b/.test(s))return 'practice';
+  if(/\btextbooks?|books?\b/.test(s))return 'textbook';
+  if(/\barticles?|read|explainer\b/.test(s))return 'article';
+  return 'any';
+}
 // Deterministic, always-working search links tailored to the request + type.
 function searchSources(subjName,query,type){
   const q=(query+' '+subjName).trim();
@@ -2554,9 +2573,11 @@ async function callAISources(subjName,query){
   return (Array.isArray(arr)?arr:[]).map(o=>({type:o.type||'Link',title:o.title||o.url,note:'AI-suggested — check that the link opens.',url:o.url,ai:true})).filter(x=>/^https?:\/\//.test(x.url||''));
 }
 document.getElementById('rs-find').onclick=async ()=>{
-  const query=document.getElementById('rs-query').value.trim();
-  if(!query){toast("Type what you're looking for");return;}
-  const type=document.getElementById('rs-type').value;
+  const raw=document.getElementById('rs-query').value.trim();
+  if(!raw){toast("Type what you're looking for");return;}
+  const query=cleanQuery(raw); // just the topic, filler removed
+  let type=document.getElementById('rs-type').value;
+  if(type==='any'){const inf=inferType(raw);if(inf!=='any')type=inf;} // honor "video"/"article" said in the request
   const subjName=subjById(resCurrentSubj).name;
   const box=document.getElementById('rs-suggestions');
   let list=searchSources(subjName,query,type);
@@ -2565,6 +2586,7 @@ document.getElementById('rs-find').onclick=async ()=>{
     box.innerHTML='<p class="sub" style="margin:0">Asking AI for the best sources…</p>';
     try{const aiList=await callAISources(subjName,query);list=aiList.concat(list);}catch(e){/* fall back to search links */}
   }
+  document.getElementById('rs-note').innerHTML=`Searching for: <strong>${esc(query)}</strong>`;
   renderSuggestions(list);
 };
 function renderSuggestions(list){
