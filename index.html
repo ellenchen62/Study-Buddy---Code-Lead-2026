@@ -291,6 +291,21 @@
         <h3 id="res-name" style="margin:16px 0 4px;font-size:20px"></h3>
         <p class="sub" id="res-desc" style="margin:0 0 8px"></p>
         <div id="res-list"></div>
+
+        <div class="card" style="margin-top:20px;border-left:4px solid var(--accent)">
+          <h3 style="margin:0 0 4px">🔎 Find a specific resource</h3>
+          <p class="sub" style="margin:0 0 12px">Ask for exactly what you want — e.g. "a video on quadratics" or "practice for factoring". I'll find sources and you can save the good ones to <strong>My Sources</strong>.</p>
+          <div class="row">
+            <input type="text" id="rs-query" placeholder="What do you want to learn or practice?" style="flex:1;min-width:180px">
+            <select id="rs-type" style="max-width:130px"><option value="any">Any type</option><option value="video">Video</option><option value="article">Article</option><option value="practice">Practice</option><option value="textbook">Textbook</option></select>
+            <button class="btn" id="rs-find">Find ✨</button>
+          </div>
+          <p class="sub" id="rs-note" style="margin:10px 0 0;font-size:12px"></p>
+          <div id="rs-suggestions" style="margin-top:12px"></div>
+        </div>
+
+        <div class="section-h">⭐ My Sources</div>
+        <div id="rs-mine"></div>
       </div>
     </section>
 
@@ -1412,6 +1427,7 @@ if(!DB.history)DB.history=[]; // every completed practice-test attempt
 if(!DB.assignments)DB.assignments=[]; // kanban assignments
 if(!DB.priorities)DB.priorities=["Low","Medium","High"]; // customizable
 if(!DB.statuses)DB.statuses=["Not started","In progress","Stumped","Finished"]; // customizable (kanban columns)
+if(!DB.mySources)DB.mySources={}; // saved external resources per subject
 syncChallengeCards(); // add harder flashcards for any already-mastered subjects
 
 // streak update
@@ -2493,8 +2509,90 @@ function openResources(id){
       <span class="rmain"><span class="rtitle">${esc(r.title)}</span><span class="rnote">${esc(r.note)}</span></span>
       <span class="rarrow">↗</span>
     </a>`).join('');
+  // source finder state
+  resCurrentSubj=id;
+  document.getElementById('rs-query').value='';
+  document.getElementById('rs-suggestions').innerHTML='';
+  const ai=DB.settings.provider!=='none'&&DB.settings.key;
+  document.getElementById('rs-note').innerHTML=ai
+    ? `AI is on — I'll suggest specific resources plus reliable search links.`
+    : `Tip: add an API key in Settings for AI-picked resources. Either way you'll get reliable search links for your exact request.`;
+  renderMySources();
 }
 document.getElementById('res-back').onclick=renderResources;
+
+/* ============================ SOURCE FINDER + MY SOURCES ============================ */
+let resCurrentSubj=null;
+const enc=encodeURIComponent;
+// Deterministic, always-working search links tailored to the request + type.
+function searchSources(subjName,query,type){
+  const q=(query+' '+subjName).trim();
+  const V={type:'Video',title:`YouTube: "${query}" (${subjName})`,note:'Search results for videos on this topic.',url:`https://www.youtube.com/results?search_query=${enc(query+' '+subjName+' tutorial')}`};
+  const K={type:'Course',title:`Khan Academy: "${query}"`,note:'Lessons and practice on Khan Academy.',url:`https://www.khanacademy.org/search?page_search_query=${enc(query)}`};
+  const W={type:'Article',title:`Wikipedia: "${query}"`,note:'Encyclopedia article and overview.',url:`https://en.wikipedia.org/w/index.php?search=${enc(query)}`};
+  const G={type:'Article',title:`Google: "${q}"`,note:'Broad web search for articles and explainers.',url:`https://www.google.com/search?q=${enc(q)}`};
+  const P={type:'Practice',title:`Quizlet: "${query}"`,note:'Flashcard sets and practice.',url:`https://quizlet.com/search?query=${enc(query)}&type=sets`};
+  const T={type:'Textbook',title:`OpenStax: "${query}"`,note:'Free textbook chapters.',url:`https://openstax.org/search?q=${enc(query)}`};
+  if(type==='video')return [V,K,G];
+  if(type==='article')return [W,G,K];
+  if(type==='practice')return [K,P,V];
+  if(type==='textbook')return [T,K,G];
+  return [V,K,W,P]; // any
+}
+async function callAISources(subjName,query){
+  const ask=`Suggest up to 4 real, well-known, free online resources for a 9th grader studying ${subjName}, specifically about: "${query}". Prefer YouTube videos, Khan Academy, and reputable educational sites with stable URLs. Return ONLY a JSON array of objects {"title","type","url"} where type is one of Video, Article, Course, Practice, Textbook.`;
+  let raw;
+  if(DB.settings.provider==='anthropic'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':DB.settings.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-3-5-haiku-latest',max_tokens:800,messages:[{role:'user',content:ask}]})});
+    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');raw=j.content[0].text;
+  } else {
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+DB.settings.key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:ask}]})});
+    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');raw=j.choices[0].message.content;
+  }
+  raw=raw.replace(/```json|```/g,'').trim();const a=raw.indexOf('['),b=raw.lastIndexOf(']');if(a>=0&&b>a)raw=raw.slice(a,b+1);
+  let arr;try{arr=JSON.parse(raw);}catch(e){return [];}
+  return (Array.isArray(arr)?arr:[]).map(o=>({type:o.type||'Link',title:o.title||o.url,note:'AI-suggested — check that the link opens.',url:o.url,ai:true})).filter(x=>/^https?:\/\//.test(x.url||''));
+}
+document.getElementById('rs-find').onclick=async ()=>{
+  const query=document.getElementById('rs-query').value.trim();
+  if(!query){toast("Type what you're looking for");return;}
+  const type=document.getElementById('rs-type').value;
+  const subjName=subjById(resCurrentSubj).name;
+  const box=document.getElementById('rs-suggestions');
+  let list=searchSources(subjName,query,type);
+  const ai=DB.settings.provider!=='none'&&DB.settings.key;
+  if(ai){
+    box.innerHTML='<p class="sub" style="margin:0">Asking AI for the best sources…</p>';
+    try{const aiList=await callAISources(subjName,query);list=aiList.concat(list);}catch(e){/* fall back to search links */}
+  }
+  renderSuggestions(list);
+};
+function renderSuggestions(list){
+  const box=document.getElementById('rs-suggestions');
+  box.innerHTML='<div class="section-h" style="margin:6px 0 8px">Suggestions — save the ones you like</div>'+list.map((r,i)=>`
+    <div class="res" style="border-left-color:${r.ai?'var(--warn)':'var(--accent)'};cursor:default">
+      <span class="rtype">${esc(r.type)}</span>
+      <span class="rmain"><span class="rtitle">${esc(r.title)}${r.ai?' <span class="badge b-med">AI</span>':''}</span><span class="rnote">${esc(r.note||'')}</span></span>
+      <a class="btn ghost sm" href="${r.url}" target="_blank" rel="noopener noreferrer" style="margin-right:6px">Open ↗</a>
+      <button class="btn sm rs-save" data-i="${i}">＋ Save</button>
+    </div>`).join('');
+  box.querySelectorAll('.rs-save').forEach(b=>b.onclick=()=>{
+    const r=list[+b.dataset.i];
+    (DB.mySources[resCurrentSubj]=DB.mySources[resCurrentSubj]||[]).push({title:r.title,type:r.type,url:r.url,ts:Date.now()});
+    save();renderMySources();toast('Saved to My Sources ⭐');
+  });
+}
+function renderMySources(){
+  const mine=DB.mySources[resCurrentSubj]||[];
+  const el=document.getElementById('rs-mine');
+  el.innerHTML=mine.length?mine.map((r,i)=>`
+    <a class="res" href="${r.url}" target="_blank" rel="noopener noreferrer" style="border-left-color:${col(resCurrentSubj)}">
+      <span class="rtype">${esc(r.type||'Link')}</span>
+      <span class="rmain"><span class="rtitle">${esc(r.title)}</span><span class="rnote">${esc(r.url)}</span></span>
+      <button class="btn ghost sm rs-del" data-i="${i}" onclick="event.preventDefault();event.stopPropagation();">✕</button>
+    </a>`).join(''):'<p class="empty" style="padding:16px">No saved sources yet. Search above and hit ＋ Save.</p>';
+  el.querySelectorAll('.rs-del').forEach(b=>b.onclick=(e)=>{e.preventDefault();e.stopPropagation();DB.mySources[resCurrentSubj].splice(+b.dataset.i,1);save();renderMySources();});
+}
 
 /* ============================ CREATE / IMPORT FLASHCARDS ============================ */
 let ccCards=[]; // {front,back}
