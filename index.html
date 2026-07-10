@@ -9,7 +9,6 @@
     --bg:#1a1d24; --bg2:#21252e; --panel:#272c37; --panel2:#2e3440;
     --line:#363c49; --txt:#e4e7ec; --muted:#9aa4b2; --faint:#6b7480;
     --accent:#7c9cc4; --accent2:#8fb39b; --warn:#cba86b; --bad:#c47c84;
-    --ap:#b07cc4;
     --r:14px; --shadow:0 6px 24px rgba(0,0,0,.28);
     /* subject colors (muted) */
     --s-alg:#7c9cc4; --s-ela:#b39ac4; --s-sci:#8fb39b; --s-spa:#cba86b; --s-his:#c49a8f;
@@ -116,6 +115,12 @@
   .sched-slot{border-radius:8px;padding:6px 4px;margin:3px 0;font-size:12px;color:#11151b;font-weight:600;position:relative}
   .sched-slot .x{position:absolute;top:1px;right:4px;cursor:pointer;opacity:.6;font-weight:700}
   .sched-slot .x:hover{opacity:1}
+  .sched-slot.busy{background:var(--panel2)!important;color:var(--muted);border:1px dashed var(--line)}
+  .commit-row{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:10px}
+  .commit-row .cdays{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px}
+  .commit-row .cdays label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:6px;padding:2px 5px;cursor:pointer}
+  .commit-row .cdays input{width:auto}
+  @media(max-width:700px){.commit-row{grid-template-columns:1fr 1fr}}
   /* Classroom */
   .assign{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:.15s;border-left:4px solid var(--line)}
   .assign:hover{background:var(--panel2)}
@@ -169,8 +174,6 @@
   .cc-card .ccb{color:var(--muted);font-size:13px;margin-top:3px}
   .cc-card .ccx{float:right;cursor:pointer;color:var(--faint);font-weight:700}
   .cc-card .ccx:hover{color:var(--bad)}
-  .btn.ap{background:var(--ap);color:#11151b}
-  .ap-chip{font-size:10px;background:var(--ap);color:#11151b;padding:2px 7px;border-radius:5px;font-weight:700;letter-spacing:.4px}
 </style>
 </head>
 <body>
@@ -183,9 +186,8 @@
     </div>
     <button class="nav-btn active" data-page="dashboard"><span class="ic">▦</span><span class="lbl">Dashboard</span></button>
     <button class="nav-btn" data-page="subjects"><span class="ic">▤</span><span class="lbl">Subjects</span></button>
-    <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Resources</span></button>
+    <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Learn</span></button>
     <button class="nav-btn" data-page="recall"><span class="ic">⚯</span><span class="lbl">Flashcards</span></button>
-    <button class="nav-btn" data-page="create"><span class="ic">✚</span><span class="lbl">Create Cards</span></button>
     <button class="nav-btn" data-page="pomodoro"><span class="ic">◷</span><span class="lbl">Pomodoro</span></button>
     <button class="nav-btn" data-page="feynman"><span class="ic">✎</span><span class="lbl">Feynman</span></button>
     <button class="nav-btn" data-page="practice"><span class="ic">✓</span><span class="lbl">Practice & Tests</span></button>
@@ -257,7 +259,7 @@
 
     <!-- RESOURCES -->
     <section class="page" id="page-resources">
-      <h2 class="title">External resources</h2>
+      <h2 class="title">Learn</h2>
       <p class="sub">Hand-picked free articles, textbooks, videos, and practice sites. Pick a subject to see its links — all open in a new tab.</p>
       <div class="grid g3" id="res-grid"></div>
 
@@ -269,79 +271,86 @@
       </div>
     </section>
 
-    <!-- CREATE / IMPORT FLASHCARDS -->
-    <section class="page" id="page-create">
-      <h2 class="title">Create flashcards</h2>
-      <p class="sub">Make your own cards from your notes, or upload a file and let AI build a set for you.</p>
-      <div class="grid g2" style="align-items:start">
-        <div class="card">
-          <label class="fld">Add cards to which subject?</label>
-          <select id="cc-subj"></select>
-
-          <div class="tabs" id="cc-tabs">
-            <button class="active" data-cc="paste">Type / paste</button>
-            <button data-cc="file">Upload a file</button>
-          </div>
-
-          <div id="cc-pane-paste">
-            <label class="fld">Your material</label>
-            <p class="sub" style="margin:0 0 6px;font-size:12px">Two ways: paste notes and let AI build cards, <em>or</em> write one card per line as <kbd>Question | Answer</kbd>.</p>
-            <textarea id="cc-text" style="min-height:170px" placeholder="Paste your notes here for AI to turn into flashcards…&#10;&#10;— or — write your own, one per line:&#10;What is photosynthesis? | How plants make food from light&#10;Capital of France :: Paris"></textarea>
-          </div>
-
-          <div id="cc-pane-file" style="display:none">
-            <label class="fld">Upload a file</label>
-            <input type="file" id="cc-file" accept=".txt,.md,.csv,.pdf,.docx,.doc">
-            <p class="sub" id="cc-filestatus" style="margin:8px 0 0;font-size:12px">Supported: .txt, .md, .csv, .pdf, .docx</p>
-            <label class="fld">Extracted text</label>
-            <textarea id="cc-filetext" style="min-height:130px" placeholder="The file's text will appear here. You can edit it before generating cards."></textarea>
-          </div>
-
-          <div class="row" style="margin-top:16px">
-            <button class="btn" id="cc-ai">Generate with AI ✨</button>
-            <button class="btn sec" id="cc-manual">Make cards from Q | A lines</button>
-          </div>
-          <p class="sub" id="cc-ainote" style="margin-top:10px;font-size:12px"></p>
-        </div>
-
-        <div class="card">
-          <div class="between"><h3 style="margin:0">Preview</h3><span class="pill"><span id="cc-count">0</span> cards</span></div>
-          <p class="sub" style="margin:6px 0 12px">Review and trim before adding. Nothing is saved until you click Add.</p>
-          <div id="cc-preview"><p class="empty">No cards yet — generate or build some on the left.</p></div>
-          <button class="btn" id="cc-add" style="margin-top:14px;display:none">Add <span id="cc-addn">0</span> cards to deck</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- FLASHCARDS / ACTIVE RECALL + SPACED REPETITION -->
+    <!-- FLASHCARDS: Review + Create/Import sub-tabs -->
     <section class="page" id="page-recall">
       <h2 class="title">Flashcards</h2>
-      <p class="sub">Active recall + spaced repetition. Grade yourself honestly — the schedule adapts.</p>
-      <div class="row" style="margin-bottom:14px">
-        <select id="rc-subject" style="max-width:240px"></select>
-        <span class="pill"><span id="rc-due">0</span> due · <span id="rc-new">0</span> new</span>
+      <div class="tabs" id="fc-tabs">
+        <button class="active" data-fc="review">Review</button>
+        <button data-fc="create">Create / Import</button>
       </div>
-      <div id="rc-stage">
-        <div class="flash" id="rc-card">
-          <span class="side-tag" id="rc-tag"></span>
-          <div id="rc-text">Loading…</div>
-          <span class="hint" id="rc-hint">click to flip</span>
+
+      <!-- REVIEW sub-tab -->
+      <div id="fc-pane-review">
+        <p class="sub">Active recall + spaced repetition. Grade yourself honestly — the schedule adapts.</p>
+        <div class="row" style="margin-bottom:14px">
+          <select id="rc-subject" style="max-width:240px"></select>
+          <span class="pill"><span id="rc-due">0</span> due · <span id="rc-new">0</span> new</span>
         </div>
-        <div id="rc-grades" style="display:none">
-          <div class="grade-row">
-            <button class="g-again" data-g="0">Again<small>&lt;1 min</small></button>
-            <button class="g-hard" data-g="1">Hard<small id="lbl-hard"></small></button>
-            <button class="g-good" data-g="2">Good<small id="lbl-good"></small></button>
-            <button class="g-easy" data-g="3">Easy<small id="lbl-easy"></small></button>
+        <div id="rc-stage">
+          <div class="flash" id="rc-card">
+            <span class="side-tag" id="rc-tag"></span>
+            <div id="rc-text">Loading…</div>
+            <span class="hint" id="rc-hint">click to flip</span>
+          </div>
+          <div id="rc-grades" style="display:none">
+            <div class="grade-row">
+              <button class="g-again" data-g="0">Again<small>&lt;1 min</small></button>
+              <button class="g-hard" data-g="1">Hard<small id="lbl-hard"></small></button>
+              <button class="g-good" data-g="2">Good<small id="lbl-good"></small></button>
+              <button class="g-easy" data-g="3">Easy<small id="lbl-easy"></small></button>
+            </div>
+          </div>
+        </div>
+        <div id="rc-done" class="card" style="display:none;text-align:center">
+          <h3>All caught up 🎉</h3>
+          <p class="sub" style="margin:6px 0 14px">No cards due in this deck right now. Spaced repetition will bring them back automatically.</p>
+          <button class="btn sec" id="rc-cram">Cram anyway (ignore schedule)</button>
+        </div>
+        <p class="sub" style="margin-top:16px;font-size:12.5px">Shortcuts: <kbd>space</kbd> flip · <kbd>1</kbd>–<kbd>4</kbd> grade</p>
+      </div>
+
+      <!-- CREATE / IMPORT sub-tab -->
+      <div id="fc-pane-create" style="display:none">
+        <p class="sub">Make your own cards from your notes, or upload a file and let AI build a set for you.</p>
+        <div class="grid g2" style="align-items:start">
+          <div class="card">
+            <label class="fld">Add cards to which subject?</label>
+            <select id="cc-subj"></select>
+
+            <div class="tabs" id="cc-tabs">
+              <button class="active" data-cc="paste">Type / paste</button>
+              <button data-cc="file">Upload a file</button>
+            </div>
+
+            <div id="cc-pane-paste">
+              <label class="fld">Your material</label>
+              <p class="sub" style="margin:0 0 6px;font-size:12px">Two ways: paste notes and let AI build cards, <em>or</em> write one card per line as <kbd>Question | Answer</kbd>.</p>
+              <textarea id="cc-text" style="min-height:170px" placeholder="Paste your notes here for AI to turn into flashcards…&#10;&#10;— or — write your own, one per line:&#10;What is photosynthesis? | How plants make food from light&#10;Capital of France :: Paris"></textarea>
+            </div>
+
+            <div id="cc-pane-file" style="display:none">
+              <label class="fld">Upload a file</label>
+              <input type="file" id="cc-file" accept=".txt,.md,.csv,.pdf,.docx,.doc">
+              <p class="sub" id="cc-filestatus" style="margin:8px 0 0;font-size:12px">Supported: .txt, .md, .csv, .pdf, .docx</p>
+              <label class="fld">Extracted text</label>
+              <textarea id="cc-filetext" style="min-height:130px" placeholder="The file's text will appear here. You can edit it before generating cards."></textarea>
+            </div>
+
+            <div class="row" style="margin-top:16px">
+              <button class="btn" id="cc-ai">Generate with AI ✨</button>
+              <button class="btn sec" id="cc-manual">Make cards from Q | A lines</button>
+            </div>
+            <p class="sub" id="cc-ainote" style="margin-top:10px;font-size:12px"></p>
+          </div>
+
+          <div class="card">
+            <div class="between"><h3 style="margin:0">Preview</h3><span class="pill"><span id="cc-count">0</span> cards</span></div>
+            <p class="sub" style="margin:6px 0 12px">Review and trim before adding. Nothing is saved until you click Add.</p>
+            <div id="cc-preview"><p class="empty">No cards yet — generate or build some on the left.</p></div>
+            <button class="btn" id="cc-add" style="margin-top:14px;display:none">Add <span id="cc-addn">0</span> cards to deck</button>
           </div>
         </div>
       </div>
-      <div id="rc-done" class="card" style="display:none;text-align:center">
-        <h3>All caught up 🎉</h3>
-        <p class="sub" style="margin:6px 0 14px">No cards due in this deck right now. Spaced repetition will bring them back automatically.</p>
-        <button class="btn sec" id="rc-cram">Cram anyway (ignore schedule)</button>
-      </div>
-      <p class="sub" style="margin-top:16px;font-size:12.5px">Shortcuts: <kbd>space</kbd> flip · <kbd>1</kbd>–<kbd>4</kbd> grade</p>
     </section>
 
     <!-- POMODORO -->
@@ -371,9 +380,9 @@
           <div class="grid g3" style="margin-top:4px">
             <div><label class="fld">Focus (min)</label><input type="number" id="pt-work" value="30" min="10" max="1440"></div>
             <div><label class="fld">Break (min)</label><input type="number" id="pt-break" value="10" min="1" max="60"></div>
-            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="20" min="1" max="120"></div>
+            <div><label class="fld">Long break</label><input type="number" id="pt-long" value="20" min="1" max="90"></div>
           </div>
-          <p class="sub" style="margin:8px 0 0;font-size:12px">Focus: 10 min–24 h · Break: 1–60 min · break is always kept ≤ focus.</p>
+          <p class="sub" style="margin:8px 0 0;font-size:12px">Focus: 10 min–24 h · Break: 1–60 min · Long break: up to 1.5 h · break is always kept ≤ focus.</p>
           <label class="switchrow" style="margin-top:14px"><input type="checkbox" id="pt-sound" checked> Play a chime when a phase ends</label>
           <div class="section-h">Why it works</div>
           <p style="color:var(--muted);font-size:13px;margin:0">Short, bounded sprints lower the activation cost of starting and protect attention from fatigue. Pair each focus block with one method — e.g. recall cards, or a Feynman write-up.</p>
@@ -387,12 +396,15 @@
       <p class="sub">If you can explain it simply, you understand it. Work through the four steps; gaps will surface.</p>
       <div class="grid g2">
         <div class="card">
-          <label class="fld">1 · Pick a concept</label>
+          <label class="fld">1 · Pick a subject, then choose or type a topic</label>
           <div class="row">
-            <select id="fy-subj" style="max-width:200px"></select>
-            <input type="text" id="fy-concept" placeholder="e.g. Why factoring works" style="flex:1;min-width:160px">
+            <select id="fy-subj" style="max-width:180px"></select>
+            <select id="fy-topic" style="flex:1;min-width:150px"></select>
+            <button class="btn sec sm" id="fy-random" title="Give me a random topic">🎲 Surprise me</button>
           </div>
-          <label class="fld">2 · Explain it like you're teaching a 10-year-old</label>
+          <label class="fld" style="margin-top:10px">Topic to explain — click the box and type your own, or pick one above</label>
+          <input type="text" id="fy-concept" autocomplete="off" placeholder="Type any topic here… e.g. How to solve quadratics">
+          <label class="fld">2 · Explain it simply, like you're teaching a younger kid</label>
           <textarea id="fy-explain" placeholder="Plain words only. No jargon. Use an everyday analogy."></textarea>
           <label class="fld">3 · Where did you get stuck or vague?</label>
           <textarea id="fy-gaps" placeholder="The spots where you reached for jargon or hand-waved — those are your gaps. Go review them."></textarea>
@@ -414,7 +426,7 @@
     <!-- PRACTICE & TESTS -->
     <section class="page" id="page-practice">
       <h2 class="title">Practice & Tests</h2>
-      <p class="sub">Practice mode gives instant feedback per question. Test mode is timed and scored like the real thing. The Gauntlet pulls 5 brutal, exam-style word problems from a deep bank — and gives you extra stats when you finish.</p>
+      <p class="sub">Practice mode gives instant feedback per question. Test mode is timed and scored like the real thing.</p>
 
       <!-- chooser -->
       <div id="pr-home">
@@ -479,7 +491,6 @@
         <div class="card" style="text-align:center;margin-bottom:18px">
           <div class="n" id="pr-r-pct" style="font-size:46px;font-weight:700"></div>
           <div class="l" style="color:var(--muted)" id="pr-r-line"></div>
-          <div id="pr-r-extra" style="margin-top:14px"></div>
           <div id="pr-r-weak" style="margin-top:14px"></div>
           <div class="row" style="justify-content:center;margin-top:14px">
             <button class="btn" id="pr-r-retry">Retake</button>
@@ -496,7 +507,6 @@
     <section class="page" id="page-progress">
       <h2 class="title">My Progress</h2>
       <p class="sub">Every practice test you take is recorded here, with feedback on what to study next.</p>
-      <div id="pg-mastery"></div>
       <div id="pg-empty" class="empty" style="display:none">No tests yet. Head to <strong>Practice &amp; Tests</strong>, take a test, and your results will show up here.</div>
       <div id="pg-content" style="display:none">
         <div class="grid g4" style="margin-bottom:18px">
@@ -565,18 +575,45 @@
     <!-- SCHEDULE -->
     <section class="page" id="page-schedule">
       <h2 class="title">Study schedule builder</h2>
-      <p class="sub">Tell it when you're free and what to prioritize. It builds a weekly plan you can tweak.</p>
+      <p class="sub">Tell me about your day and your commitments, and I'll fit study blocks into the free time — around school, dinner, practices, and bedtime.</p>
+
+      <!-- 1. Daily rhythm -->
       <div class="card">
+        <div class="section-h" style="margin-top:0">1 · Your daily rhythm</div>
+        <div class="grid g3">
+          <div><label class="fld">Home from school (weekdays)</label><input type="time" id="sc-schoolend" value="15:30"></div>
+          <div><label class="fld">Weekend earliest start</label><input type="time" id="sc-weekendstart" value="10:00"></div>
+          <div><label class="fld">Study until / bedtime</label><input type="time" id="sc-bedtime" value="21:30"></div>
+        </div>
+        <div class="grid g3" style="margin-top:6px">
+          <div><label class="fld">Dinner time</label><input type="time" id="sc-dinner" value="18:00"></div>
+          <div><label class="fld">Dinner length (min)</label><input type="number" id="sc-dinnerlen" value="45" min="0" max="180"></div>
+          <div><label class="fld">Wind-down before bed (min)</label><input type="number" id="sc-winddown" value="30" min="0" max="180"></div>
+        </div>
+      </div>
+
+      <!-- 2. Commitments -->
+      <div class="card" style="margin-top:16px">
+        <div class="between"><div class="section-h" style="margin:0">2 · Other commitments</div><button class="btn sec sm" id="sc-add-commit">+ Add commitment</button></div>
+        <p class="sub" style="margin:6px 0 12px">Sports practice, music/instrument lessons, clubs, a job, chores — anything that blocks out time. I'll schedule study around these.</p>
+        <div id="sc-commits"></div>
+      </div>
+
+      <!-- 3. Study preferences -->
+      <div class="card" style="margin-top:16px">
+        <div class="section-h" style="margin-top:0">3 · Study preferences</div>
         <div class="grid g2">
           <div>
             <label class="fld">Days you'll study</label>
             <div class="row" id="sc-days"></div>
-            <div class="grid g2" style="margin-top:4px">
-              <div><label class="fld">Start time</label><input type="time" id="sc-start" value="16:00"></div>
-              <div><label class="fld">End time</label><input type="time" id="sc-end" value="19:00"></div>
+            <div class="grid g3" style="margin-top:4px">
+              <div><label class="fld">Block length</label>
+                <select id="sc-block"><option value="25">25 min</option><option value="50" selected>50 min</option><option value="60">60 min</option></select></div>
+              <div><label class="fld">Break between</label>
+                <select id="sc-gap"><option value="5">5 min</option><option value="10" selected>10 min</option><option value="15">15 min</option></select></div>
+              <div><label class="fld">Max study/day</label>
+                <select id="sc-max"><option value="60">1 hr</option><option value="120" selected>2 hr</option><option value="180">3 hr</option><option value="240">4 hr</option><option value="9999">No cap</option></select></div>
             </div>
-            <label class="fld">Block length (minutes)</label>
-            <select id="sc-block"><option value="25">25 (one pomodoro)</option><option value="50" selected>50 (two pomodoros)</option><option value="60">60</option></select>
           </div>
           <div>
             <label class="fld">Priority per subject (higher = more blocks)</label>
@@ -584,13 +621,27 @@
           </div>
         </div>
         <div class="row" style="margin-top:18px">
-          <button class="btn" id="sc-generate">Generate schedule</button>
-          <button class="btn sec" id="sc-clear">Clear</button>
+          <button class="btn" id="sc-generate">Build my schedule</button>
+          <button class="btn sec" id="sc-clear">Clear schedule</button>
         </div>
       </div>
       <div id="sc-result" style="margin-top:22px;display:none">
-        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Drag not needed — click ✕ to remove, or "Add block" in any cell.</span></div>
+        <div class="between"><h3 style="margin:0">Your week</h3><span class="sub" style="margin:0">Click ✕ to remove a block, or "+ block" in any cell.</span></div>
         <div style="overflow-x:auto;margin-top:12px"><table class="sched-table" id="sc-table"></table></div>
+        <div class="card" style="margin-top:16px;border-left:4px solid var(--accent2)">
+          <div class="between">
+            <div><strong>Add to Google Calendar</strong><div class="sub" style="margin:4px 0 0">Download your week as a calendar file — each block becomes a weekly repeating event.</div></div>
+            <button class="btn sm" id="sc-ics">Download .ics</button>
+          </div>
+          <details style="margin-top:12px"><summary>How to import into Google Calendar</summary>
+            <ol style="color:var(--muted);font-size:13px;line-height:1.8">
+              <li>Click <strong>Download .ics</strong> above to save the file.</li>
+              <li>Open <a href="https://calendar.google.com/calendar/u/0/r/settings/export" target="_blank" rel="noopener noreferrer">Google Calendar → Settings → Import &amp; export</a>.</li>
+              <li>Choose the .ics file, pick which calendar to add it to, and click <strong>Import</strong>.</li>
+              <li>Your study blocks appear as weekly recurring events. (Re-import after you tweak the schedule to refresh.)</li>
+            </ol>
+          </details>
+        </div>
       </div>
     </section>
 
@@ -623,10 +674,6 @@
             <p>This page runs entirely in your browser with no server behind it, so there's no shared key it can borrow. Adding your own key (or running it through the templates) are the two safe options. Keys here never leave your machine except to call the provider you chose.</p>
           </details>
         </div>
-      </div>
-      <div class="card" style="margin-top:16px">
-        <h3 style="margin:0 0 6px">Mastery celebration 🏆</h3>
-        <div id="set-mastery-wrap"></div>
       </div>
       <div class="card" style="margin-top:16px">
         <h3 style="margin:0 0 6px">Connecting real Google Classroom later</h3>
@@ -1159,7 +1206,7 @@ const CHALLENGE_QUESTIONS = {
     ["Which sentence is in the passive voice?",["The committee approved the plan.","The plan was approved by the committee.","The committee will approve it.","Approve the plan."],1,"Passive: the subject receives the action ('was approved').","Grammar"],
     ["When an author inserts an earlier scene into the story, it's a…",["Flashback","Foreshadowing","Climax","Frame story"],0,"A flashback is an inserted earlier scene.","Narrative structure"],
     ["'Ask not what your country can do for you…' relies most on…",["Parallelism","Onomatopoeia","Assonance","Hyperbole"],0,"The mirrored grammatical structure is parallelism.","Rhetorical devices"],
-    ["A narrator who misunderstands events, so the reader perceives more than he does, is best called…",["An unreliable narrator","An omniscient narrator","A reliable narrator","A second-person narrator"],0,"Such a narrator is unreliable, which produces dramatic irony for the reader.","Point of view"],
+    ["A narrator who misunderstands events creates…",["An unreliable narrator","Dramatic irony for the reader","Both A and B","Neither"],2,"The narrator is unreliable, producing dramatic irony for readers.","Point of view"],
     ["Which option states a theme rather than a topic?",["War","Loyalty can demand painful sacrifice.","A soldier's life","Friendship"],1,"A theme is a complete insight, not a one-word topic.","Theme"],
     ["In 'The pen is mightier than the sword,' pen and sword are…",["Metonyms for writing and force","Similes","Personification","Alliteration"],0,"Each stands in for a larger idea (metonymy).","Figurative language"],
   ],
@@ -1239,719 +1286,10 @@ const CHALLENGE_CARDS = {
   ],
 };
 
-/* ===== AP CHALLENGE BANK — a large pool of incredibly hard, AP-exam-styled questions. =====
-   Each AP Challenge test pulls 5 questions at random from this bank for the chosen subject.
-   format: [question, [choices], correctIndex, explanation, topic] */
-const AP_QUESTIONS = {
-  alg:[
-    ["A roller-coaster's track height (in meters) along its run is modeled by h(x) = 2x³ − 3x² − 12x + 5, where x is the horizontal position. The designers need the position where the track reaches a local maximum (a crest). At which x does that local maximum occur?",["x = −1","x = 2","x = 0","x = 1"],0,"h'(x) = 6x² − 6x − 12 = 6(x−2)(x+1). The curve rises, then falls, then rises, so the local max is at the smaller critical value, x = −1.","Calculus / extrema"],
-    ["Two bacterial cultures are being compared. After x hours, culture A contains 3^(2x) cells and culture B contains 7^(x+1) cells. A lab tech wants to know the time x at which the two populations are exactly equal. Solve for x.",["≈ 7.74","≈ 1.21","≈ 3.50","≈ 0.41"],0,"Set 3^(2x) = 7^(x+1): 2x·ln3 = (x+1)·ln7 → x(2ln3 − ln7) = ln7 → x = ln7/(2ln3 − ln7) ≈ 7.74.","Exponential equations"],
-    ["An electrical engineer analyzing an AC circuit reduces it to the equation x² + bx + c = 0, where b and c are real numbers. Testing reveals that 2 + i is one of the roots. What must (b, c) be?",["(−4, 5)","(4, 5)","(−4, 3)","(4, −5)"],0,"Real coefficients force the conjugate 2 − i to also be a root. Sum of roots = 4 = −b → b = −4; product = (2+i)(2−i) = 5 = c.","Complex roots"],
-    ["A company's quarterly profit (in thousands of dollars) is modeled by P(x) = x⁴ − 3x² + 2x − 5. To check the model at a value, an analyst divides P(x) by (x − 2). Using the Remainder Theorem, what remainder results?",["3","−5","7","0"],0,"By the Remainder Theorem the remainder is P(2) = 16 − 12 + 4 − 5 = 3.","Polynomial division"],
-    ["While building a probability model, a statistics student must expand the binomial (2x − 1)⁵ and report the coefficient of the x³ term for the next step. What is that coefficient?",["80","−80","40","10"],0,"Term = C(5,3)(2x)³(−1)² = 10·8x³·1 = 80x³.","Binomial theorem"],
-    ["A ball is dropped and bounces forever. Its first arc covers 3 meters of horizontal travel, and each successive arc is 2/3 as long as the one before. What is the total horizontal distance, the sum of the infinite geometric series 3·(2/3)ⁿ from n = 0?",["9","6","4.5","∞"],0,"Geometric with a = 3, r = 2/3: S = a/(1−r) = 3/(1/3) = 9.","Infinite series"],
-    ["A measuring instrument converts an input x to an output using f(x) = (x + 1)/(x − 2). A technician reads an output of 3 and needs to recover the original input, i.e. f⁻¹(3). What is it?",["7/2","3","5/2","−1"],0,"Solve (x+1)/(x−2) = 3 → x + 1 = 3x − 6 → 2x = 7 → x = 7/2.","Inverse functions"],
-    ["The vertical displacement of an oscillating mass is governed by the equation 2sin²θ − sinθ − 1 = 0. Find every angle θ in the interval [0, 2π) that satisfies it.",["θ = π/2, 7π/6, 11π/6","θ = π/2 only","θ = π/6, 5π/6","θ = 0, π"],0,"Factor: (2sinθ + 1)(sinθ − 1) = 0 → sinθ = 1 (π/2) or sinθ = −1/2 (7π/6, 11π/6).","Trig equations"],
-    ["An engineer adjusts a single design parameter k so that the projectile equation kx² + 4x + 1 = 0 has exactly one real solution (the path just grazes the ground at one point). What value of k accomplishes this?",["k = 4","k = 2","k = 16","k = 1/4"],0,"One real solution means the discriminant is zero: 16 − 4k = 0 → k = 4.","Discriminant"],
-    ["A sample of a radioactive isotope decays according to N = N₀e^(−0.05t), where t is measured in years. A health physicist needs the half-life — the time for the amount to fall to half of N₀. Approximately how many years is that?",["≈ 13.9 years","≈ 20.0 years","≈ 6.9 years","≈ 3.5 years"],0,"Half-life t = ln2/0.05 = 0.693/0.05 ≈ 13.86 years.","Exponential decay"],
-    ["A chemist models a reactant's concentration with the rational function C(x) = (x² − 4)/(x² − x − 6). She needs the single x-value where the model has a vertical asymptote (where concentration blows up). At what x is it?",["x = 3","x = −2","x = 2","x = −3"],0,"Factor: (x−2)(x+2)/[(x−3)(x+2)]. The (x+2) cancels (a hole), leaving a vertical asymptote only at x = 3.","Rational functions"],
-    ["An acoustics formula relating two sound intensities reduces to log₂(x) − log₂(x − 3) = 2. Solve for x.",["x = 4","x = 3","x = 6","x = 12"],0,"Combine: log₂[x/(x−3)] = 2 → x/(x−3) = 4 → x = 4x − 12 → 3x = 12 → x = 4.","Logarithms"],
-    ["A signal-processing engineer determines that a system's monic characteristic polynomial has roots 1, 2i, and −2i. Which polynomial matches those roots?",["x³ − x² + 4x − 4","x³ + x² + 4x + 4","x³ − x² − 4x − 4","x³ − 4x² + x − 4"],0,"(x − 1)(x − 2i)(x + 2i) = (x − 1)(x² + 4) = x³ − x² + 4x − 4.","Polynomials & complex roots"],
-    ["A thermostat is designed to hold a control value x within tolerance, defined by the inequality |2x − 3| < 5. What is the full range of allowed values of x?",["−1 < x < 4","x < −1 or x > 4","1 < x < 4","−4 < x < 1"],0,"−5 < 2x − 3 < 5 → −2 < 2x < 8 → −1 < x < 4.","Absolute-value inequalities"],
-    ["A social-media post is shared 5 times in its first hour, and the number of shares doubles every hour after that (5, 10, 20, …). How many shares occur during the 12th hour — the 12th term of the sequence?",["10240","5120","20480","2048"],0,"aₙ = 5·2^(n−1), so a₁₂ = 5·2¹¹ = 5·2048 = 10240.","Geometric sequences"],
-    ["A scaling law in an experiment is written logₓ(8) = 3/2, where x is an unknown base. Determine the base x.",["4","2","6","16"],0,"x^(3/2) = 8 → x = 8^(2/3) = (8^(1/3))² = 2² = 4.","Logarithms"],
-    ["A business finds that its two break-even production levels are the roots of 2x² − 5x + 3 = 0. Without solving for each root, use Vieta's formulas to find the sum of the two break-even levels.",["5/2","3/2","−5/2","1"],0,"Sum of roots = −b/a = 5/2.","Vieta's formulas"],
-  ],
-  ela:[
-    ["At a graduation ceremony, the keynote speaker opens four sentences in a row with the identical phrase 'We will rise.' This deliberate repetition of words at the BEGINNING of successive clauses is called…",["Anaphora","Epistrophe","Chiasmus","Zeugma"],0,"Anaphora repeats words at the start of successive clauses; epistrophe repeats them at the end.","Rhetorical schemes"],
-    ["In an inaugural address, a president urges, 'Ask not what your country can do for you — ask what you can do for your country,' reversing the order of the key words across the two halves. This balanced reversal is…",["Antimetabole","Anaphora","Hyperbole","Synecdoche"],0,"Antimetabole (a form of chiasmus) reverses the order of repeated words across two clauses.","Rhetorical schemes"],
-    ["During a storm, a ship's captain bellows 'All hands on deck!', using the word 'hands' to mean the entire crew of sailors. Using a part to stand for the whole is the device of…",["Synecdoche","Metonymy","Personification","Litotes"],0,"Synecdoche uses a part ('hands') to represent the whole (the sailors).","Figurative language"],
-    ["A novelist writes that after the argument 'he lost his coat and his temper,' letting the single verb 'lost' govern two very different objects. This device is…",["Zeugma","Anaphora","Oxymoron","Allusion"],0,"Zeugma yokes two unlike objects to one verb that applies to each in a different sense.","Rhetorical devices"],
-    ["Reviewing a film, a critic calls the lead character 'not the friendliest person you'll ever meet,' making a point by negating its opposite rather than stating it directly. This ironic understatement is…",["Litotes","Hyperbole","Apostrophe","Paradox"],0,"Litotes affirms something by negating its contrary, creating understatement.","Rhetorical devices"],
-    ["A student scanning a line from a Shakespeare play counts five rhythmic feet, each an unstressed syllable followed by a stressed one. The meter of that line is…",["Iambic pentameter","Trochaic tetrameter","Dactylic hexameter","Anapestic trimeter"],0,"Five iambs (unstressed–stressed) per line is iambic pentameter.","Meter & prosody"],
-    ["In a poem about an empty house, the writer describes a 'deafening silence,' joining two words whose meanings flatly contradict each other. This figure of speech is an…",["Oxymoron","Hyperbole","Metonymy","Allusion"],0,"An oxymoron pairs two contradictory terms for effect.","Figurative language"],
-    ["In a televised debate, one candidate ignores his opponent's actual argument and instead spends his time attacking her character and motives. The logical fallacy he commits is…",["Ad hominem","Straw man","False dilemma","Begging the question"],0,"Ad hominem attacks the person rather than refuting the argument.","Logical fallacies"],
-    ["A newspaper editorial declares that 'the pen is mightier than the sword,' letting the word 'pen' stand in for the written word and persuasion. Substituting a closely associated object for the idea is…",["Metonymy","Synecdoche","Simile","Hyperbole"],0,"Metonymy replaces a concept with something closely associated with it ('pen' for writing).","Figurative language"],
-    ["A short novel about a barnyard of farm animals can be read on two levels at once: every animal and event also stands for a real political figure or moment in a revolution, sustained from start to finish. This kind of work is an…",["Allegory","Anecdote","Aphorism","Apostrophe"],0,"An allegory is an extended narrative whose elements consistently represent abstract or historical ideas.","Literary forms"],
-    ["During a debate, a speaker restates her opponent's careful, qualified position as a ridiculous extreme version, then easily knocks that version down. The fallacy she has used is the…",["Straw man fallacy","Red herring","Slippery slope","Ad populum"],0,"The straw-man fallacy distorts an opponent's view, then refutes the distortion.","Logical fallacies"],
-    ["A campaign advertisement ends three consecutive sentences with the very same phrase, '…for the people.' Repeating words at the END of successive clauses is the device of…",["Epistrophe","Anaphora","Assonance","Caesura"],0,"Epistrophe (epiphora) repeats the same words at the end of successive clauses.","Rhetorical schemes"],
-    ["In an elegy, the grieving poet cries out, 'O Death, where is thy sting?', directly addressing an abstraction as though it could hear and answer. This device is…",["Apostrophe","Allusion","Anaphora","Analogy"],0,"Apostrophe directly addresses an absent person or an abstraction as if present.","Rhetorical devices"],
-    ["A self-help essayist builds her whole argument around the claim that 'less is more' — a statement that at first sounds self-contradictory yet, on reflection, reveals a genuine truth. This is a…",["Paradox","Pun","Hyperbole","Cliché"],0,"A paradox is a seemingly self-contradictory statement that contains an underlying truth.","Literary devices"],
-    ["Reading a poem aloud in class, a student notices a strong, deliberate pause built into the middle of a line, breaking its rhythm before it continues. This mid-line break is best called a…",["Caesura","Enjambment","Anaphora","Volta"],0,"A caesura is a deliberate pause within a line of verse.","Poetic structure"],
-    ["In a memorial speech, the orator balances the line 'To err is human; to forgive, divine,' setting two contrasting ideas against each other in mirrored, parallel phrasing. This device is…",["Antithesis","Anaphora","Hyperbole","Synecdoche"],0,"Antithesis places contrasting ideas in balanced, parallel grammatical structure.","Rhetorical schemes"],
-  ],
-  sci:[
-    ["In a lab, a 2 kg block is placed on a frictionless ramp that makes a 30° angle with the horizontal and then released from rest. Taking g = 9.8 m/s², what is the magnitude of the block's acceleration as it slides down the ramp?",["4.9 m/s²","9.8 m/s²","2.5 m/s²","5.7 m/s²"],0,"Along a frictionless incline, a = g·sinθ = 9.8 × sin30° = 9.8 × 0.5 = 4.9 m/s².","Dynamics on inclines"],
-    ["A student sets up an Atwood machine: two masses, 3 kg and 5 kg, hang from the ends of a light string draped over a frictionless pulley. When the system is released, what is the magnitude of its acceleration? (g = 9.8 m/s²)",["2.45 m/s²","4.9 m/s²","1.96 m/s²","9.8 m/s²"],0,"a = (m₂ − m₁)g/(m₁ + m₂) = (5−3)(9.8)/(5+3) = 19.6/8 = 2.45 m/s².","Atwood machine"],
-    ["A soccer ball is kicked from level ground with a speed of 20 m/s at an angle of 30° above the horizontal. Using g = 10 m/s² and ignoring air resistance, how long does the ball stay in the air before it lands?",["2 s","1 s","4 s","0.5 s"],0,"Time of flight t = 2v·sinθ/g = 2·20·sin30°/10 = 2·20·0.5/10 = 2 s.","Projectile motion"],
-    ["On a frictionless air track, a 2 kg cart moving at 3 m/s slams into a stationary 1 kg cart, and the two stick together and move off as one. What is the speed of the combined carts immediately after the collision?",["2 m/s","1.5 m/s","3 m/s","1 m/s"],0,"Conserve momentum: (2·3 + 1·0)/(2 + 1) = 6/3 = 2 m/s.","Inelastic collisions"],
-    ["A 0.5 kg ball is dropped from rest off a balcony 10 m above the ground. Ignoring air resistance and taking g = 10 m/s², about how fast is the ball moving just before it hits the ground?",["≈ 14.1 m/s","10 m/s","20 m/s","≈ 7.1 m/s"],0,"Energy conservation: v = √(2gh) = √(2·10·10) = √200 ≈ 14.1 m/s.","Energy conservation"],
-    ["A car drives around a flat circular test track of radius 5 m at a constant speed of 10 m/s. What is the magnitude of the car's centripetal acceleration?",["20 m/s²","2 m/s²","50 m/s²","5 m/s²"],0,"a_c = v²/r = 10²/5 = 100/5 = 20 m/s².","Circular motion"],
-    ["A biology student follows a glucose molecule through every stage of aerobic respiration and asks which stage produces the greatest quantity of ATP. Which stage is it?",["Oxidative phosphorylation","Glycolysis","The Krebs cycle","Fermentation"],0,"Oxidative phosphorylation (the electron transport chain plus chemiosmosis) yields by far the most ATP.","Cellular respiration"],
-    ["As a cell begins to copy its DNA, one specific enzyme must first unwind and separate the two strands of the double helix so they can be read. Which enzyme performs this unwinding?",["Helicase","DNA polymerase","Ligase","Primase"],0,"Helicase unwinds and separates the two parental DNA strands at the replication fork.","DNA replication"],
-    ["Two pea plants are crossed, and each parent is heterozygous for two genes that assort independently (genotype AaBb). What phenotypic ratio should the gardener expect among the offspring?",["9 : 3 : 3 : 1","3 : 1","1 : 1 : 1 : 1","9 : 7"],0,"A dihybrid cross of two AaBb parents gives the classic 9:3:3:1 phenotypic ratio.","Genetics"],
-    ["While studying how sex cells form, a student looks for the stage in which homologous chromosomes pair up as tetrads and physically exchange segments. During which phase does this crossing over take place?",["Prophase I of meiosis","Metaphase II","Mitotic anaphase","Interphase"],0,"Crossing over occurs in prophase I, when homologous chromosomes pair as tetrads.","Meiosis"],
-    ["A pharmacology lab tests a drug that binds directly to an enzyme's active site, competing with the normal substrate. The data show the apparent Km increases while Vmax stays the same. This molecule is best described as a…",["Competitive inhibitor that raises apparent Km","Noncompetitive inhibitor that lowers Vmax","Permanent allosteric activator","Denaturing agent"],0,"A competitive inhibitor competes for the active site, raising apparent Km while leaving Vmax unchanged.","Enzyme kinetics"],
-    ["Inside a chloroplast, the first stage of photosynthesis takes place in the thylakoid membrane and supplies the energy carriers that the Calvin cycle then uses. What two products do these light-dependent reactions generate?",["ATP and NADPH","Glucose and O₂ only","CO₂ and water","Pyruvate"],0,"The light-dependent reactions produce ATP and NADPH (and release O₂), powering the Calvin cycle.","Photosynthesis"],
-    ["In a large population that is in Hardy–Weinberg equilibrium, exactly 16% of individuals display the recessive phenotype, so q² = 0.16. What fraction of the population is heterozygous (2pq)?",["0.48","0.16","0.36","0.24"],0,"q = √0.16 = 0.4, so p = 0.6 and 2pq = 2(0.6)(0.4) = 0.48.","Hardy–Weinberg"],
-    ["A buoy floating at sea bobs up and down as water waves pass beneath it. The waves have a frequency of 50 Hz and a wavelength of 4 m. What is the speed of the waves?",["200 m/s","12.5 m/s","54 m/s","0.08 m/s"],0,"Wave speed v = fλ = 50 × 4 = 200 m/s.","Waves"],
-    ["Two satellites orbiting Earth exert a gravitational pull on each other. If a maneuver doubles the distance between them, by what factor does the gravitational force between them change?",["1/4","1/2","2","4"],0,"Gravitational force varies as 1/r², so doubling r multiplies the force by 1/2² = 1/4.","Gravitation"],
-    ["A 1000 kg car traveling at 20 m/s slams on its brakes and comes to a complete stop. Using the work–energy theorem, how much work do the brakes do on the car?",["−2.0 × 10⁵ J","−4.0 × 10⁵ J","−1.0 × 10⁵ J","−2.0 × 10⁴ J"],0,"Work = ΔKE = 0 − ½(1000)(20²) = −200,000 J = −2.0 × 10⁵ J.","Work–energy theorem"],
-  ],
-  spa:[
-    ["Tu mejor amigo está organizando una fiesta y tú de verdad deseas que él te acompañe. Completa la oración correctamente: 'Quiero que tú ___ (venir) a la fiesta conmigo.'",["vengas","vienes","vendrás","viniste"],0,"Después de una expresión de deseo ('quiero que') se usa el presente de subjuntivo: vengas.","Present subjunctive"],
-    ["Sueñas con ayudar a un amigo a estudiar, pero en realidad no tienes ni un minuto libre. Completa esta oración hipotética contraria a la realidad: 'Si yo ___ más tiempo, te ayudaría.'",["tuviera","tengo","tendré","tenga"],0,"Una cláusula 'si' contraria a la realidad con resultado en condicional pide el imperfecto de subjuntivo: tuviera.","Si clauses"],
-    ["Estás esperando en el aeropuerto y crees que tus amigos probablemente ya aterrizaron, aunque no lo has confirmado. Completa: 'Espero que ellos ya ___ llegado.'",["hayan","han","habrán","hubieran"],0,"La esperanza sobre una acción ya completada usa el pretérito perfecto de subjuntivo: hayan llegado.","Perfect subjunctive"],
-    ["Le pides a tu hermana que, en cuanto regrese a casa más tarde esta noche, te avise. Completa: 'Cuando ___ a casa esta noche, llámame.'",["llegues","llegas","llegaste","llegarás"],0,"Una acción futura todavía pendiente después de 'cuando' lleva el subjuntivo: llegues.","Subjunctive w/ conjunctions"],
-    ["Un compañero te pregunta por qué estudias tantas horas, y tú le explicas tu meta de llegar a ser médico. Completa: 'Estudio mucho ___ ser médico.'",["para","por","a","de"],0,"Para expresar propósito o meta ('con el fin de') se usa para.","Por vs para"],
-    ["Durante una discusión, tu rival insiste en algo, pero tú no estás nada convencido de que él tenga la razón. Completa: 'Dudo que él ___ razón.'",["tenga","tiene","tendrá","tuvo"],0,"La duda exige el subjuntivo: dudo que él tenga razón.","Subjunctive of doubt"],
-    ["En la clase de literatura comentan quién creó cierta novela famosa. Completa la oración en voz pasiva: 'Cien años de soledad ___ por Gabriel García Márquez.'",["fue escrito","fue escrita","estuvo escrito","es escribido"],0,"Voz pasiva con ser + participio que concuerda con el sujeto masculino ('el libro'): fue escrito.","Passive voice"],
-    ["Mañana hay un partido importante y tú realmente quieres que haga buen clima. Completa expresando ese deseo: 'Ojalá que mañana ___ buen tiempo.'",["haga","hace","hará","hizo"],0,"'Ojalá que' siempre va seguido del subjuntivo: haga buen tiempo.","Subjunctive w/ ojalá"],
-    ["Cuentas que, anoche, cerraron la puerta justo antes de que los invitados se fueran. Completa: 'Cerramos la puerta antes de que ellos ___ (salir).'",["salieran","salían","salieron","salen"],0,"'Antes de que' siempre pide subjuntivo; en contexto pasado, el imperfecto de subjuntivo: salieran.","Adverbial subjunctive"],
-    ["Recuerdas que ayer le exigiste a tu amigo que fuera honesto contigo. Completa: 'Le pedí que me ___ la verdad.'",["dijera","dijo","dice","diga"],0,"Una petición en el pasado activa el imperfecto de subjuntivo: que me dijera.","Sequence of tenses"],
-    ["Describes una escena del pasado: tú estabas en medio de la lectura cuando, de repente, ella entró. Completa: 'Mientras yo ___ (leer), ella entró.'",["leía","leí","leeré","lea"],0,"La acción de fondo en curso interrumpida por una acción puntual va en imperfecto: leía.","Preterite vs imperfect"],
-    ["Quieres entregarle el libro a María, pero esta vez reemplazando ambos objetos por pronombres. ¿Cómo se reescribe 'Doy el libro a María'?",["Se lo doy","Le lo doy","Lo le doy","Me lo doy"],0,"El objeto indirecto 'le' se convierte en 'se' delante del objeto directo 'lo': Se lo doy.","Double object pronouns"],
-    ["Tu hermano menor no ha terminado su tarea y tú le das una orden directa. ¿Cuál es el mandato afirmativo de 'hacer' para 'tú'?",["haz","hace","haga","hagas"],0,"'Hacer' tiene un mandato afirmativo irregular de tú: haz.","Commands"],
-    ["El plazo del proyecto se acabó y tú dudas que el equipo lo haya completado a tiempo. Completa: 'No creo que ellos ___ (haber) terminado.'",["hayan","han","habían","habrán"],0,"La creencia negada sobre una acción completada usa el pretérito perfecto de subjuntivo: hayan terminado.","Perfect subjunctive"],
-    ["Llevas exactamente dos horas estudiando español y todavía sigues haciéndolo en este momento. Completa: 'Hace dos horas que ___ español.'",["estudio","estudié","estudiaba","estudiaré"],0,"'Hace + tiempo + que + presente' expresa una acción que aún continúa: estudio.","Time expressions"],
-    ["Cuentas tu paseo de ayer: ustedes atravesaron el parque caminando de un lado al otro. Completa: 'Caminamos ___ el parque.'",["por","para","a","en"],0,"El movimiento a través de un lugar usa por: por el parque.","Por vs para"],
-  ],
-  his:[
-    ["A student examines an 1803 Supreme Court ruling in which the Court, for the first time, declared an act of Congress unconstitutional and refused to enforce it. This landmark case (Marbury v. Madison) established which principle?",["Judicial review","Popular sovereignty","Implied powers","Dual federalism"],0,"Marbury v. Madison established judicial review — the courts' power to strike down unconstitutional laws.","Judicial review"],
-    ["A merchant in the 1700s explains that the colonies exist mainly to ship raw materials to the mother country and to buy back its finished goods, all to enrich the home nation. This economic theory is known as…",["Mercantilism","Laissez-faire","Capitalism","Physiocracy"],0,"Mercantilism treated colonies as suppliers of raw materials and captive markets for the mother country.","Colonial economy"],
-    ["In 1798–99, Jefferson and Madison secretly authored resolutions in Virginia and Kentucky arguing that the states themselves could judge a federal law unconstitutional and refuse to follow it. These resolutions advanced the doctrine of…",["States' rights / nullification","Judicial review","Manifest Destiny","Popular sovereignty"],0,"They argued states could nullify federal laws they judged unconstitutional — the states'-rights/nullification doctrine.","Early republic"],
-    ["An 1820 agreement admitted Missouri as a slave state but drew a line across the rest of the Louisiana Territory, banning slavery north of one specific line of latitude. What was that latitude?",["36°30′","40°","49°","32°"],0,"The Missouri Compromise barred slavery north of latitude 36°30′ (except in Missouri itself).","Sectionalism"],
-    ["In an 1819 case over whether a state could tax the national bank, the Supreme Court ruled that Congress possessed implied powers and that no state could tax a federal institution. McCulloch v. Maryland thereby affirmed…",["Implied powers and federal supremacy","Judicial review","Nullification","Strict construction"],0,"McCulloch v. Maryland upheld implied powers and federal supremacy over the states.","Federalism"],
-    ["After delegates from New England met in 1814–15 and openly floated the idea of secession during the War of 1812, the resulting backlash destroyed one political party. Which party collapsed in the aftermath?",["The Federalist Party","The Democratic-Republicans","The Whigs","The Know-Nothings"],0,"The Hartford Convention discredited the Federalist Party, hastening its demise.","First party system"],
-    ["In the deadlocked election of 1824, the House of Representatives chose John Quincy Adams as president, and he promptly named as Secretary of State the very man whose support had handed him the win. Who was that man?",["Henry Clay","Andrew Jackson","John C. Calhoun","Martin Van Buren"],0,"Critics called it the 'Corrupt Bargain': Clay backed Adams and was then made Secretary of State.","Jacksonian era"],
-    ["During the Mexican-American War, a congressman introduced a measure aimed at any land the U.S. might win from Mexico. What did this proposal — the Wilmot Proviso — seek to do?",["Ban slavery in any territory gained from Mexico","Annex all of Texas","Repeal the Missouri Compromise","Admit California as a slave state"],0,"The Wilmot Proviso sought to prohibit slavery in any territory acquired from Mexico.","Sectionalism & slavery"],
-    ["In an 1857 decision, the Supreme Court declared that an enslaved man who had lived in free territory was not a citizen and could not sue, and that Congress had no power to ban slavery in the territories. The Dred Scott decision thus ruled that…",["Enslaved people were not citizens and Congress could not bar slavery in territories","Slavery was unconstitutional","Popular sovereignty was illegal","States could secede"],0,"Dred Scott denied Black citizenship and struck down congressional limits on slavery in the territories.","Road to Civil War"],
-    ["An 1854 law organizing two new territories let the settlers there vote for themselves on whether to permit slavery, in effect repealing an earlier compromise line. The Kansas-Nebraska Act introduced which principle?",["Popular sovereignty","Nullification","Judicial review","Free soil"],0,"The Kansas-Nebraska Act let territorial settlers decide on slavery by popular sovereignty.","Sectionalism"],
-    ["A civics teacher lists three central guarantees of one Reconstruction-era amendment: citizenship for all born in the U.S., due process of law, and one more clause requiring states to treat people equally. What is that third clause of the Fourteenth Amendment?",["Equal protection","Free exercise","Just compensation","Double jeopardy"],0,"The 14th Amendment guarantees citizenship, due process, and equal protection of the laws.","Reconstruction amendments"],
-    ["After the Civil War, many freedpeople and poor whites in the South farmed land they did not own, borrowing supplies on credit against future crops and seldom earning enough to escape what they owed. This crop-lien and sharecropping system mainly produced…",["Cycles of debt for freedpeople and poor whites","Rapid industrialization","Widespread land ownership","Free public universities"],0,"Sharecropping and the crop-lien system trapped tenants in chronic, inescapable debt.","Reconstruction"],
-    ["To settle the bitterly disputed 1876 presidential election, leaders struck a bargain that, among other things, pulled the last federal troops out of the South. This Compromise of 1877 effectively ended Reconstruction by…",["Withdrawing federal troops from the South","Granting Black suffrage","Impeaching the president","Passing the 15th Amendment"],0,"The Compromise of 1877 removed federal troops from the South, ending Reconstruction.","End of Reconstruction"],
-    ["In a famous essay, James Madison argues that the larger and more diverse a republic is, the better it can guard against one persistent danger to good government. According to Federalist No. 10, a large republic best…",["Controls the effects of faction","Prevents judicial review","Guarantees direct democracy","Eliminates political parties"],0,"In Federalist No. 10, Madison contends that a large, diverse republic best controls the effects of faction.","Founding documents"],
-    ["Throughout the mid-1800s, politicians and settlers invoked an almost religious belief that the United States was destined to spread across the entire continent. This doctrine of Manifest Destiny was most directly used to justify…",["Westward territorial expansion","Abolition of slavery","Industrial tariffs","Naval blockades"],0,"Manifest Destiny framed continental westward expansion as a providential, inevitable mission.","Westward expansion"],
-    ["At the 1787 Constitutional Convention, Northern and Southern delegates clashed bitterly over how enslaved people would be counted, finally settling on a fraction used for both House seats and direct taxes. The Three-Fifths Compromise determined…",["How enslaved persons counted toward representation and taxation","The number of Supreme Court justices","The terms of senators","The date slavery would end"],0,"Each enslaved person counted as three-fifths of a person for both representation and direct taxation.","Constitutional Convention"],
-  ],
-};
-
-/* ============================ EXPANSION BANKS (harder + ~double the questions) ============================
-   These extra questions are merged into the four core banks at load time, so every feature
-   (Practice, Practice Test, Challenge, Gauntlet) gets roughly double the volume and a harder average. */
-const QUESTIONS_X = {
-  alg:[
-    ["Solve x² + 6x + 9 = 0.",["x = −3 (double root)","x = 3","x = ±3","x = −9"],0,"(x+3)² = 0, so x = −3 is a repeated root.","Factoring quadratics"],
-    ["Simplify (x² − x − 6)/(x − 3).",["x + 2","x − 2","x + 3","x − 6"],0,"(x−3)(x+2)/(x−3) = x + 2.","Rational expressions"],
-    ["Solve 5^x = 125.",["x = 3","x = 2","x = 5","x = 25"],0,"5³ = 125.","Exponential equations"],
-    ["Expand (2x + 3)(x − 4).",["2x² − 5x − 12","2x² + 5x − 12","2x² − 5x + 12","2x² − 11x − 12"],0,"2x²−8x+3x−12 = 2x²−5x−12.","Polynomial expansion"],
-    ["Find the sum of the roots of x² − 7x + 12 = 0.",["7","−7","12","5"],0,"Sum = −b/a = 7.","Vieta's formulas"],
-    ["Find the product of the roots of x² − 7x + 12 = 0.",["12","−12","7","5"],0,"Product = c/a = 12.","Vieta's formulas"],
-    ["Simplify √8 · √2.",["4","√10","2√2","8"],0,"√16 = 4.","Radicals"],
-    ["Solve |x − 2| = 6.",["x = 8 or −4","x = 8 only","x = 4 or −8","x = 6 or −6"],0,"x−2=±6 → x=8 or −4.","Absolute value"],
-    ["For f(x) = x² − 4x + 3, find f(0).",["3","0","−1","7"],0,"f(0) = 3.","Functions"],
-    ["What is the x-coordinate of the vertex of y = x² − 6x + 5?",["3","6","−3","5"],0,"x = −b/2a = 3.","Quadratic graphs"],
-    ["Factor 3x² − 12.",["3(x − 2)(x + 2)","3(x − 4)","(3x − 6)(x + 2)","3(x² − 4) only"],0,"3(x²−4)=3(x−2)(x+2).","Factoring"],
-    ["Solve 2x² = 18.",["x = ±3","x = 9","x = ±9","x = 3"],0,"x²=9 → x=±3.","Quadratics"],
-    ["Evaluate log₃(81).",["4","3","9","27"],0,"3⁴ = 81.","Logarithms"],
-    ["Simplify (x⁻²)⁻³.",["x⁶","x⁻⁶","x⁻⁵","x⁵"],0,"(−2)(−3)=6.","Exponent rules"],
-    ["Find the midpoint of (−2, 5) and (4, −1).",["(1, 2)","(2, 4)","(1, 3)","(3, 2)"],0,"((−2+4)/2,(5−1)/2)=(1,2).","Coordinate geometry"],
-    ["Find the distance between (0, 0) and (3, 4).",["5","7","√7","12"],0,"√(9+16)=5.","Coordinate geometry"],
-    ["Solve the system y = 2x and x + y = 9.",["x = 3","x = 2","x = 4.5","x = 6"],0,"3x=9 → x=3.","Systems of equations"],
-    ["Multiply (3x²y)(2xy³).",["6x³y⁴","6x²y³","5x³y⁴","6x³y³"],0,"6, x³, y⁴.","Exponent rules"],
-    ["If f(x) = x + 2 and g(x) = 3x, find f(g(4)).",["14","18","12","20"],0,"g(4)=12, f(12)=14.","Composite functions"],
-    ["Solve log₂(x) = 5.",["x = 32","x = 10","x = 25","x = 7"],0,"2⁵=32.","Logarithms"],
-    ["Factor x² + x − 12.",["(x + 4)(x − 3)","(x − 4)(x + 3)","(x + 6)(x − 2)","(x + 2)(x − 6)"],0,"4·(−3)=−12, 4+(−3)=1.","Factoring quadratics"],
-    ["What does the discriminant of x² + x + 1 tell you?",["Negative (−3): no real roots","Zero: one root","Positive: two real roots","It equals 1"],0,"1−4=−3<0.","Discriminant"],
-    ["Simplify (x² − 9)/(x + 3).",["x − 3","x + 3","x − 9","x"],0,"(x−3)(x+3)/(x+3)=x−3.","Rational expressions"],
-    ["Solve 4^x = 1/16.",["x = −2","x = 2","x = −4","x = 1/2"],0,"4⁻²=1/16.","Exponential equations"],
-    ["What is the common ratio of 81, 27, 9, …?",["1/3","3","−3","1/9"],0,"27/81=1/3.","Geometric sequences"],
-  ],
-  ela:[
-    ["A direct comparison without 'like' or 'as' ('Her eyes were oceans') is a…",["Metaphor","Simile","Pun","Hyperbole"],0,"A metaphor states one thing is another.","Figurative language"],
-    ["The repeated 's' in 'silent snakes slither' is…",["Alliteration","Assonance","Rhyme","Meter"],0,"Repeated initial consonant sounds.","Literary devices"],
-    ["A reference to a famous person, place, or work is an…",["Allusion","Illusion","Analogy","Aside"],0,"An allusion references something well known.","Literary devices"],
-    ["A narrator who knows all characters' thoughts uses…",["Third-person omniscient","First person","Second person","Third-person limited"],0,"Omniscient = all-knowing.","Point of view"],
-    ["A word that sounds like its meaning ('buzz', 'hiss') is…",["Onomatopoeia","Oxymoron","Allusion","Pun"],0,"Onomatopoeia imitates sounds.","Literary devices"],
-    ["The turning point of a story is the…",["Climax","Exposition","Denouement","Rising action"],0,"Climax is the peak of tension.","Plot structure"],
-    ["'The early bird catches the worm' is best described as a…",["Proverb/aphorism","Metaphor","Allusion","Pun"],0,"A short, well-known saying expressing a truth.","Literary devices"],
-    ["A struggle within a character's own mind is…",["Internal conflict","External conflict","Climax","Resolution"],0,"Character vs. self.","Reading comprehension"],
-    ["The feeling a text creates in the reader is its…",["Mood","Tone","Theme","Plot"],0,"Mood = atmosphere felt by reader.","Tone & mood"],
-    ["Which is a complete sentence?",["The dog barked loudly.","Running down the street.","Because she was late.","After the long game."],0,"It has a subject, verb, and complete thought.","Grammar"],
-    ["The repetition of vowel sounds ('the rain in Spain') is…",["Assonance","Consonance","Alliteration","Rhyme"],0,"Assonance repeats vowel sounds.","Literary devices"],
-    ["A brief, often funny story used to illustrate a point is an…",["Anecdote","Allegory","Analogy","Aside"],0,"An anecdote is a short illustrative story.","Literary devices"],
-    ["Which sentence uses correct punctuation?",["I bought apples, oranges, and pears.","I bought apples oranges and pears.","I bought, apples oranges and pears.","I bought apples; oranges; and pears."],0,"Commas separate items in a series.","Grammar"],
-    ["The use of clues to hint at future events is…",["Foreshadowing","Flashback","Irony","Allusion"],0,"Foreshadowing hints at what is to come.","Literary devices"],
-    ["A comparison of two unlike things to explain an idea is an…",["Analogy","Allusion","Anecdote","Aside"],0,"An analogy explains by comparison.","Literary devices"],
-    ["The author's main purpose in a persuasive essay is to…",["Convince the reader","Entertain only","Describe a setting","List facts neutrally"],0,"Persuasive writing aims to convince.","Argument writing"],
-    ["A contrast between expectation and reality is…",["Irony","Imagery","Allusion","Alliteration"],0,"Irony = gap between expectation and reality.","Literary devices"],
-    ["Descriptive language appealing to the senses is…",["Imagery","Dialogue","Exposition","Meter"],0,"Imagery uses sensory detail.","Literary devices"],
-    ["Which word is the adverb in 'She sang beautifully'?",["beautifully","She","sang","none"],0,"'Beautifully' modifies the verb.","Grammar"],
-    ["The central character a reader roots for is the…",["Protagonist","Antagonist","Narrator","Foil"],0,"Protagonist = central main character.","Character"],
-    ["A character who contrasts with another to highlight traits is a…",["Foil","Protagonist","Narrator","Antagonist"],0,"A foil highlights qualities by contrast.","Character"],
-    ["'Boom!' and 'crash!' are examples of…",["Onomatopoeia","Hyperbole","Simile","Allusion"],0,"They imitate sounds.","Literary devices"],
-    ["The time and place of a story is its…",["Setting","Plot","Theme","Mood"],0,"Setting = time and place.","Reading comprehension"],
-    ["Which title is correctly capitalized?",["The Catcher in the Rye","the catcher in the rye","The Catcher In The Rye","THE catcher in the rye"],0,"Capitalize major words; short article/preposition stay lowercase mid-title.","Grammar / mechanics"],
-    ["An exaggeration for effect ('I could eat a horse') is…",["Hyperbole","Litotes","Simile","Allusion"],0,"Hyperbole is deliberate exaggeration.","Figurative language"],
-  ],
-  sci:[
-    ["The unit of electric current is the…",["Ampere","Volt","Ohm","Watt"],0,"Current is measured in amperes.","Units & measurement"],
-    ["Ohm's law is…",["V = IR","P = IV","F = ma","V = I/R"],0,"Voltage = current × resistance.","Electricity"],
-    ["Mitosis results in…",["Two identical diploid cells","Four gametes","Two haploid cells","One large cell"],0,"Two genetically identical cells.","Cell processes"],
-    ["The process by which plants lose water vapor through leaves is…",["Transpiration","Respiration","Digestion","Condensation"],0,"Transpiration is water loss through leaves.","Plant biology"],
-    ["Density is calculated as…",["mass ÷ volume","mass × volume","volume ÷ mass","force ÷ area"],0,"ρ = m/V.","Units & measurement"],
-    ["A neutral atom has equal numbers of protons and…",["Electrons","Neutrons","Ions","Isotopes"],0,"Protons = electrons.","Atomic structure"],
-    ["The first trophic level of a food chain is the…",["Producers","Herbivores","Carnivores","Decomposers"],0,"Producers form the base.","Ecosystems"],
-    ["Acceleration has units of…",["m/s²","m/s","kg·m","N·s"],0,"Acceleration is m/s².","Kinematics"],
-    ["Which organelle carries out cellular respiration?",["Mitochondrion","Chloroplast","Nucleus","Ribosome"],0,"Mitochondria make ATP.","Cell organelles"],
-    ["The bending of light as it passes between media is…",["Refraction","Reflection","Diffraction","Absorption"],0,"Refraction is bending of light.","Waves & optics"],
-    ["RNA differs from DNA in that RNA contains…",["Uracil instead of thymine","Thymine instead of uracil","No nitrogen bases","Only a double helix"],0,"RNA uses uracil.","DNA & genetics"],
-    ["The net force on an object moving at constant velocity is…",["Zero","Maximum","Equal to its weight","Greater than zero"],0,"Balanced forces → zero net force.","Newton's laws"],
-    ["Photosynthesis releases which gas?",["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"],0,"O₂ is released.","Photosynthesis"],
-    ["The SI unit of power is the…",["Watt","Joule","Newton","Pascal"],0,"Power is in watts.","Units & measurement"],
-    ["A trait masked in the heterozygote is…",["Recessive","Dominant","Codominant","Sex-linked"],0,"Recessive traits are masked.","Genetics"],
-    ["The change of a liquid to a gas at its surface is…",["Evaporation","Condensation","Sublimation","Freezing"],0,"Evaporation: liquid → gas at the surface.","States of matter"],
-    ["Sound waves are…",["Longitudinal","Transverse","Electromagnetic","Standing only"],0,"Sound is longitudinal.","Waves"],
-    ["The molecule that stores and transfers cellular energy is…",["ATP","DNA","RNA","NaCl"],0,"ATP stores energy.","Cell processes"],
-    ["The force that opposes motion between surfaces is…",["Friction","Gravity","Tension","Normal force"],0,"Friction opposes motion.","Forces"],
-    ["Which blood cells fight infection?",["White blood cells","Red blood cells","Platelets","Plasma"],0,"White blood cells fight infection.","Human biology"],
-    ["The atomic number equals the number of…",["Protons","Neutrons","Electrons + neutrons","Isotopes"],0,"Atomic number = protons.","Atomic structure"],
-    ["Total momentum is conserved in a collision when…",["No external force acts","Energy is lost","The objects stick","Speed is constant"],0,"Conserved with no external force.","Momentum"],
-    ["Movement across a membrane from high to low concentration without energy is…",["Passive transport","Active transport","Endocytosis","Exocytosis"],0,"Passive transport needs no energy.","Cell transport"],
-    ["The unit of frequency is the…",["Hertz","Decibel","Watt","Meter"],0,"Frequency is in hertz.","Waves"],
-    ["Which is a chemical change?",["Iron rusting","Ice melting","Water boiling","Sugar dissolving"],0,"Rusting forms a new substance.","Chemistry basics"],
-  ],
-  spa:[
-    ["Conjuga 'comer' para 'nosotros' (presente).",["comemos","comen","comes","como"],0,"-er nosotros: comemos.","Present tense"],
-    ["'I want' (querer, yo) is…",["quiero","quero","queremos","quieres"],0,"Querer → quiero (e→ie).","Stem-changing verbs"],
-    ["Translate 'the white houses' (feminine plural).",["las casas blancas","los casas blancos","la casa blanca","las casa blancas"],0,"las casas blancas.","Adjective agreement"],
-    ["'¿Cuántos años tienes?' asks…",["How old are you?","What's your name?","Where are you?","How are you?"],0,"Literally 'how many years do you have?'","Common expressions"],
-    ["The yo form of 'ir' (to go) is…",["voy","vo","vas","va"],0,"Ir → yo voy.","Irregular verbs"],
-    ["'Me gusta el café' means…",["I like coffee","Coffee likes me","I drink coffee","I make coffee"],0,"Me gusta = it pleases me.","Gustar"],
-    ["How is 'the 5th of May' written in Spanish?",["el cinco de mayo","el mayo cinco","cinco mayo","mayo el cinco"],0,"el [day] de [month].","Dates"],
-    ["'Hace sol' means…",["It's sunny","It's snowing","It's windy","It's cold"],0,"Hace sol = it's sunny.","Weather"],
-    ["The plural of 'la luz' is…",["las luces","las luzes","los luces","la luzes"],0,"z→c before -es: luces.","Plurals"],
-    ["'Estoy cansado' uses estar because it describes…",["a temporary state","permanent identity","origin","profession"],0,"Estar for temporary conditions.","Ser vs estar"],
-    ["Conjuga 'escribir' para 'yo' (presente).",["escribo","escribe","escribimos","escribes"],0,"-ir yo: escribo.","Present tense"],
-    ["'Tengo que estudiar' means…",["I have to study","I am studying","I studied","I will study"],0,"Tener que + infinitive = have to.","Expressions"],
-    ["The opposite of 'grande' is…",["pequeño","alto","largo","bueno"],0,"Pequeño = small.","Vocabulary"],
-    ["'Son las tres' means…",["It's three o'clock","It's three days","There are three","I have three"],0,"Telling time: it's 3:00.","Telling time"],
-    ["The preterite 'él' form of 'hablar' is…",["habló","hablo","hablaba","hablará"],0,"Preterite él: habló.","Preterite tense"],
-    ["In 'Voy al cine', 'al' is a contraction of…",["a + el","a + la","de + el","a + los"],0,"a + el = al.","Contractions"],
-    ["The feminine of 'el profesor' is…",["la profesora","la profesor","el profesora","las profesor"],0,"la profesora.","Gender of nouns"],
-    ["'Nos vemos' means…",["See you (we'll see each other)","We saw","I see","They see us"],0,"Reflexive farewell.","Expressions"],
-    ["Conjuga 'ser' para 'ellos'.",["son","somos","sois","es"],0,"Ser ellos: son.","Irregular verbs"],
-    ["'Mucho gusto' is said when…",["meeting someone","leaving","eating","sleeping"],0,"Nice to meet you.","Greetings"],
-    ["The color 'rojo' means…",["red","blue","green","yellow"],0,"Rojo = red.","Vocabulary"],
-    ["'¿De dónde eres?' asks…",["Where are you from?","Where are you going?","How are you?","Who are you?"],0,"Where are you from.","Questions"],
-    ["Conjuga 'poder' para 'yo' (presente).",["puedo","podo","podemos","puede"],0,"Poder → puedo (o→ue).","Stem-changing verbs"],
-    ["'La mano' is which gender?",["feminine","masculine","neuter","both"],0,"La mano is feminine (exception).","Gender of nouns"],
-    ["'Hace dos días' means…",["two days ago","in two days","every two days","for two days"],0,"Hace + time = ago.","Time expressions"],
-  ],
-  his:[
-    ["The Pilgrims who founded Plymouth arrived on the…",["Mayflower","Santa María","Niña","Endeavour"],0,"The Mayflower (1620).","Colonial America"],
-    ["The Revolution's first battles were at…",["Lexington and Concord","Yorktown","Saratoga","New Orleans"],0,"Lexington and Concord (1775).","American Revolution"],
-    ["The first ten amendments are called the…",["Bill of Rights","Articles","Preamble","Federalist Papers"],0,"The Bill of Rights.","Constitution"],
-    ["The Declaration of Independence was primarily written by…",["Thomas Jefferson","Ben Franklin","John Adams","George Washington"],0,"Jefferson drafted it.","Founding documents"],
-    ["The Louisiana Purchase was made during the presidency of…",["Thomas Jefferson","George Washington","James Madison","John Adams"],0,"Jefferson, 1803.","Early republic"],
-    ["The pre-Civil War Southern economy relied on…",["plantation slavery","factories","fur trapping","shipbuilding"],0,"Plantation agriculture using enslaved labor.","Sectionalism"],
-    ["The Emancipation Proclamation was issued in…",["1863","1776","1812","1900"],0,"January 1, 1863.","Civil War"],
-    ["The author of 'Common Sense' was…",["Thomas Paine","Patrick Henry","Paul Revere","Sam Adams"],0,"Thomas Paine.","Road to Revolution"],
-    ["The branch that interprets laws is the…",["Judicial","Legislative","Executive","Federal"],0,"The judicial branch interprets laws.","Constitution"],
-    ["The Trail of Tears was the forced removal of the…",["Cherokee and other tribes","Pilgrims","Loyalists","Confederates"],0,"Native American removal in the 1830s.","Westward expansion"],
-    ["The Constitution begins with the words…",["We the People","Four score and seven","When in the course","I have a dream"],0,"'We the People…'","Constitution"],
-    ["The Civil War ended in…",["1865","1776","1812","1898"],0,"1865.","Civil War"],
-    ["The Boston Massacre (1770) increased…",["anti-British anger","support for the king","trade","westward migration"],0,"It fueled colonial resentment.","Road to Revolution"],
-    ["The first President under the Constitution was…",["George Washington","John Adams","Thomas Jefferson","James Madison"],0,"Washington (1789).","Early republic"],
-    ["The Underground Railroad helped…",["enslaved people escape to freedom","build railroads","move troops","trade cotton"],0,"It aided escapes from slavery.","Sectionalism & slavery"],
-    ["The 13th Amendment…",["abolished slavery","gave women the vote","created the income tax","limited terms"],0,"Abolished slavery (1865).","Reconstruction"],
-    ["The Declaration's natural-rights ideas came from…",["Enlightenment thinkers","the King","the Pope","mercantilists"],0,"Enlightenment ideas (Locke).","Enlightenment ideas"],
-    ["The Battle of Saratoga (1777) was important because it…",["brought France into the war","ended the war","captured Boston","freed enslaved people"],0,"It convinced France to ally with the colonies.","American Revolution"],
-    ["Power shared between national and state governments is…",["federalism","monarchy","anarchy","theocracy"],0,"Federalism.","Constitution"],
-    ["The 'Father of the Constitution' is…",["James Madison","George Washington","Thomas Jefferson","Alexander Hamilton"],0,"James Madison.","Constitution"],
-    ["Reconstruction followed which war?",["The Civil War","The Revolution","The War of 1812","World War I"],0,"After the Civil War.","Reconstruction"],
-    ["Colonists protested the Stamp Act because it was…",["a direct tax without representation","a trade benefit","a land grant","a religious law"],0,"Taxation without representation.","Road to Revolution"],
-    ["The Gettysburg Address was delivered by…",["Abraham Lincoln","Robert E. Lee","Ulysses Grant","Jefferson Davis"],0,"Lincoln, 1863.","Civil War"],
-    ["The Constitutional Convention met in…",["Philadelphia","Boston","New York","Washington"],0,"Philadelphia, 1787.","Constitution"],
-    ["The three-fifths clause counted enslaved people for…",["representation and taxes","voting rights","citizenship","military service"],0,"Representation and taxation.","Constitutional Convention"],
-  ],
-};
-const TEST_QUESTIONS_X = {
-  alg:[
-    ["Solve 3x² − 5x − 2 = 0.",["x = 2 or −1/3","x = −2 or 1/3","x = 1 or −2/3","x = 3 or −1/2"],0,"(3x+1)(x−2)=0.","Factoring quadratics"],
-    ["Evaluate log₅(1/25).",["−2","2","−5","5"],0,"5⁻²=1/25.","Logarithms"],
-    ["Simplify (2x³y²)⁴.",["16x¹²y⁸","8x¹²y⁸","16x⁷y⁶","2x¹²y⁸"],0,"2⁴=16, x¹², y⁸.","Exponent rules"],
-    ["Find the vertex of y = x² + 4x + 1.",["(−2, −3)","(2, −3)","(−2, 3)","(−4, 1)"],0,"x=−2, y=−3.","Quadratic graphs"],
-    ["Solve 9^x = 27.",["x = 3/2","x = 3","x = 2/3","x = 9"],0,"2x=3 → x=3/2.","Exponential equations"],
-    ["Factor 2x² − 50.",["2(x − 5)(x + 5)","2(x − 25)","(2x − 10)(x + 5)","2(x² − 5)"],0,"2(x²−25).","Factoring"],
-    ["If the roots of x² + bx + 6 = 0 are 2 and 3, find b.",["−5","5","6","−6"],0,"Sum=−b=5 → b=−5.","Vieta's formulas"],
-    ["Simplify √75 − √12.",["3√3","√63","5√3","√3"],0,"5√3−2√3=3√3.","Radicals"],
-    ["Find f⁻¹(x) for f(x) = (x − 4)/2.",["2x + 4","2x − 4","(x+4)/2","x/2 − 4"],0,"x=2y+4.","Inverse functions"],
-    ["The 8th term of 2, 6, 18, … is",["4374","2187","1458","6561"],0,"2·3⁷=4374.","Geometric sequences"],
-    ["Solve x² + 4x + 5 = 0.",["x = −2 ± i","x = −2","x = 2 ± i","x = −1, −5"],0,"x=−2±i.","Complex numbers"],
-    ["Expand (x − 2)³.",["x³ − 6x² + 12x − 8","x³ − 8","x³ − 6x² − 12x − 8","x³ + 6x² + 12x + 8"],0,"(x−2)³ = x³−6x²+12x−8.","Polynomial expansion"],
-    ["Solve log(x) + log(x − 3) = 1 (base 10).",["x = 5","x = 4","x = 2","x = 8"],0,"x²−3x=10 → x=5.","Logarithms"],
-    ["The range of f(x) = −x² + 4 is",["y ≤ 4","y ≥ 4","y ≤ 0","all reals"],0,"Opens down, max 4.","Domain & range"],
-    ["Simplify (x² − 5x + 6)/(x² − 9).",["(x − 2)/(x + 3)","(x − 2)/(x − 3)","(x + 2)/(x + 3)","x − 2"],0,"(x−2)(x−3)/[(x−3)(x+3)].","Rational expressions"],
-  ],
-  ela:[
-    ["'The wind screamed and the trees clawed at the sky' chiefly uses…",["Personification","Simile","Hyperbole","Alliteration"],0,"Human actions given to nature.","Figurative language"],
-    ["Which is a complex sentence?",["Although it rained, we played outside.","It rained. We played.","It rained and we played.","Playing outside in the rain."],0,"Dependent + independent clause.","Grammar"],
-    ["A recurring symbol or idea across a work is a…",["Motif","Climax","Foil","Stanza"],0,"A motif supports theme.","Literary devices"],
-    ["The storytelling voice that is not the author is the…",["Narrator","Protagonist","Antagonist","Author"],0,"The narrator tells the story.","Point of view"],
-    ["Best fix for the run-on 'I was tired I went to bed.'",["I was tired, so I went to bed.","I was tired I went, to bed.","I was tired; I, went to bed.","I was, tired I went to bed."],0,"Comma + conjunction.","Grammar"],
-    ["'It was the best of times, it was the worst of times' uses…",["Antithesis","Anaphora","Hyperbole","Pun"],0,"Contrasting ideas in parallel.","Rhetorical devices"],
-    ["Dramatic irony occurs when…",["The audience knows what a character does not","Two characters argue","The plot ends sadly","An author exaggerates"],0,"Audience knows more than the character.","Literary devices"],
-    ["The denouement of a plot is the…",["Resolution after the climax","Turning point","Introduction","Rising tension"],0,"It ties up the story.","Plot structure"],
-    ["Which is written in the passive voice?",["The window was broken by the storm.","The storm broke the window.","The storm is breaking windows.","Break the window."],0,"Subject receives the action.","Grammar"],
-    ["A juxtaposition of contradictory terms ('bittersweet') is an…",["Oxymoron","Allusion","Analogy","Anecdote"],0,"Oxymoron pairs opposites.","Figurative language"],
-    ["The perspective using 'you' throughout is…",["Second person","First person","Third limited","Omniscient"],0,"Second person addresses 'you'.","Point of view"],
-    ["In argument, a 'concession' is when the writer…",["Acknowledges a valid opposing point","Restates the thesis","Adds a new claim","Quotes a source"],0,"It admits merit to the other side.","Argument writing"],
-    ["Which sentence has a misplaced modifier?",["Running fast, the bus was missed by Tom.","Tom, running fast, missed the bus.","Running fast, Tom missed the bus.","Tom missed the bus while running."],0,"'Running fast' wrongly modifies 'the bus'.","Grammar"],
-    ["The central insight about life in a work is the…",["Theme","Motif","Setting","Tone"],0,"Theme is the central insight.","Theme"],
-    ["'Her smile was as warm as July' is a…",["Simile","Metaphor","Personification","Hyperbole"],0,"Comparison with 'as'.","Figurative language"],
-  ],
-  sci:[
-    ["A 5 N force accelerates a 2 kg cart. Its acceleration is…",["2.5 m/s²","10 m/s²","2 m/s²","7 m/s²"],0,"a=F/m=2.5.","Newton's laws"],
-    ["A wave travels 340 m/s at 170 Hz. Its wavelength is…",["2 m","0.5 m","510 m","2 Hz"],0,"λ=v/f=2 m.","Waves"],
-    ["A 3 kg object lifted 4 m gains PE of (g=10)…",["120 J","12 J","7 J","1200 J"],0,"PE=mgh=120 J.","Energy"],
-    ["In a circuit, 12 V across 4 Ω gives a current of…",["3 A","48 A","0.33 A","8 A"],0,"I=V/R=3 A.","Electricity"],
-    ["A cross of AA × aa gives offspring that are…",["all Aa","all aa","3:1","1:1 AA:aa"],0,"All heterozygous Aa.","Genetics"],
-    ["Which process produces genetically varied gametes?",["Meiosis","Mitosis","Binary fission","Budding"],0,"Meiosis yields variation.","Cell division"],
-    ["A 1000 kg car at 10 m/s has momentum of…",["10,000 kg·m/s","100 kg·m/s","1000 kg·m/s","10 kg·m/s"],0,"p=mv=10,000.","Momentum"],
-    ["The pH of a neutral solution at 25°C is…",["7","0","14","1"],0,"Neutral pH is 7.","Chemistry"],
-    ["Which subatomic particle is negatively charged?",["Electron","Proton","Neutron","Nucleus"],0,"Electrons are negative.","Atomic structure"],
-    ["At its highest point, a ball thrown straight up has a velocity of…",["0 m/s","9.8 m/s","its launch speed","maximum"],0,"Velocity is momentarily zero.","Kinematics"],
-    ["The enzyme that begins starch digestion in saliva is…",["Amylase","Pepsin","Lipase","Lactase"],0,"Salivary amylase.","Human biology"],
-    ["Two 4 Ω resistors in series total…",["8 Ω","2 Ω","4 Ω","16 Ω"],0,"Series adds: 8 Ω.","Electricity"],
-    ["A blood type AB person can receive red cells from…",["all ABO types","only AB","only O","only A"],0,"AB is the universal recipient.","Human biology"],
-    ["Work done by a 10 N force moving an object 3 m is…",["30 J","3.3 J","13 J","30 N"],0,"W=Fd=30 J.","Work & energy"],
-    ["The light reactions supply the Calvin cycle with ATP and…",["NADPH","glucose","oxygen","CO₂"],0,"ATP and NADPH.","Photosynthesis"],
-  ],
-  spa:[
-    ["The preterite 'yo' of 'ir/ser' is…",["fui","fue","iba","voy"],0,"Both ir and ser: yo fui.","Irregular preterite"],
-    ["'Si llueve, no ___ al parque' (we won't go).",["iremos","fuimos","íbamos","vayamos"],0,"Real condition → future: iremos.","Si clauses"],
-    ["Complete: 'A mí ___ gustan los libros.'",["me","mi","yo","te"],0,"Indirect-object pronoun me.","Gustar"],
-    ["The gerund (–ing) of 'leer' is…",["leyendo","leiendo","leendo","leyando"],0,"Leer → leyendo (i→y).","Present progressive"],
-    ["'Llevo dos años estudiando' means…",["I've been studying for two years","I studied two years ago","I will study two years","I take two years"],0,"Llevar + time + gerund.","Time expressions"],
-    ["The formal 'usted' command of 'hablar' is…",["hable","habla","hablas","hablen"],0,"Usted command: hable.","Commands"],
-    ["In 'Me lo dio', 'lo' refers to…",["a masculine direct object","me","the giver","a place"],0,"Masculine direct object.","Object pronouns"],
-    ["Choose ser/estar: 'La sopa ___ fría.' (it went cold)",["está","es","son","están"],0,"Temporary condition → está.","Ser vs estar"],
-    ["The preterite 'nosotros' of 'tener' is…",["tuvimos","tenemos","teníamos","tuvieron"],0,"Tener pret.: tuvimos.","Irregular preterite"],
-    ["'No tengo ___ dinero.' (any)",["nada de","ningún","algún","alguno"],0,"No...nada de = not any.","Negation"],
-    ["'Taller than' is…",["más alto que","tan alto como","el más alto","muy alto"],0,"más + adj + que.","Comparatives"],
-    ["'Se venden casas' is an example of…",["the passive/impersonal se","reflexive yo","a command","future tense"],0,"Se + verb = passive/impersonal.","Se constructions"],
-    ["The imperfect 'yo' of 'ser' is…",["era","fui","soy","seré"],0,"Ser imperfect: era.","Imperfect tense"],
-    ["'Acabo de comer' means…",["I just ate","I finish eating","I will eat","I'm eating"],0,"Acabar de + inf = to have just.","Expressions"],
-    ["'Hace mucho calor, ___ agua.' (drink — tú command)",["bebe","bebes","beber","beba"],0,"Affirmative tú command: bebe.","Commands"],
-  ],
-  his:[
-    ["The Northwest Ordinance (1787) is known for…",["organizing western territories and banning slavery there","ending the Revolution","creating the Bank","starting the Civil War"],0,"It governed territories and barred slavery in the Northwest.","Early republic"],
-    ["The XYZ Affair strained U.S. relations with…",["France","Britain","Spain","Mexico"],0,"A crisis with France (1797–98).","Early republic"],
-    ["The Monroe Doctrine (1823) warned Europe against…",["new colonization in the Americas","trading with the U.S.","building canals","ending slavery"],0,"No further European colonization in the Americas.","Foreign policy"],
-    ["The Seneca Falls Convention (1848) launched the movement for…",["women's rights","abolition only","temperance","labor unions"],0,"The women's rights movement.","Reform movements"],
-    ["The Compromise of 1850 strengthened the…",["Fugitive Slave Act","income tax","Bank charter","Homestead Act"],0,"It toughened the Fugitive Slave Act.","Sectionalism"],
-    ["'Bleeding Kansas' arose from disputes over…",["whether the territory would allow slavery","gold mining","railroad routes","Native land"],0,"Violence over slavery in Kansas.","Sectionalism"],
-    ["The Federalists favored…",["a strong central government","states' rights above all","no constitution","a king"],0,"A strong national government.","First party system"],
-    ["Eli Whitney's cotton gin (1793) had the effect of…",["expanding slavery","ending slavery","industrializing only the North","reducing cotton output"],0,"It made cotton profitable, expanding slavery.","Antebellum economy"],
-    ["The Whiskey Rebellion tested the government's ability to…",["enforce federal law and taxes","declare war","free enslaved people","admit states"],0,"Washington enforced federal tax law.","Early republic"],
-    ["The Missouri Compromise admitted Maine free and Missouri as…",["a slave state","a free state","a territory","unorganized"],0,"Missouri entered as a slave state.","Sectionalism"],
-    ["The Dred Scott decision was written by Chief Justice…",["Roger Taney","John Marshall","Earl Warren","John Jay"],0,"Taney, 1857.","Road to Civil War"],
-    ["The 'Great Awakening' was primarily a…",["religious revival","political party","military campaign","trade pact"],0,"A wave of religious revival.","Colonial America"],
-    ["The Hartford Convention opposed which war?",["The War of 1812","The Revolution","The Civil War","The Mexican War"],0,"Federalists opposed the War of 1812.","Early republic"],
-    ["The 14th Amendment's 'equal protection' clause restricts the…",["states","federal courts only","military","territories only"],0,"It restricts the states.","Reconstruction amendments"],
-    ["The antebellum Southern economy was dependent on…",["a single cash crop and enslaved labor","factories","fishing","fur trade"],0,"A one-crop (cotton) economy and slavery.","Sectionalism"],
-  ],
-};
-const CHALLENGE_QUESTIONS_X = {
-  alg:[
-    ["Solve 3x² − 2x − 4 = 0 (to 2 d.p.).",["x ≈ 1.54 or −0.87","x ≈ 1.20 or −0.50","x ≈ 2.00 or −0.67","x ≈ 0.87 or −1.54"],0,"x=[2±√52]/6 ≈ 1.54 or −0.87.","Quadratic formula"],
-    ["If logₐ 2 = 0.3 and logₐ 3 = 0.5, find logₐ 12.",["1.1","0.8","1.3","0.9"],0,"log12=2(0.3)+0.5=1.1.","Logarithms"],
-    ["Sum to infinity of 16, 12, 9, … is",["64","48","36","∞"],0,"r=3/4, S=16/(1/4)=64.","Infinite series"],
-    ["Factor completely x³ + 27.",["(x + 3)(x² − 3x + 9)","(x + 3)³","(x + 3)(x² + 3x + 9)","(x − 3)(x² + 3x + 9)"],0,"Sum of cubes.","Factoring"],
-    ["If f(x) = 2x − 1, find (f∘f)(x).",["4x − 3","4x − 1","2x − 3","4x + 1"],0,"f(2x−1)=4x−3.","Composite functions"],
-    ["Solve 2^(2x) − 5·2^x + 4 = 0.",["x = 0 or 2","x = 1 or 4","x = 2 only","x = 0 or 1"],0,"u=2^x: u=1 or 4 → x=0 or 2.","Exponential equations"],
-    ["The remainder when 2x³ − 3x + 1 is divided by (x + 2) is",["−9","9","−5","3"],0,"P(−2)=−9.","Polynomial division"],
-    ["Find k so that x² − kx + 9 has a double root.",["k = ±6","k = 6","k = 9","k = ±3"],0,"k²−36=0 → k=±6.","Discriminant"],
-  ],
-  ela:[
-    ["The deliberate omission of conjunctions ('I came, I saw, I conquered') is…",["Asyndeton","Polysyndeton","Anaphora","Zeugma"],0,"Asyndeton omits conjunctions.","Rhetorical devices"],
-    ["The repeated use of conjunctions ('and…and…and') for effect is…",["Polysyndeton","Asyndeton","Anaphora","Chiasmus"],0,"Polysyndeton piles up conjunctions.","Rhetorical devices"],
-    ["A 14-line poem with a turn (volta) is a…",["Sonnet","Ode","Limerick","Villanelle"],0,"A sonnet has 14 lines and a volta.","Poetic forms"],
-    ["'The crown announced a new tax' uses which device for the monarchy?",["Metonymy","Synecdoche","Simile","Hyperbole"],0,"Metonymy substitutes an associated term.","Figurative language"],
-    ["A story-within-a-story structure is called a…",["Frame narrative","Flashback","Foil","Foreshadow"],0,"A frame narrative encloses another story.","Narrative structure"],
-    ["When a character speaks privately to the audience, unheard by others, it is an…",["Aside","Allusion","Anecdote","Epilogue"],0,"An aside is spoken to the audience.","Drama terms"],
-    ["Biting, mocking humor aimed at reform is…",["Satire","Sentimentality","Nostalgia","Reverence"],0,"Satire critiques through ridicule.","Tone & genre"],
-    ["'To ___ did you give it?' — the correct word is…",["whom","who","whose","who's"],0,"Object of the preposition 'to' → whom.","Grammar"],
-  ],
-  sci:[
-    ["A 2 kg ball at 4 m/s bounces off a wall at 4 m/s. The change in momentum is…",["16 kg·m/s","0","8 kg·m/s","4 kg·m/s"],0,"Δp=2(−4−4)=−16; magnitude 16.","Momentum"],
-    ["A 60 W bulb runs 5 minutes. Energy used is…",["18,000 J","300 J","12 J","60 J"],0,"E=Pt=60·300=18,000 J.","Energy & power"],
-    ["In a test cross AaBb × aabb, the fraction showing both recessive traits is…",["1/4","9/16","1/16","1/2"],0,"(1/2)(1/2)=1/4.","Genetics"],
-    ["Two 6 Ω resistors in parallel total…",["3 Ω","12 Ω","6 Ω","1/12 Ω"],0,"1/R=1/3 → 3 Ω.","Electricity"],
-    ["A satellite's orbital speed must increase if its orbital radius…",["decreases","increases","stays the same","is irrelevant"],0,"Closer orbits need higher speed (v∝1/√r).","Gravitation"],
-    ["During which stage of respiration is CO₂ released?",["Krebs cycle","Glycolysis","Electron transport chain","Light reactions"],0,"The Krebs cycle releases CO₂.","Cell respiration"],
-    ["A 0.2 kg ball dropped from 5 m rebounds to 1.8 m. Fraction of mechanical energy retained is…",["0.36","0.18","0.64","0.50"],0,"E∝h: 1.8/5=0.36.","Energy"],
-    ["The mRNA start codon AUG codes for…",["Methionine","Stop","Glycine","Valine"],0,"AUG = methionine (start).","Molecular genetics"],
-  ],
-  spa:[
-    ["'Ojalá ___ ganado el partido' (had won — past, contrary to fact).",["hubiéramos","hayamos","habíamos","habremos"],0,"Pluperfect subjunctive: hubiéramos ganado.","Pluperfect subjunctive"],
-    ["'Te lo habría dicho si ___.' (if I had known)",["hubiera sabido","habría sabido","sabía","supe"],0,"Si + pluperfect subjunctive.","Conditional perfect"],
-    ["The 'vosotros' affirmative command of 'hablar' is…",["hablad","hablen","habláis","hablar"],0,"Vosotros command: hablad.","Commands"],
-    ["'Por más que ___, no entiende.' (however much he studies)",["estudie","estudia","estudió","estudiará"],0,"Concessive → subjunctive: estudie.","Subjunctive"],
-    ["Replace objects: 'No le des el libro a él.'",["No se lo des","No le lo des","No lo le des","No se los des"],0,"le→se before lo.","Object pronouns"],
-    ["'Llegamos sin que nadie nos ___ (ver).'",["viera","vio","veía","verá"],0,"'Sin que' + past subjunctive: viera.","Adverbial subjunctive"],
-    ["The future perfect ('habré' + participle) expresses…",["will have done","would do","had done","was doing"],0,"Future perfect.","Compound tenses"],
-    ["'Cualquiera que ___ la respuesta, gana.' (whoever knows)",["sepa","sabe","sabía","sabrá"],0,"Indefinite 'cualquiera que' → subjunctive: sepa.","Subjunctive"],
-  ],
-  his:[
-    ["Gibbons v. Ogden (1824) expanded federal power over…",["interstate commerce","slavery","religion","the military"],0,"Federal authority over interstate commerce.","Judicial branch"],
-    ["The Tariff of Abominations (1828) triggered the…",["Nullification Crisis","Civil War","Revolution","Trail of Tears"],0,"South Carolina's nullification fight.","Jacksonian era"],
-    ["The Kansas-Nebraska Act (1854) repealed which line?",["The Missouri Compromise line","The Mason-Dixon survey","The Proclamation Line","The 49th parallel"],0,"It repealed the 36°30′ restriction.","Sectionalism"],
-    ["Lincoln's primary stated goal early in the war was to…",["preserve the Union","abolish slavery at once","expand westward","punish the South"],0,"His first aim was to preserve the Union.","Civil War"],
-    ["The 'spoils system' under Jackson refers to…",["rewarding supporters with government jobs","selling western land","tariff policy","bank deposits"],0,"Patronage for loyal supporters.","Jacksonian era"],
-    ["The Wilmot Proviso proposed to…",["ban slavery in lands gained from Mexico","annex Cuba","tax the South","free all enslaved people"],0,"Ban slavery in Mexican-cession territory.","Sectionalism"],
-    ["The Freedmen's Bureau was created to…",["aid formerly enslaved people after the war","collect tariffs","build railroads","remove Native Americans"],0,"It assisted freedpeople.","Reconstruction"],
-    ["The 'Corrupt Bargain' of 1824 denied the presidency to…",["Andrew Jackson","John Quincy Adams","Henry Clay","James Monroe"],0,"Jackson won the popular vote but lost in the House.","Jacksonian era"],
-  ],
-};
-const AP_QUESTIONS_X = {
-  alg:[
-    ["A cable hangs in a parabola modeled by h(x) = 0.5x² − 4x + 12 (meters). What is the cable's lowest height?",["4 m","8 m","12 m","0 m"],0,"Vertex at x=4: h(4)=8−16+12=4 m.","Quadratic optimization"],
-    ["A town's population follows P(t) = 500·(1.08)^t. To the nearest year, when does it first exceed 1000?",["t = 9","t = 6","t = 12","t = 5"],0,"1.08^t=2 → t=ln2/ln1.08≈9 yr.","Exponential growth"],
-    ["A rocket's height (m) is h(t) = −5t² + 20t + 25. At what time t (s) does it return to the ground?",["t = 5","t = 4","t = 25","t = 1"],0,"−5t²+20t+25=0 → (t−5)(t+1)=0 → t=5.","Quadratic word problem"],
-    ["A loan's balance halves each year, starting at $6400. After how many whole years does it first drop below $500?",["4 years","3 years","5 years","6 years"],0,"6400/2⁴=400<500; after 3 years it is 800.","Exponential decay"],
-    ["Two trains' distances (km) from a station are d₁ = 60t and d₂ = 200 − 40t (t in hours). When are they equidistant?",["t = 2","t = 2.5","t = 1.5","t = 4"],0,"60t=200−40t → 100t=200 → t=2.","Linear systems"],
-    ["A rectangle's length is 3 more than its width, and its area is 40. What is the width?",["5","8","4","6"],0,"w(w+3)=40 → (w+8)(w−5)=0 → w=5.","Quadratic word problem"],
-    ["An earthquake's intensity is 1000 times the reference I₀. Its Richter magnitude M = log₁₀(I/I₀) is…",["3","2","1000","6"],0,"log₁₀(1000)=3.","Logarithms"],
-    ["A deposit grows as A = 1200·(1.05)^t. About how many years to reach $1800?",["≈ 8.3","≈ 5.0","≈ 12.0","≈ 3.6"],0,"1.05^t=1.5 → t≈8.3.","Exponential growth"],
-    ["A drone's speed (m/s) is v(t) = t² − 6t + 8. At what times is it momentarily stopped (v = 0)?",["t = 2 and t = 4","t = 1 and t = 8","t = −2 and −4","t = 3 only"],0,"(t−2)(t−4)=0.","Quadratics"],
-    ["Five payments 100 + 100(1.1) + 100(1.1)² + … + 100(1.1)⁴ total approximately…",["$610.51","$550.00","$500.00","$671.56"],0,"S=100(1.1⁵−1)/0.1≈610.51.","Geometric series"],
-    ["A ladder leans on a wall: its base is x m out, its top reaches (x + 7) m up, and the ladder is 13 m long. Find x.",["5","12","6","8"],0,"x²+(x+7)²=169 → x²+7x−60=0 → x=5.","Pythagorean / quadratics"],
-    ["A drug with a 6-hour half-life follows A = A₀(1/2)^(t/6). What fraction remains after 18 hours?",["1/8","1/3","1/6","1/16"],0,"(1/2)³=1/8.","Exponential decay"],
-    ["A profit function is P(x) = −2x² + 40x − 150 (dollars). How many units maximize profit?",["10","20","15","5"],0,"x=−b/2a=10.","Quadratic optimization"],
-    ["Find the break-even points of P(x) = −2x² + 40x − 150 (where P = 0).",["x = 5 and 15","x = 10 and 20","x = 3 and 25","x = 5 and 30"],0,"x²−20x+75=0 → (x−5)(x−15)=0.","Quadratics"],
-    ["A bacteria colony triples each hour: 1000, 3000, 9000, … How many are present after 6 hours (the 7th term)?",["729000","243000","2187000","6000"],0,"1000·3⁶=729000.","Geometric sequences"],
-    ["A sound's loudness is L = 10·log₁₀(I/I₀) dB. If intensity rises by a factor of 100, by how many dB does L rise?",["20 dB","100 dB","2 dB","10 dB"],0,"10·log₁₀(100)=20 dB.","Logarithms"],
-  ],
-  ela:[
-    ["A politician's speech piles clause upon clause joined by 'and…and…and' to build momentum. This deliberate overuse of conjunctions is…",["Polysyndeton","Asyndeton","Anaphora","Litotes"],0,"Polysyndeton repeats conjunctions for effect.","Rhetorical schemes"],
-    ["A war correspondent writes 'I came, I saw, I conquered,' stripping out conjunctions for urgency. This omission is…",["Asyndeton","Polysyndeton","Chiasmus","Zeugma"],0,"Asyndeton omits conjunctions.","Rhetorical schemes"],
-    ["In a tragedy, the audience knows the cup is poisoned while the unaware hero raises it. This gap in knowledge is…",["Dramatic irony","Verbal irony","Situational irony","Cosmic irony"],0,"Dramatic irony: the audience knows what the character does not.","Irony"],
-    ["A poet writes a 14-line love poem in iambic pentameter whose argument turns at line 9. The form is a…",["Sonnet","Villanelle","Ballad","Ode"],0,"A 14-line poem with a volta is a sonnet.","Poetic forms"],
-    ["A novel opens with a traveler who narrates a long tale of his youth, the inner story enclosed by the opening scene. This structure is a…",["Frame narrative","In medias res","Stream of consciousness","Epistolary form"],0,"A frame narrative encloses one story within another.","Narrative structure"],
-    ["An essayist mockingly proposes an outrageous 'solution' to expose society's cruelty, aiming at reform through ridicule. This mode is…",["Satire","Eulogy","Elegy","Panegyric"],0,"Satire uses ridicule to criticize and reform.","Genre & tone"],
-    ["A character turns from the others and confides a secret plan to the audience alone. This convention is an…",["Aside","Soliloquy","Monologue","Epilogue"],0,"An aside is a remark to the audience unheard by others.","Drama terms"],
-    ["A character alone on stage voices his entire inner debate aloud. This solo speech is a…",["Soliloquy","Aside","Dialogue","Prologue"],0,"A soliloquy reveals inner thoughts aloud.","Drama terms"],
-    ["A headline reads 'Washington vetoes the bill,' using the capital city for the federal government. This device is…",["Metonymy","Synecdoche","Personification","Allusion"],0,"Metonymy substitutes an associated term.","Figurative language"],
-    ["A diplomat begins each of five sentences with 'Let us…' to unify a call to action. This repetition at the start of clauses is…",["Anaphora","Epistrophe","Antithesis","Chiasmus"],0,"Anaphora repeats opening words.","Rhetorical schemes"],
-    ["A novel's events are told out of order, opening at the hero's death and circling back to his childhood. Beginning amid the action is…",["In medias res","Denouement","Exposition","Foreshadowing"],0,"In medias res starts in the middle of events.","Narrative structure"],
-    ["A grammarian notes that in 'the prize went to ___ deserved it,' the blank is the subject of 'deserved.' The correct word is…",["whoever","whomever","whom","whose"],0,"As the subject of 'deserved,' use 'whoever'.","Grammar"],
-    ["A eulogy speaks of the mayor's 'living legacy' and 'a deafening silence,' joining contradictory terms. Such pairings are…",["Oxymorons","Hyperboles","Similes","Puns"],0,"An oxymoron joins contradictory terms.","Figurative language"],
-    ["A critic observes that a poem's meaning turns sharply at its ninth line, reversing the speaker's stance. This turn is the…",["Volta","Caesura","Enjambment","Refrain"],0,"The volta is the thematic turn in a sonnet.","Poetic structure"],
-    ["A novel tells its entire story through the characters' exchanged letters and diary entries. This form is…",["Epistolary","Allegorical","Picaresque","Pastoral"],0,"An epistolary work is told through letters/documents.","Literary forms"],
-    ["A narrator renders a character's unfiltered, associative flow of thoughts and impressions. This technique is…",["Stream of consciousness","Third-person objective","Frame narrative","Foreshadowing"],0,"Stream of consciousness renders continuous inner thought.","Narrative technique"],
-  ],
-  sci:[
-    ["A 1500 kg car accelerates from rest to 20 m/s in 5 s on a level road. What net force acts on it?",["6000 N","3000 N","30000 N","300 N"],0,"a=4 m/s²; F=ma=6000 N.","Dynamics"],
-    ["A spring (k = 200 N/m) is compressed 0.1 m. The elastic potential energy stored is…",["1 J","2 J","20 J","0.1 J"],0,"PE=½kx²=½·200·0.01=1 J.","Energy"],
-    ["A ball is thrown horizontally at 10 m/s from a 20 m cliff (g = 10). How long until it lands?",["2 s","4 s","1 s","√2 s"],0,"t=√(2h/g)=2 s.","Projectile motion"],
-    ["A cross of two heterozygous tall pea plants (Tt) yields 240 offspring. About how many are short?",["60","120","180","240"],0,"1/4 × 240 = 60.","Genetics"],
-    ["A 100 W motor lifts a 50 kg load (g = 10) at constant speed. How fast can it raise the load?",["0.2 m/s","2 m/s","5 m/s","20 m/s"],0,"v=P/(mg)=100/500=0.2 m/s.","Power"],
-    ["A sample has an 8-day half-life. After 24 days, what fraction remains?",["1/8","1/3","1/24","1/16"],0,"24/8=3 half-lives → 1/8.","Nuclear decay"],
-    ["Blood returns to the heart's right atrium. Which chamber then pumps it to the lungs?",["Right ventricle","Left ventricle","Left atrium","Aorta"],0,"The right ventricle pumps blood to the lungs.","Human physiology"],
-    ["A 2 kg cart at 3 m/s collides elastically head-on with an identical 2 kg cart at rest. The first cart's speed afterward is…",["0 m/s","3 m/s","1.5 m/s","6 m/s"],0,"Equal masses, elastic: velocities exchange; the first stops.","Collisions"],
-    ["A wave has frequency 250 Hz and speed 100 m/s. Its wavelength is…",["0.4 m","2.5 m","150 m","25000 m"],0,"λ=v/f=0.4 m.","Waves"],
-    ["In glycolysis, one glucose molecule yields a net of how many ATP?",["2","36","4","0"],0,"Glycolysis nets 2 ATP.","Cellular respiration"],
-    ["A 12 V battery drives 2 A through a circuit. The power delivered is…",["24 W","6 W","14 W","10 W"],0,"P=IV=24 W.","Electricity"],
-    ["On the Moon (g = 1.6 m/s²), an object weighs 32 N. Its mass is…",["20 kg","51 kg","32 kg","2 kg"],0,"m=W/g=20 kg.","Gravitation"],
-    ["A solution has [H⁺] = 1×10⁻³ M. Its pH is…",["3","11","−3","7"],0,"pH=−log(10⁻³)=3.","Chemistry"],
-    ["During DNA replication, the strand built continuously toward the replication fork is the…",["Leading strand","Lagging strand","Template strand","Okazaki fragment"],0,"The leading strand is synthesized continuously.","Molecular biology"],
-    ["A 1200 kg car rounds a flat curve of radius 50 m at 10 m/s. The centripetal force needed is…",["2400 N","240 N","120 N","12000 N"],0,"F=mv²/r=2400 N.","Circular motion"],
-    ["A heterozygous purple flower (Pp) is crossed with a white one (pp). What percent of offspring are white?",["50%","25%","75%","0%"],0,"Pp×pp → 1/2 white.","Genetics"],
-  ],
-  spa:[
-    ["Tu jefe te habría ascendido si tú ___ (llegar) a tiempo cada día. Completa con el pluscuamperfecto de subjuntivo.",["hubieras llegado","habrías llegado","llegaras","llegabas"],0,"Si + pluscuamperfecto de subjuntivo: hubieras llegado.","Pluperfect subjunctive"],
-    ["Es mejor que, mientras tanto, tú no ___ (decir) nada del asunto. Completa.",["digas","dices","dijiste","dirás"],0,"'Es mejor que' + subjuntivo: digas.","Subjunctive"],
-    ["Buscamos a alguien que ___ (saber) tres idiomas, aunque dudamos que exista. Completa.",["sepa","sabe","sabía","sabrá"],0,"Antecedente indefinido → subjuntivo: sepa.","Adjective-clause subjunctive"],
-    ["Si hubiera hecho buen tiempo, nosotros ___ a la playa. Completa con el condicional compuesto.",["habríamos ido","hubiéramos ido","íbamos","fuimos"],0,"Resultado de un 'si' pluscuamperfecto → condicional compuesto.","Conditional perfect"],
-    ["El profesor insistió en que los estudiantes ___ (entregar) la tarea ese día. Completa.",["entregaran","entregaron","entregan","entregarán"],0,"Mandato indirecto en pasado → imperfecto de subjuntivo.","Sequence of tenses"],
-    ["Por mucho que ellos ___ (intentarlo), el resultado no cambiará. Completa.",["lo intenten","lo intentan","lo intentaron","lo intentarán"],0,"'Por mucho que' → subjuntivo: lo intenten.","Concessive subjunctive"],
-    ["Reescribe con pronombres: 'Da el informe a la directora.'",["Dáselo","Dálelo","Dalo a ella","Se da lo"],0,"le→se + lo: Dáselo.","Object pronouns + commands"],
-    ["Para cuando lleguemos, la película ya ___ (empezar). Completa con el futuro perfecto.",["habrá empezado","habría empezado","ha empezado","empezó"],0,"Acción terminada antes de un punto futuro → futuro perfecto.","Future perfect"],
-    ["Es una lástima que tú no ___ (poder) venir a la fiesta anoche. Completa.",["hayas podido","puedas","podías","pudiste"],0,"Emoción sobre acción pasada → pretérito perfecto de subjuntivo.","Perfect subjunctive"],
-    ["No había nadie que ___ (conocer) la respuesta correcta. Completa.",["conociera","conocía","conoció","conozca"],0,"Antecedente negativo en pasado → imperfecto de subjuntivo.","Adjective-clause subjunctive"],
-    ["Tan pronto como ___ (salir) el sol, saldremos a caminar. Completa.",["salga","sale","salió","saldrá"],0,"Acción futura tras 'tan pronto como' → subjuntivo.","Adverbial subjunctive"],
-    ["Aunque ___ (costar) mucho, compraré ese coche. (concesión hipotética) Completa.",["cueste","cuesta","costó","costará"],0,"'Aunque' + subjuntivo = concesión hipotética.","Concessive subjunctive"],
-    ["Me molesta que la gente ___ (hablar) durante la película. Completa.",["hable","habla","hablaba","hablará"],0,"Emoción + 'que' → subjuntivo: hable.","Subjunctive of emotion"],
-    ["Quería un apartamento que ___ (tener) vista al mar, pero no lo encontré. Completa.",["tuviera","tenía","tuvo","tenga"],0,"Antecedente no hallado en pasado → imperfecto de subjuntivo.","Adjective-clause subjunctive"],
-    ["Si yo ___ (ser) tú, aceptaría la oferta de inmediato. Completa.",["fuera","sería","soy","era"],0,"'Si' hipotético → imperfecto de subjuntivo: fuera.","Si clauses"],
-    ["Reescribe con pronombres: 'Entregué las llaves a los vecinos.'",["Se las entregué","Les las entregué","Las les entregué","Se la entregué"],0,"les→se + las: Se las entregué.","Object pronouns"],
-  ],
-  his:[
-    ["A historian studies an 1819 ruling that struck down a state tax on the national bank, declaring 'the power to tax involves the power to destroy.' This case is…",["McCulloch v. Maryland","Marbury v. Madison","Gibbons v. Ogden","Dred Scott v. Sandford"],0,"McCulloch v. Maryland upheld federal supremacy and implied powers.","Federalism"],
-    ["In 1832, South Carolina declared a federal tariff void within its borders, prompting Jackson to threaten force. This is the…",["Nullification Crisis","Whiskey Rebellion","XYZ Affair","Bleeding Kansas"],0,"The Nullification Crisis pitted states' rights against federal power.","Jacksonian era"],
-    ["One 1787 delegate wants representation by population, another wants equal state votes. The deal creating a two-house Congress is the…",["Great Compromise","Three-Fifths Compromise","Missouri Compromise","Compromise of 1850"],0,"The Great Compromise created the bicameral Congress.","Constitutional Convention"],
-    ["An 1850s abolitionist paper denounces a law forcing Northerners to help capture escaped slaves. This law was part of the…",["Compromise of 1850","Missouri Compromise","Northwest Ordinance","Kansas-Nebraska Act"],0,"The Fugitive Slave Act was part of the Compromise of 1850.","Sectionalism"],
-    ["A 1776 pamphlet argues in plain language that it is absurd for a continent to be ruled by an island, urging independence. It is…",["Common Sense","The Federalist","The Declaration","Poor Richard's Almanack"],0,"Paine's Common Sense urged independence.","Road to Revolution"],
-    ["After the disputed 1876 election, a bargain made Hayes president in exchange for removing federal troops from the South, effectively ending…",["Reconstruction","the Civil War","the Gilded Age","the Revolution"],0,"The Compromise of 1877 ended Reconstruction.","Reconstruction"],
-    ["An 1857 opinion declares Congress cannot bar slavery in the territories and that Black Americans are not citizens. This case is…",["Dred Scott v. Sandford","Plessy v. Ferguson","Marbury v. Madison","Brown v. Board"],0,"Dred Scott denied citizenship and territorial limits.","Road to Civil War"],
-    ["A farmer in 1794 refuses a federal whiskey tax, and Washington leads troops to enforce the law. This showed the federal government could…",["enforce its laws","be safely ignored","not tax citizens","not raise an army"],0,"The Whiskey Rebellion proved federal enforcement power.","Early republic"],
-    ["At an 1848 convention, reformers issue a 'Declaration of Sentiments' demanding equality for women. This gathering was at…",["Seneca Falls","Philadelphia","Appomattox","Gettysburg"],0,"The Seneca Falls Convention launched women's rights.","Reform movements"],
-    ["A statesman in 1823 declares the Americas closed to further European colonization. This policy is the…",["Monroe Doctrine","Marshall Plan","Truman Doctrine","Open Door Policy"],0,"The Monroe Doctrine opposed European colonization.","Foreign policy"],
-    ["A planter notes a 1793 invention lets one worker clean fifty times more cotton daily, deepening reliance on enslaved labor. The invention was the…",["cotton gin","spinning jenny","steam engine","telegraph"],0,"Whitney's cotton gin expanded cotton and slavery.","Antebellum economy"],
-    ["A 1798 set of laws lets the president deport non-citizens and punish criticism of the government, sparking the Virginia and Kentucky Resolutions. These were the…",["Alien and Sedition Acts","Intolerable Acts","Coercive Acts","Force Bills"],0,"The Alien and Sedition Acts sparked the Resolutions.","Early republic"],
-    ["A delegate explains that counting three of every five enslaved persons will boost Southern seats in Congress. This is the…",["Three-Fifths Compromise","Great Compromise","Missouri Compromise","Connecticut Plan"],0,"The Three-Fifths Compromise set representation counting.","Constitutional Convention"],
-    ["An 1803 decision asserts the Court's power to strike down a law as unconstitutional for the first time. This case is…",["Marbury v. Madison","McCulloch v. Maryland","Gibbons v. Ogden","Worcester v. Georgia"],0,"Marbury v. Madison established judicial review.","Judicial review"],
-    ["A settler argues each territory's people, not Congress, should vote on slavery — the principle behind the Kansas-Nebraska Act. It is…",["popular sovereignty","nullification","judicial review","mercantilism"],0,"Popular sovereignty let settlers decide on slavery.","Sectionalism"],
-    ["A newly freed family in 1866 seeks food, schooling, and labor contracts from a federal agency aiding their transition. That agency was the…",["Freedmen's Bureau","Continental Congress","Federal Reserve","Tennessee Valley Authority"],0,"The Freedmen's Bureau aided formerly enslaved people.","Reconstruction"],
-  ],
-};
-/* Merge the expansion banks into the core banks (mutating each subject's array). */
-[[QUESTIONS,QUESTIONS_X],[TEST_QUESTIONS,TEST_QUESTIONS_X],[CHALLENGE_QUESTIONS,CHALLENGE_QUESTIONS_X],[AP_QUESTIONS,AP_QUESTIONS_X]].forEach(function(pair){
-  var base=pair[0], extra=pair[1];
-  SUBJECTS.forEach(function(s){ if(extra[s.id]) base[s.id]=(base[s.id]||[]).concat(extra[s.id]); });
-});
-
-/* ============================ FINAL EXAM ============================
-   A single, comprehensive, ultra-hard exam drawing on EVERY subject from its own bank.
-   Harder than the Challenge and Gauntlet combined. Unlocked only by scoring 100% on every
-   subject's Gauntlet. A perfect score permanently flags total mastery. */
-const FINAL_PULL=50; // questions drawn per Final Exam
-const FINAL_QUESTIONS=[
-  ["A cubic polynomial x³ − 6x² + 11x − 6 has three consecutive positive integer roots. What are they?",["1, 2, and 3","2, 3, and 4","0, 1, and 2","1, 3, and 5"],0,"It factors as (x−1)(x−2)(x−3), so the roots are 1, 2, 3.","Algebra · polynomials"],
-  ["Solve log₂(x) + log₄(x) = 3.",["x = 4","x = 8","x = 2","x = 16"],0,"log₄x = ½·log₂x, so (3/2)·log₂x = 3 → log₂x = 2 → x = 4.","Algebra · logarithms"],
-  ["An infinite geometric series has first term 18 and sums to 27. Its common ratio is…",["1/3","2/3","1/2","3/4"],0,"18/(1−r)=27 → 1−r=2/3 → r=1/3.","Algebra · series"],
-  ["If f(x) = x² + 2, find a positive value of a such that f(f(a)) = 27.",["√3","3","√5","5"],0,"(a²+2)²+2=27 → (a²+2)²=25 → a²+2=5 → a²=3 → a=√3.","Algebra · functions"],
-  ["Solve log₃(x²) − log₃(x + 6) = 1 for x > 0.",["x = 6","x = 3","x = 9","x = −3"],0,"x²/(x+6)=3 → x²−3x−18=0 → (x−6)(x+3)=0 → x=6.","Algebra · logarithms"],
-  ["How many real solutions does x⁴ − 5x² + 4 = 0 have?",["4","2","1","0"],0,"Let u=x²: (u−1)(u−4)=0 → x=±1,±2 → four real roots.","Algebra · equations"],
-  ["What is the sum of ALL real solutions of |x² − 4| = 3?",["0","7","2","√7"],0,"x²=7 gives ±√7; x²=1 gives ±1; the four solutions sum to 0.","Algebra · absolute value"],
-  ["A sonnet reverses its argument at line nine, cries 'O Death!' to an abstraction, and joins its clauses with no conjunctions. Which THREE devices appear?",["Volta, apostrophe, and asyndeton","Caesura, allusion, and zeugma","Enjambment, metonymy, and litotes","Refrain, anaphora, and irony"],0,"Line-9 turn = volta; addressing Death = apostrophe; dropped conjunctions = asyndeton.","ELA · devices"],
-  ["Which sentence is BOTH passive voice AND in the subjunctive mood?",["If I were chosen, the trophy would be awarded to me.","The committee awarded me the trophy.","I was chosen, and they gave me the trophy.","Choose me for the trophy."],0,"'were chosen' is subjunctive; 'would be awarded' is passive.","ELA · grammar"],
-  ["'The pen is mightier than the sword' substitutes each object for an associated idea (writing, force). This specific device is…",["Metonymy","Synecdoche","Personification","Hyperbole"],0,"Substituting an associated term is metonymy, not part-for-whole synecdoche.","ELA · figurative language"],
-  ["A first-person narrator who misreads events so that readers grasp more than he does is best described as…",["An unreliable narrator creating dramatic irony","An omniscient narrator","A foil","A protagonist"],0,"He is unreliable, producing dramatic irony for the reader.","ELA · point of view"],
-  ["'I came, I saw, I conquered' drops its conjunctions (asyndeton) and also forms a three-part parallel series called a…",["Tricolon","Couplet","Quatrain","Stanza"],0,"Three parallel members form a tricolon.","ELA · rhetoric"],
-  ["A 2 kg block slides from rest down a frictionless 30° incline through 4 m (g = 10 m/s²). Its speed at the bottom is about…",["6.3 m/s","8.9 m/s","4.0 m/s","12.6 m/s"],0,"a=g·sin30°=5 m/s²; v=√(2·5·4)=√40≈6.3 m/s.","Science · mechanics"],
-  ["In a cross AaBb × AaBb, what fraction of offspring are homozygous recessive at BOTH genes (aabb)?",["1/16","1/4","9/16","1/8"],0,"(1/4)(1/4)=1/16.","Science · genetics"],
-  ["A 1000 kg car traveling 20 m/s brakes to a stop over 40 m. The average braking force is…",["5000 N","2500 N","10000 N","500 N"],0,"KE=½·1000·20²=200,000 J; F=W/d=200000/40=5000 N.","Science · energy"],
-  ["The Calvin cycle uses ATP and NADPH to fix CO₂. How many CO₂ molecules are needed to build ONE glucose?",["6","2","12","1"],0,"Six CO₂ are fixed to make one six-carbon glucose.","Science · photosynthesis"],
-  ["A wave's frequency doubles while its speed stays constant. Its wavelength…",["is halved","doubles","is unchanged","quadruples"],0,"v=fλ is constant, so λ ∝ 1/f: doubling f halves λ.","Science · waves"],
-  ["A 3 Ω and a 6 Ω resistor are in parallel, and that pair is in series with a 4 Ω resistor. The total resistance is…",["6 Ω","13 Ω","9 Ω","2 Ω"],0,"Parallel: (3·6)/(3+6)=2 Ω; series adds 4 → 6 Ω.","Science · electricity"],
-  ["Completa: 'Si yo ___ que venías, ___ la cena.' (had known / would have prepared)",["hubiera sabido, habría preparado","sabía, preparaba","supe, preparé","sabría, prepararía"],0,"Pluscuamperfecto de subjuntivo + condicional compuesto.","Spanish · si clauses"],
-  ["Reescribe con pronombres: 'El profesor explicó la lección a los estudiantes.'",["Se la explicó","Les la explicó","La les explicó","Se lo explicó"],0,"les→se + la (la lección): Se la explicó.","Spanish · object pronouns"],
-  ["Completa: 'Por más rápido que ___ (correr), no llegarás a tiempo.'",["corras","corres","corriste","correrás"],0,"'Por más que' expresa concesión → subjuntivo: corras.","Spanish · subjunctive"],
-  ["¿Cuál oración es completamente correcta?",["Espero que el regalo esté listo para mañana.","Espero que el regalo está listo por mañana.","Espero que el regalo es listo para mañana.","Espero que el regalo sea listo por mañana."],0,"'Espero que' + subjuntivo (esté); estar para una condición; para para un plazo.","Spanish · synthesis"],
-  ["Order these from EARLIEST to latest: (a) Dred Scott decision, (b) Missouri Compromise, (c) Kansas-Nebraska Act, (d) Compromise of 1850.",["b, d, c, a","a, b, c, d","b, c, d, a","d, b, c, a"],0,"1820 (b), 1850 (d), 1854 (c), 1857 (a).","History · chronology"],
-  ["Which Supreme Court case is correctly paired with its principle?",["McCulloch v. Maryland — implied powers","Marbury v. Madison — interstate commerce","Gibbons v. Ogden — judicial review","Dred Scott — abolished slavery"],0,"McCulloch upheld implied powers; the other three are mismatched.","History · judicial"],
-  ["Put these founding documents in chronological order: Declaration of Independence, Constitution, Articles of Confederation, Bill of Rights.",["Declaration, Articles, Constitution, Bill of Rights","Declaration, Constitution, Articles, Bill of Rights","Articles, Declaration, Constitution, Bill of Rights","Declaration, Articles, Bill of Rights, Constitution"],0,"1776 Declaration, 1781 Articles, 1787 Constitution, 1791 Bill of Rights.","History · founding documents"],
-];
-
-const FINAL_EXTRA=[
-  // ===== ALGEBRA (35) =====
-  ["Solve 2x² − 7x + 3 = 0.",["x = 1/2 or 3","x = −1/2 or 3","x = 2 or 3","x = 1 or 3"],0,"(2x−1)(x−3)=0.","Algebra"],
-  ["Solve log₅(x) = −2.",["x = 1/25","x = −10","x = 25","x = −25"],0,"5⁻²=1/25.","Algebra"],
-  ["Simplify (x³ − 8)/(x − 2).",["x² + 2x + 4","x² − 2x + 4","x² + 4","x² − 4"],0,"Difference of cubes: a³−b³=(a−b)(a²+ab+b²).","Algebra"],
-  ["The sum of the roots of 3x² + 6x − 9 = 0 is…",["−2","2","3","−3"],0,"Sum = −b/a = −6/3 = −2.","Algebra"],
-  ["Simplify (1 + i)².",["2i","2","1 + 2i","−2i"],0,"1+2i+i²=2i.","Algebra"],
-  ["Solve 3^(x+1) = 27.",["x = 2","x = 3","x = 8","x = 1"],0,"3^(x+1)=3³ → x+1=3.","Algebra"],
-  ["The 7th term of the arithmetic sequence 5, 9, 13, … is…",["29","27","33","25"],0,"a₇=5+6·4=29.","Algebra"],
-  ["Solve x² − 2x − 15 = 0.",["x = 5 or −3","x = −5 or 3","x = 5 or 3","x = 15 or 1"],0,"(x−5)(x+3)=0.","Algebra"],
-  ["Evaluate log₂(32) − log₂(4).",["3","5","8","2"],0,"5−2=3.","Algebra"],
-  ["The vertex of y = 2(x − 1)² − 3 is…",["(1, −3)","(−1, −3)","(1, 3)","(2, −3)"],0,"Vertex form a(x−h)²+k.","Algebra"],
-  ["Simplify √50 + √8.",["7√2","9√2","√58","5√2"],0,"5√2+2√2=7√2.","Algebra"],
-  ["Solve |3x − 6| = 9.",["x = 5 or −1","x = 5 or 1","x = 3 or −3","x = −5 or 1"],0,"3x−6=±9 → x=5 or −1.","Algebra"],
-  ["If f(x) = 2^x, what is f(5) − f(3)?",["24","16","8","28"],0,"32−8=24.","Algebra"],
-  ["Solve the system 2x + y = 7 and x − y = 2.",["x = 3, y = 1","x = 2, y = 3","x = 1, y = 5","x = 4, y = −1"],0,"Add: 3x=9 → x=3, y=1.","Algebra"],
-  ["The inverse of f(x) = 3x − 6 is…",["(x + 6)/3","(x − 6)/3","3x + 6","x/3 − 6"],0,"y=3x−6 → x=(y+6)/3.","Algebra"],
-  ["What does the discriminant of 4x² − 4x + 1 indicate?",["One repeated real root","Two real roots","Two complex roots","No solution"],0,"16−16=0 → one repeated root.","Algebra"],
-  ["The common ratio of 2, −6, 18, −54, … is…",["−3","3","−2","1/3"],0,"−6/2=−3.","Algebra"],
-  ["Solve log(x − 1) = 2 (base 10).",["x = 101","x = 11","x = 21","x = 99"],0,"x−1=10²=100.","Algebra"],
-  ["Multiply (2x − 1)(2x + 1).",["4x² − 1","4x² + 1","2x² − 1","4x² − 4x − 1"],0,"Difference of squares.","Algebra"],
-  ["The sum 1 + 2 + 4 + … + 128 (eight terms) equals…",["255","256","254","127"],0,"2⁸−1=255.","Algebra"],
-  ["Solve x³ = 64.",["x = 4","x = 8","x = 16","x = 3"],0,"∛64=4.","Algebra"],
-  ["Factor x² − x − 20.",["(x − 5)(x + 4)","(x + 5)(x − 4)","(x − 10)(x + 2)","(x − 4)(x − 5)"],0,"−5·4=−20, −5+4=−1.","Algebra"],
-  ["The range of y = 2^x is…",["y > 0","y ≥ 0","all reals","y < 0"],0,"Exponentials are always positive.","Algebra"],
-  ["Solve 5x − 2 = 3x + 8.",["x = 5","x = 3","x = 10","x = 6"],0,"2x=10 → x=5.","Algebra"],
-  ["The midpoint of (4, −2) and (−2, 6) is…",["(1, 2)","(2, 1)","(3, 2)","(1, 4)"],0,"Average coordinates.","Algebra"],
-  ["The slope of a line perpendicular to y = 2x + 1 is…",["−1/2","1/2","2","−2"],0,"Negative reciprocal of 2.","Algebra"],
-  ["Evaluate log₄(64).",["3","2","4","16"],0,"4³=64.","Algebra"],
-  ["Solve 2x² = 8x.",["x = 0 or 4","x = 4 only","x = 2 or 4","x = 0 or 8"],0,"2x(x−4)=0.","Algebra"],
-  ["Simplify (6x⁴)/(2x²).",["3x²","3x⁶","3x²/1","4x²"],0,"6/2=3, x⁴⁻²=x².","Algebra"],
-  ["The conjugate of 4 − 5i is…",["4 + 5i","−4 + 5i","5 − 4i","−4 − 5i"],0,"Flip the imaginary sign.","Algebra"],
-  ["Solve √(x + 3) = 4.",["x = 13","x = 1","x = 19","x = 16"],0,"x+3=16 → x=13.","Algebra"],
-  ["For an arithmetic sequence with a₁ = 3 and d = 5, a₁₀ equals…",["48","53","45","50"],0,"3+9·5=48.","Algebra"],
-  ["Solve the inequality x² + 6x + 8 < 0.",["−4 < x < −2","x < −4 or x > −2","2 < x < 4","−2 < x < 4"],0,"Roots −2, −4; negative between them.","Algebra"],
-  ["If (x − 2) is a factor of x³ − 3x² + kx − 2, find k.",["k = 3","k = 2","k = −3","k = 1"],0,"P(2)=8−12+2k−2=0 → 2k=6 → k=3.","Algebra"],
-  ["Rationalize 6/√3.",["2√3","3√2","√18","6√3"],0,"6/√3 · √3/√3 = 6√3/3 = 2√3.","Algebra"],
-  // ===== ELA (35) =====
-  ["The repetition of grammatical structure across phrases is…",["Parallelism","Allusion","Caesura","Litotes"],0,"Parallel structure repeats grammatical form.","ELA"],
-  ["Directly addressing an absent person or abstraction is…",["Apostrophe","Allusion","Anaphora","Aside"],0,"Apostrophe addresses the absent.","ELA"],
-  ["A deliberate pause within a line of verse is a…",["Caesura","Enjambment","Volta","Refrain"],0,"A caesura is a mid-line pause.","ELA"],
-  ["Carrying a sentence past the end of a poetic line without pause is…",["Enjambment","Caesura","Refrain","Meter"],0,"Enjambment runs a line into the next.","ELA"],
-  ["A 14-line poem with a volta is a…",["Sonnet","Ballad","Ode","Limerick"],0,"Sonnets are 14 lines.","ELA"],
-  ["Three parallel elements in a row form a…",["Tricolon","Couplet","Quatrain","Refrain"],0,"Three parallel members = tricolon.","ELA"],
-  ["'The White House announced…' uses which device for the president's office?",["Metonymy","Synecdoche","Simile","Hyperbole"],0,"Metonymy uses an associated term.","ELA"],
-  ["'All hands on deck' uses 'hands' for sailors — this is…",["Synecdoche","Metonymy","Personification","Allusion"],0,"Part for whole = synecdoche.","ELA"],
-  ["Saying 'not bad' to mean 'good' is…",["Litotes","Hyperbole","Apostrophe","Paradox"],0,"Understatement by negation.","ELA"],
-  ["'Deafening silence' is an example of…",["Oxymoron","Simile","Allusion","Pun"],0,"Contradictory terms joined.","ELA"],
-  ["Attacking the speaker rather than the argument is the fallacy of…",["Ad hominem","Straw man","Red herring","Slippery slope"],0,"Ad hominem targets the person.","ELA"],
-  ["Assuming the truth of what you are trying to prove is…",["Begging the question","A straw man","A red herring","Ad populum"],0,"Circular reasoning begs the question.","ELA"],
-  ["A reference to another work, person, or event is an…",["Allusion","Illusion","Analogy","Anecdote"],0,"Allusion references something known.","ELA"],
-  ["A recurring image or idea supporting a theme is a…",["Motif","Climax","Foil","Stanza"],0,"A motif recurs to support theme.","ELA"],
-  ["The atmosphere a text creates in the reader is the…",["Mood","Tone","Theme","Plot"],0,"Mood is the reader's felt atmosphere.","ELA"],
-  ["The author's attitude toward the subject is the…",["Tone","Mood","Motif","Setting"],0,"Tone is the author's attitude.","ELA"],
-  ["A story enclosed within another story is a…",["Frame narrative","Flashback","Foil","Aside"],0,"A frame narrative encloses a tale.","ELA"],
-  ["A narrative that begins in the middle of the action is…",["In medias res","Denouement","Exposition","Epilogue"],0,"In medias res = into the middle.","ELA"],
-  ["The unfiltered flow of a character's thoughts is…",["Stream of consciousness","Dialogue","Exposition","Monologue"],0,"Stream of consciousness renders inner thought.","ELA"],
-  ["A novel told entirely through letters is…",["Epistolary","Allegorical","Pastoral","Picaresque"],0,"Epistolary = told via letters.","ELA"],
-  ["The thematic turn in a sonnet is the…",["Volta","Caesura","Refrain","Stanza"],0,"The volta is the sonnet's turn.","ELA"],
-  ["Saying the opposite of what one means is…",["Verbal irony","Dramatic irony","Situational irony","Mood"],0,"Verbal irony says the opposite.","ELA"],
-  ["When the audience knows what a character does not, it is…",["Dramatic irony","Verbal irony","Situational irony","Suspense"],0,"Dramatic irony: audience knows more.","ELA"],
-  ["When the outcome is the opposite of what is expected, it is…",["Situational irony","Verbal irony","Dramatic irony","Foreshadowing"],0,"Situational irony reverses expectation.","ELA"],
-  ["Which sentence uses the subjunctive mood?",["If I were rich, I would travel.","I was rich last year.","I am rich now.","I will be rich."],0,"'If I were' is subjunctive.","ELA"],
-  ["Which sentence is in the passive voice?",["The cake was eaten by the dog.","The dog ate the cake.","The dog is eating.","Eat the cake."],0,"Subject receives the action.","ELA"],
-  ["Which uses a semicolon correctly?",["I came; I saw; I conquered.","I came, I saw; I conquered","I came; and I saw.","I came; I, saw."],0,"Semicolons join related independent clauses.","ELA"],
-  ["'To ___ should I send the letter?' — the correct word is…",["whom","who","whose","who's"],0,"Object of the preposition → whom.","ELA"],
-  ["Which sentence has correct parallel structure?",["She likes hiking, swimming, and biking.","She likes hiking, to swim, and biking.","She likes to hike, swimming, bike.","She likes hike, swim, and to bike."],0,"All gerunds match.","ELA"],
-  ["A brief, witty saying that expresses a truth is an…",["Aphorism","Anecdote","Allusion","Analogy"],0,"An aphorism is a terse truth.","ELA"],
-  ["Deliberate exaggeration for effect is…",["Hyperbole","Litotes","Irony","Allusion"],0,"Hyperbole exaggerates.","ELA"],
-  ["Giving human qualities to nonhuman things is…",["Personification","Simile","Metonymy","Allusion"],0,"Personification humanizes.","ELA"],
-  ["Repetition of consonant sounds at the ENDS of words ('first and last') is…",["Consonance","Assonance","Alliteration","Rhyme"],0,"Consonance repeats end/internal consonants.","ELA"],
-  ["Repetition of initial consonant sounds is…",["Alliteration","Assonance","Consonance","Rhyme"],0,"Alliteration repeats initial consonants.","ELA"],
-  ["An extended narrative with a symbolic second meaning is an…",["Allegory","Anecdote","Aphorism","Aside"],0,"Allegory carries sustained symbolism.","ELA"],
-  // ===== SCIENCE (35) =====
-  ["A 10 N force acts on a 4 kg mass. Its acceleration is…",["2.5 m/s²","40 m/s²","2 m/s²","14 m/s²"],0,"a=F/m=2.5.","Science"],
-  ["The kinetic energy of a 2 kg object at 6 m/s is…",["36 J","12 J","72 J","6 J"],0,"½·2·36=36 J.","Science"],
-  ["The gravitational PE of a 5 kg object 3 m up (g = 10) is…",["150 J","15 J","50 J","1500 J"],0,"mgh=150 J.","Science"],
-  ["The momentum of a 3 kg object at 4 m/s is…",["12 kg·m/s","7 kg·m/s","1.3 kg·m/s","12 N"],0,"p=mv=12.","Science"],
-  ["A 9 V source across 3 Ω drives a current of…",["3 A","27 A","0.33 A","6 A"],0,"I=V/R=3 A.","Science"],
-  ["A 12 V source delivering 2 A provides power of…",["24 W","6 W","14 W","10 W"],0,"P=IV=24 W.","Science"],
-  ["A wave of frequency 5 Hz and wavelength 2 m travels at…",["10 m/s","2.5 m/s","7 m/s","0.4 m/s"],0,"v=fλ=10.","Science"],
-  ["A car goes from 0 to 30 m/s in 6 s. Its acceleration is…",["5 m/s²","180 m/s²","0.2 m/s²","36 m/s²"],0,"a=Δv/t=5.","Science"],
-  ["Work done by a 20 N force over 5 m is…",["100 J","4 J","25 J","100 N"],0,"W=Fd=100 J.","Science"],
-  ["Three resistors 2 Ω, 3 Ω, 5 Ω in series total…",["10 Ω","0.97 Ω","3.3 Ω","30 Ω"],0,"Series add.","Science"],
-  ["Two 8 Ω resistors in parallel total…",["4 Ω","16 Ω","8 Ω","2 Ω"],0,"Equal parallel halves.","Science"],
-  ["In AaBb × AaBb, the fraction showing both dominant traits is…",["9/16","3/16","1/16","1/4"],0,"9:3:3:1 → 9/16 both dominant.","Science"],
-  ["In Aa × Aa, the fraction homozygous recessive is…",["1/4","1/2","3/4","1/16"],0,"1 of 4 is aa.","Science"],
-  ["In a test cross Aa × aa, the fraction recessive is…",["1/2","1/4","3/4","1/16"],0,"Half are aa.","Science"],
-  ["How many nucleotides make up one mRNA codon?",["3","1","2","4"],0,"A codon is three bases.","Science"],
-  ["Photosynthesis takes place in the…",["Chloroplast","Mitochondrion","Nucleus","Ribosome"],0,"Chloroplasts house photosynthesis.","Science"],
-  ["Aerobic respiration occurs mainly in the…",["Mitochondrion","Chloroplast","Nucleus","Vacuole"],0,"Mitochondria make ATP.","Science"],
-  ["Copying DNA into mRNA is called…",["Transcription","Translation","Replication","Mutation"],0,"DNA → mRNA = transcription.","Science"],
-  ["Building a protein from mRNA at the ribosome is…",["Translation","Transcription","Replication","Digestion"],0,"mRNA → protein = translation.","Science"],
-  ["In DNA, adenine pairs with…",["Thymine","Guanine","Cytosine","Uracil"],0,"A–T pairing.","Science"],
-  ["RNA uses which base in place of thymine?",["Uracil","Cytosine","Guanine","Adenine"],0,"RNA uses uracil.","Science"],
-  ["A typical human body (somatic) cell has how many chromosomes?",["46","23","92","48"],0,"46 (23 pairs).","Science"],
-  ["Human gametes are haploid with how many chromosomes?",["23","46","22","24"],0,"Half of 46.","Science"],
-  ["A solution with pH 1 is…",["strongly acidic","neutral","strongly basic","weakly basic"],0,"Low pH = strongly acidic.","Science"],
-  ["In a neutral atom, the number of electrons equals the number of…",["protons","neutrons","isotopes","ions"],0,"Protons = electrons.","Science"],
-  ["The speed of light in a vacuum is about…",["3×10⁸ m/s","3×10⁶ m/s","3×10¹⁰ m/s","340 m/s"],0,"≈300,000 km/s.","Science"],
-  ["80 g of an isotope remains after 2 half-lives as…",["20 g","40 g","10 g","60 g"],0,"80→40→20.","Science"],
-  ["A 60 g object occupying 20 cm³ has a density of…",["3 g/cm³","1200 g/cm³","0.33 g/cm³","80 g/cm³"],0,"ρ=m/V=3.","Science"],
-  ["Newton's third law states forces come in pairs that are…",["equal and opposite","unequal and opposite","equal and same direction","always zero"],0,"Action–reaction pairs.","Science"],
-  ["The SI unit of energy is the…",["joule","newton","watt","hertz"],0,"Energy is in joules.","Science"],
-  ["The SI unit of force is the…",["newton","joule","watt","pascal"],0,"Force is in newtons.","Science"],
-  ["The SI unit of frequency is the…",["hertz","decibel","watt","meter"],0,"Frequency is in hertz.","Science"],
-  ["The reactants of photosynthesis are…",["carbon dioxide and water","glucose and oxygen","oxygen and ATP","nitrogen and water"],0,"CO₂ + H₂O (+ light).","Science"],
-  ["Cellular respiration's products include…",["carbon dioxide, water, and ATP","glucose and oxygen","only oxygen","only glucose"],0,"It releases CO₂, H₂O, and ATP.","Science"],
-  ["Mitosis produces…",["two identical diploid cells","four haploid gametes","one large cell","two haploid cells"],0,"Two identical diploid cells.","Science"],
-  // ===== SPANISH (35) =====
-  ["Completa: 'Quiero que tú ___ (hablar) más despacio.'",["hables","hablas","hablaste","hablarás"],0,"Deseo + que → subjuntivo: hables.","Spanish"],
-  ["The preterite 'yo' of 'hacer' is…",["hice","hací","hago","hizo"],0,"Irregular: yo hice.","Spanish"],
-  ["The imperfect 'yo' of 'ir' is…",["iba","fui","voy","iré"],0,"Ir imperfect: iba.","Spanish"],
-  ["'Si tuviera dinero, ___ un coche.'",["compraría","compro","compré","compraba"],0,"Conditional result: compraría.","Spanish"],
-  ["The affirmative 'tú' command of 'decir' is…",["di","dice","diga","dices"],0,"Irregular tú command: di.","Spanish"],
-  ["The negative 'tú' command of 'hablar' is…",["no hables","no hablas","no habla","no hablar"],0,"Negative tú uses subjunctive: no hables.","Spanish"],
-  ["The gerund of 'dormir' is…",["durmiendo","dormiendo","dormando","durmando"],0,"o→u stem change: durmiendo.","Spanish"],
-  ["The past participle of 'escribir' is…",["escrito","escribido","escripto","escribiendo"],0,"Irregular: escrito.","Spanish"],
-  ["'Yo he ___ (comer) ya.'",["comido","comiendo","comí","como"],0,"Present perfect: he comido.","Spanish"],
-  ["Reescribe: 'Me da el libro' con pronombre directo.",["Me lo da","Me la da","Se lo da","Me le da"],0,"el libro → lo: me lo da.","Spanish"],
-  ["'Gracias ___ todo' usa…",["por","para","de","a"],0,"Gratitude uses por.","Spanish"],
-  ["'La fiesta ___ en mi casa' (an event's location) uses…",["es","está","son","están"],0,"Events use ser: la fiesta es en…","Spanish"],
-  ["'El museo ___ en el centro' (a building's location) uses…",["está","es","son","ser"],0,"Physical location uses estar.","Spanish"],
-  ["Completa: 'Es importante que ellos ___ (llegar) temprano.'",["lleguen","llegan","llegaron","llegarán"],0,"Impersonal expression + que → subjuntivo.","Spanish"],
-  ["The preterite 'ellos' of 'pedir' is…",["pidieron","pedieron","piden","pidió"],0,"e→i stem: pidieron.","Spanish"],
-  ["'Hace dos años que vivo aquí' means…",["I have lived here for two years","I lived here two years ago","I will live here two years","I lived here for two years and left"],0,"Hace + time + que + present = ongoing.","Spanish"],
-  ["Completa: 'Nosotros nos ___ (despertarse) a las seis.'",["despertamos","despierto","despiertan","despertáis"],0,"Reflexive nosotros: nos despertamos.","Spanish"],
-  ["'El edificio más alto' is an example of a…",["superlative","comparative","diminutive","gerund"],0,"'el más' = superlative.","Spanish"],
-  ["The future 'yo' of 'tener' is…",["tendré","tenré","tendría","tengo"],0,"Irregular stem tendr-: tendré.","Spanish"],
-  ["The conditional 'yo' of 'poder' is…",["podría","podré","puedo","podía"],0,"Conditional: podría.","Spanish"],
-  ["The 'usted' command of 'venir' is…",["venga","viene","ven","venir"],0,"Usted command: venga.","Spanish"],
-  ["'Aunque ___ (llover), iremos.' (hypothetical) uses…",["llueva","llueve","llovió","lloverá"],0,"Hypothetical concession → subjuntivo: llueva.","Spanish"],
-  ["The preterite 'yo' of 'dar' is…",["di","doy","daba","dé"],0,"Irregular: di.","Spanish"],
-  ["The direct-object pronoun replacing 'las llaves' is…",["las","los","les","la"],0,"Feminine plural: las.","Spanish"],
-  ["In 'Le escribo una carta,' 'le' is the…",["indirect object pronoun","direct object pronoun","subject","reflexive pronoun"],0,"'Le' marks the indirect object.","Spanish"],
-  ["The pluperfect 'había comido' is formed with había + the…",["past participle","gerund","infinitive","present tense"],0,"haber (imperfect) + participle.","Spanish"],
-  ["The present subjunctive 'yo' of 'estar' is…",["esté","estoy","está","estaba"],0,"Subjunctive: esté.","Spanish"],
-  ["The negative 'tú' command of 'hacer' is…",["no hagas","no haces","no haz","no hagáis"],0,"Negative tú: no hagas.","Spanish"],
-  ["'Me gustaría viajar' means…",["I would like to travel","I liked to travel","I like traveling","I will travel"],0,"Conditional of gustar = would like.","Spanish"],
-  ["The preterite 'yo' of 'estar' is…",["estuve","estaba","estoy","estaré"],0,"Irregular: estuve.","Spanish"],
-  ["'Ella es tan alta como su hermana' expresses…",["equality","superiority","inferiority","a superlative"],0,"tan…como = equal comparison.","Spanish"],
-  ["'Ojalá que ___ (venir) pronto.'",["vengan","vienen","vinieron","vendrán"],0,"Ojalá + subjuntivo.","Spanish"],
-  ["'Lo que necesito es tiempo' — 'lo que' means…",["what / that which","the","who","whose"],0,"'Lo que' = what/that which.","Spanish"],
-  ["'Para mañana ya habré terminado' uses the…",["future perfect","conditional","preterite","imperfect"],0,"habré + participle = future perfect.","Spanish"],
-  ["'Yo habría ido, pero llovió' uses the…",["conditional perfect","future perfect","pluperfect","preterite"],0,"habría + participle = conditional perfect.","Spanish"],
-  // ===== HISTORY (35) =====
-  ["The Supreme Court power to declare laws unconstitutional was established in…",["Marbury v. Madison","Gibbons v. Ogden","McCulloch v. Maryland","Dred Scott"],0,"Marbury v. Madison (1803).","History"],
-  ["The Declaration of Independence was adopted in…",["1776","1787","1791","1781"],0,"July 4, 1776.","History"],
-  ["The U.S. Constitution was written in…",["1787","1776","1791","1800"],0,"Philadelphia, 1787.","History"],
-  ["The Bill of Rights was ratified in…",["1791","1787","1776","1865"],0,"1791.","History"],
-  ["The Louisiana Purchase occurred in…",["1803","1776","1820","1846"],0,"1803, from France.","History"],
-  ["The Missouri Compromise was passed in…",["1820","1850","1854","1787"],0,"1820.","History"],
-  ["The Civil War was fought during…",["1861–1865","1775–1783","1812–1815","1846–1848"],0,"1861–1865.","History"],
-  ["The Emancipation Proclamation took effect in…",["1863","1865","1776","1857"],0,"January 1, 1863.","History"],
-  ["The 13th Amendment…",["abolished slavery","granted citizenship","guaranteed the vote","set term limits"],0,"Abolished slavery (1865).","History"],
-  ["The 14th Amendment guaranteed citizenship and…",["equal protection","the right to bear arms","prohibition","women's suffrage"],0,"Citizenship, due process, equal protection.","History"],
-  ["The 15th Amendment guaranteed the vote regardless of…",["race","sex","age","wealth"],0,"15th: race (1870).","History"],
-  ["The principal author of the Declaration of Independence was…",["Thomas Jefferson","John Adams","Benjamin Franklin","George Washington"],0,"Jefferson drafted it.","History"],
-  ["The first U.S. president was…",["George Washington","John Adams","Thomas Jefferson","James Madison"],0,"Washington (1789).","History"],
-  ["The Federalist Papers were written by Hamilton, Madison, and…",["John Jay","John Adams","Thomas Paine","Patrick Henry"],0,"Hamilton, Madison, Jay.","History"],
-  ["The Three-Fifths Compromise concerned…",["counting enslaved people for representation","the national bank","tariffs","western land"],0,"Representation/taxation counting.","History"],
-  ["The Great Compromise created a…",["bicameral legislature","single executive","national bank","supreme court"],0,"Two-house Congress.","History"],
-  ["The Boston Tea Party took place in…",["1773","1776","1765","1781"],0,"1773.","History"],
-  ["The treaty ending the Revolutionary War was the…",["Treaty of Paris (1783)","Treaty of Ghent","Treaty of Versailles","Jay Treaty"],0,"1783 Treaty of Paris.","History"],
-  ["The central cause of the Civil War was…",["slavery","tariffs alone","a foreign invasion","a gold shortage"],0,"Conflict over slavery.","History"],
-  ["The Underground Railroad was a network that…",["helped enslaved people escape","built railroads","moved troops","traded cotton"],0,"Aided escapes to freedom.","History"],
-  ["The Mexican-American War resulted in U.S. acquisition of…",["the Southwest (Mexican Cession)","Louisiana","Florida","Alaska"],0,"The Mexican Cession.","History"],
-  ["'Manifest Destiny' justified…",["westward expansion","abolition","industrial tariffs","neutrality"],0,"Continental expansion.","History"],
-  ["The Trail of Tears was the forced removal of the…",["Cherokee","Sioux","Apache","Iroquois"],0,"Cherokee and others (1830s).","History"],
-  ["The Dred Scott decision held that enslaved people were…",["not citizens","free in the North","equal citizens","able to vote"],0,"Denied citizenship (1857).","History"],
-  ["The Kansas-Nebraska Act introduced the principle of…",["popular sovereignty","nullification","judicial review","mercantilism"],0,"Settlers vote on slavery.","History"],
-  ["The Compromise of 1850 strengthened the…",["Fugitive Slave Act","income tax","national bank","Homestead Act"],0,"Tougher Fugitive Slave Act.","History"],
-  ["The Lincoln–Douglas debates centered on…",["slavery in the territories","tariffs","the national bank","foreign policy"],0,"Slavery's expansion.","History"],
-  ["The Battle of Gettysburg (1863) was significant as a…",["turning point of the Civil War","Revolutionary victory","War of 1812 battle","naval defeat"],0,"Union turning point.","History"],
-  ["Reconstruction lasted from…",["1865 to 1877","1776 to 1783","1861 to 1865","1820 to 1850"],0,"1865–1877.","History"],
-  ["The Freedmen's Bureau was created to…",["aid formerly enslaved people","collect tariffs","build canals","remove Native Americans"],0,"Aid to freedpeople.","History"],
-  ["McCulloch v. Maryland affirmed the doctrine of…",["implied powers","judicial review","popular sovereignty","nullification"],0,"Implied powers & federal supremacy.","History"],
-  ["Gibbons v. Ogden expanded federal power over…",["interstate commerce","religion","education","the military"],0,"Interstate commerce.","History"],
-  ["The U.S. fought the War of 1812 against…",["Britain","France","Spain","Mexico"],0,"Great Britain.","History"],
-  ["The Monroe Doctrine (1823) opposed European…",["colonization in the Americas","trade with the U.S.","alliances","immigration"],0,"No new colonization in the Americas.","History"],
-  ["The Nullification Crisis was led by…",["John C. Calhoun","Henry Clay","Daniel Webster","Andrew Johnson"],0,"Calhoun championed nullification.","History"],
-];
-FINAL_QUESTIONS.push.apply(FINAL_QUESTIONS, FINAL_EXTRA);
-
 /* ===== DIFFICULTY UNLOCK ===== */
 const MASTERY=90; // score needed on a subject's test to unlock its challenge content
 function isMastered(subj){return (DB.tests[subj]||0)>=MASTERY;}
 function allMastered(){return SUBJECTS.every(s=>isMastered(s.id));}
-/* ===== AP CHALLENGE UNLOCK =====
-   The AP Challenge is locked just like Challenge mode, but it demands perfection:
-   100% on BOTH the subject's practice test (DB.tests) AND its Challenge (DB.challengeBest). */
-const AP_UNLOCK=100;
-function testPerfect(subj){return (DB.tests[subj]||0)>=AP_UNLOCK;}
-function challengePerfect(subj){return (DB.challengeBest[subj]||0)>=AP_UNLOCK;}
-function apUnlocked(subj){return testPerfect(subj)&&challengePerfect(subj);}
-// The Final Exam unlocks only when EVERY subject's Gauntlet has been scored 100%.
-function gauntletsAced(){return SUBJECTS.filter(s=>(DB.apTests[s.id]||0)>=100).length;}
-function finalUnlocked(){return SUBJECTS.every(s=>(DB.apTests[s.id]||0)>=100);}
-// Announce a freshly-earned AP unlock exactly once.
-function maybeUnlockAP(subj){
-  if(!DB.apAnnounced)DB.apAnnounced={};
-  if(apUnlocked(subj)&&!DB.apAnnounced[subj]){
-    DB.apAnnounced[subj]=1;save();
-    setTimeout(()=>toast(`⚔️ Gauntlet unlocked for ${subjById(subj).name}! Perfect on both the test and Challenge.`),700);
-  }
-}
 // Add a mastered subject's harder flashcards into the deck (once), so spaced repetition includes them.
 function syncChallengeCards(){
   const have=new Set(DB.cards.map(c=>c.subj+'||'+c.front));
@@ -2000,12 +1338,6 @@ const SEED_VERSION=2;
 if((DB.seedVersion||0)<SEED_VERSION){syncSeedCards();DB.seedVersion=SEED_VERSION;save();}
 if(!DB.tests)DB.tests={}; // best practice-test score per subject
 if(!DB.history)DB.history=[]; // every completed practice-test attempt
-if(!DB.apTests)DB.apTests={}; // best AP Challenge score per subject
-if(!DB.challengeBest)DB.challengeBest={}; // best Challenge-mode score per subject (needed, at 100%, to unlock AP)
-if(!DB.apAnnounced)DB.apAnnounced={}; // subjects whose AP unlock has already been announced
-if(DB.finalBest===undefined)DB.finalBest=0;          // best Final Exam score
-if(DB.finalMastered===undefined)DB.finalMastered=false; // permanently true once you ace the Final
-if(DB.showMasteryMsg===undefined)DB.showMasteryMsg=true; // toggle for the mastery message
 syncChallengeCards(); // add harder flashcards for any already-mastered subjects
 
 // streak update
@@ -2030,8 +1362,7 @@ function go(p){
   if(p==='dashboard')renderDash();
   if(p==='subjects')renderSubjects();
   if(p==='resources')renderResources();
-  if(p==='create')renderCreate();
-  if(p==='recall')startRecall();
+  if(p==='recall')openFlashcards();
   if(p==='pomodoro')initPom();
   if(p==='feynman')renderFeynman();
   if(p==='practice')renderPractice();
@@ -2060,9 +1391,14 @@ function renderDash(){
   if(DB.schedule){
     const day=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date().getDay()];
     const slots=(DB.schedule.grid&&DB.schedule.grid[day])||[];
-    if(slots.length){
-      plan.innerHTML=slots.map(s=>`<div class="row" style="margin-bottom:8px"><span class="sched-slot" style="background:${col(s.subj)};min-width:130px">${subjById(s.subj).name}</span><span class="sub" style="margin:0">${s.time}</span></div>`).join('');
-    } else plan.innerHTML='<p class="sub" style="margin:0">Nothing scheduled today — enjoy the break, or add a block.</p>';
+    const study=slots.filter(s=>s.kind!=='busy');
+    if(study.length){
+      plan.innerHTML=slots.map(s=>{
+        if(s.kind==='busy')return `<div class="row" style="margin-bottom:8px"><span class="sched-slot busy" style="min-width:130px">${esc(s.label||'Busy')}</span><span class="sub" style="margin:0">${s.time}</span></div>`;
+        const nm=subjById(s.subj)?subjById(s.subj).name:s.subj;
+        return `<div class="row" style="margin-bottom:8px"><span class="sched-slot" style="background:${col(s.subj)};min-width:130px">${esc(nm)}</span><span class="sub" style="margin:0">${s.time}</span></div>`;
+      }).join('');
+    } else plan.innerHTML='<p class="sub" style="margin:0">No study blocks today — enjoy the break, or add one.</p>';
   } else {
     plan.innerHTML='<p class="sub" style="margin:0 0 10px">No schedule yet.</p><button class="btn sm" data-jump="schedule">Build my schedule</button>';
     plan.querySelector('[data-jump]').onclick=()=>go('schedule');
@@ -2126,6 +1462,22 @@ document.getElementById('ac-save').onclick=()=>{
 let rcQueue=[],rcIdx=0,rcFlipped=false,rcCram=false;
 function fillSubjSelect(el,all=true){
   el.innerHTML=(all?'<option value="">All subjects</option>':'')+SUBJECTS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+// Flashcards page has two sub-tabs: Review and Create / Import.
+function openFlashcards(){
+  const tabs=document.getElementById('fc-tabs');
+  if(!tabs.dataset.init){
+    tabs.dataset.init=1;
+    tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>showFcTab(b.dataset.fc));
+  }
+  showFcTab('review');
+}
+function showFcTab(which){
+  document.querySelectorAll('#fc-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.fc===which));
+  document.getElementById('fc-pane-review').style.display = which==='review'?'block':'none';
+  document.getElementById('fc-pane-create').style.display = which==='create'?'block':'none';
+  if(which==='review')startRecall();
+  else renderCreate();
 }
 function startRecall(){
   const sel=document.getElementById('rc-subject');
@@ -2197,7 +1549,9 @@ document.querySelectorAll('#rc-grades [data-g]').forEach(b=>b.onclick=()=>grade(
 document.getElementById('rc-cram').onclick=()=>{rcCram=true;buildQueue();};
 document.addEventListener('keydown',e=>{
   if(!document.getElementById('page-recall').classList.contains('active'))return;
+  if(document.getElementById('fc-pane-review').style.display==='none')return; // not on Review sub-tab
   if(document.querySelector('.modal-bg.show'))return;
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||'')))return; // don't hijack typing
   if(e.code==='Space'){e.preventDefault();flip();}
   if(rcFlipped&&['1','2','3','4'].includes(e.key))grade(+e.key-1);
 });
@@ -2209,16 +1563,33 @@ function initPom(){
   const sel=document.getElementById('pt-subj');
   if(!sel.dataset.init){
     fillSubjSelect(sel);sel.dataset.init=1;
-    // enforce the limits whenever the student edits a field
-    ['pt-work','pt-break','pt-long'].forEach(id=>document.getElementById(id).addEventListener('change',clampPomInputs));
+    // enforce the limits as the student types (live cap), and fully on blur/change
+    ['pt-work','pt-break','pt-long'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.addEventListener('input',capMaxLive);            // stop values going over the max as they type
+      el.addEventListener('change',()=>clampPomInputs(true));
+      el.addEventListener('blur',()=>clampPomInputs(true));
+    });
   }
   document.getElementById('pt-doneToday').textContent=(DB.pomToday.date===dstr()?DB.pomToday.count:0);
   renderPom();
 }
-const POM_LIMITS={work:[10,1440],brk:[1,60],long:[1,120]};
-function clampN(v,[lo,hi],dflt){v=Math.round(+v);if(!isFinite(v)||!v)v=dflt;return Math.min(hi,Math.max(lo,v));}
-// Focus stays within 10–1440 min, break within 1–60 min, and break can never exceed focus.
-function clampPomInputs(){
+const POM_LIMITS={work:[10,1440],brk:[1,60],long:[1,90]}; // long break max = 1.5 h
+// Empty/NaN → default; any number (including 0) is clamped into [lo,hi], so 0 → the minimum.
+function clampN(raw,[lo,hi],dflt){
+  if(raw===''||raw==null)return dflt;
+  let v=Math.round(+raw);
+  if(!isFinite(v))return dflt;
+  return Math.min(hi,Math.max(lo,v));
+}
+// While typing, never let a field exceed its max (prevents e.g. 300-min break sitting in the box).
+function capMaxLive(e){
+  const el=e.target;const lim=el.id==='pt-work'?POM_LIMITS.work:el.id==='pt-break'?POM_LIMITS.brk:POM_LIMITS.long;
+  if(el.value!==''&&+el.value>lim[1])el.value=lim[1];
+}
+// Full enforcement: focus 10–1440, break 1–60, long 1–90, and break/long can never exceed focus.
+// syncIdle: if the timer isn't running and we're on Focus, update the displayed countdown to the new focus length.
+function clampPomInputs(syncIdle){
   const wEl=document.getElementById('pt-work'),bEl=document.getElementById('pt-break'),lEl=document.getElementById('pt-long');
   let w=clampN(wEl.value,POM_LIMITS.work,30);
   let b=clampN(bEl.value,POM_LIMITS.brk,10);
@@ -2226,9 +1597,9 @@ function clampPomInputs(){
   let note='';
   if(b>w){b=w;note='Break can’t be longer than focus — trimmed it to match.';} // study time cannot be less than break
   if(l>w){l=w;}
-  if(String(w)!==wEl.value)wEl.value=w;
-  bEl.value=b;lEl.value=l;wEl.value=w;
+  wEl.value=w;bEl.value=b;lEl.value=l;
   if(note)toast(note);
+  if(syncIdle && !pom.running && pom.phase==='Focus'){pom.total=pom.remaining=w*60;renderPom();}
   return {w,b,l};
 }
 function workMin(){return clampN(document.getElementById('pt-work').value,POM_LIMITS.work,30);}
@@ -2252,6 +1623,10 @@ function renderPom(){
 }
 document.getElementById('pt-start').onclick=function(){
   if(pom.running){pom.running=false;clearInterval(pom.timer);this.textContent='Start';return;}
+  clampPomInputs(false); // make sure typed values are valid before counting down
+  // if we're starting a fresh Focus block, lock in the (clamped) focus length
+  if(pom.phase==='Focus' && pom.remaining===pom.total && !pom.started){pom.total=pom.remaining=workMin()*60;}
+  pom.started=true;
   pom.running=true;this.textContent='Pause';
   pom.timer=setInterval(()=>{
     pom.remaining--;
@@ -2260,7 +1635,8 @@ document.getElementById('pt-start').onclick=function(){
   },1000);
 };
 document.getElementById('pt-reset').onclick=()=>{
-  clearInterval(pom.timer);pom.running=false;pom.phase='Focus';pom.total=pom.remaining=workMin()*60;pom.round=1;
+  clampPomInputs(false);
+  clearInterval(pom.timer);pom.running=false;pom.started=false;pom.phase='Focus';pom.total=pom.remaining=workMin()*60;pom.round=1;
   document.getElementById('pt-start').textContent='Start';renderPom();
 };
 document.getElementById('pt-skip').onclick=()=>{
@@ -2285,9 +1661,41 @@ function phaseEnd(){
 function chime(){try{const a=new(window.AudioContext||window.webkitAudioContext)();const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=660;g.gain.setValueAtTime(.001,a.currentTime);g.gain.exponentialRampToValueAtTime(.3,a.currentTime+.05);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1);o.start();o.stop(a.currentTime+1);}catch(e){}}
 
 /* ============================ FEYNMAN ============================ */
+/* concrete, specific topics per subject to make "explain it simply" meaningful */
+const FEYNMAN_TOPICS={
+  alg:["How to solve quadratics by factoring","Why the quadratic formula works","What logarithms actually are","How to complete the square","What a function's domain and range mean","Why you can't divide by zero","How the exponent rules work","What imaginary numbers are","How to find the vertex of a parabola","What an inverse function does","What the discriminant tells you","How to graph a parabola","Why a negative times a negative is positive","What the slope of a line means","How to simplify radicals (square roots)","Arithmetic vs geometric sequences","How to solve a system of equations","What absolute value really means","How function composition works","Why dividing by a fraction means multiplying by its reciprocal","What a polynomial is","How to factor a difference of squares","What a rational expression is","How to read function notation like f(x)"],
+  ela:["When to use an Oxford comma","The difference between its and it's","How to write a strong thesis statement","Metaphor vs simile","Active voice vs passive voice","How to cite a source in MLA","The difference between tone and mood","What makes a run-on sentence","How to structure a body paragraph","Semicolons vs colons","The difference between affect and effect","When to use who vs whom","What a dangling modifier is","What an allusion is","What personification is","What connotation vs denotation means","How to punctuate dialogue","What irony is (verbal, situational, dramatic)","The difference between a phrase and a clause","How to avoid a comma splice","What theme means in a story","How to identify a claim vs evidence","What foreshadowing is","The difference between first and third person"],
+  sci:["Newton's second law (F = ma)","Why heavy and light objects fall at the same rate","How photosynthesis works","What DNA does","The difference between speed and velocity","How natural selection works","Kinetic vs potential energy","Why the cell membrane is selectively permeable","How mitosis works","What momentum is","Newton's first law (inertia)","Newton's third law (action–reaction)","How cellular respiration works","Scalars vs vectors","How diffusion and osmosis work","What acceleration really is","How DNA base pairing works","Genotype vs phenotype","What work and power mean in physics","What a food chain is","How gravity affects falling objects","A chemical vs a physical change","What the powerhouse of the cell does","Why energy is conserved"],
+  spa:["When to use ser vs estar","How to conjugate -ar verbs in the present","Preterite vs imperfect past tense","How the subjunctive works","Why nouns are masculine or feminine","How the verb 'gustar' works","Reflexive verbs (me, te, se)","When to use por vs para","How to form a question in Spanish","Adjective agreement","How to conjugate -er and -ir verbs","Definite vs indefinite articles (el/la vs un/una)","How to make a noun plural","When to use tú vs usted","How to form a negative sentence","What stem-changing verbs are","Common irregular verbs (tener, ir, ser)","How accent marks change a word","How to tell time in Spanish","How to describe the weather","Direct vs indirect object pronouns","How to give a command (imperative)"],
+  his:["How checks and balances work","What caused the American Revolution","Why the Bill of Rights exists","What the Three-Fifths Compromise was","The main causes of the Civil War","What federalism means","Why the Articles of Confederation failed","What Manifest Destiny was","What Reconstruction tried to do","Judicial review (Marbury v. Madison)","What the Declaration of Independence said","Why the colonists protested taxes","What the Boston Tea Party was","What the Louisiana Purchase was","What the Emancipation Proclamation did","What the Underground Railroad was","The three branches of government","What the Great Compromise was","Why Gettysburg was a turning point","What mercantilism was","The Enlightenment ideas behind the founding","What the 13th, 14th, and 15th Amendments did","Why the Constitution replaced the Articles","What separation of powers means"],
+};
+function fyFillTopics(){
+  const subj=document.getElementById('fy-subj').value;
+  const sel=document.getElementById('fy-topic');
+  const list=FEYNMAN_TOPICS[subj]||[];
+  sel.innerHTML='<option value="">— suggested topics —</option>'+list.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+}
 function renderFeynman(){
   const sel=document.getElementById('fy-subj');
-  if(!sel.dataset.init){fillSubjSelect(sel,false);sel.dataset.init=1;}
+  if(!sel.dataset.init){
+    fillSubjSelect(sel,false);sel.dataset.init=1;
+    fyFillTopics();
+    sel.addEventListener('change',fyFillTopics);
+    // picking a suggestion fills the box; the box always stays freely editable
+    document.getElementById('fy-topic').addEventListener('change',e=>{
+      if(e.target.value)document.getElementById('fy-concept').value=e.target.value;
+    });
+    // when the student types their own topic, clear the dropdown selection so it doesn't conflict
+    document.getElementById('fy-concept').addEventListener('input',()=>{document.getElementById('fy-topic').value='';});
+    document.getElementById('fy-random').onclick=()=>{
+      const subj=document.getElementById('fy-subj').value;const list=FEYNMAN_TOPICS[subj]||[];
+      if(!list.length)return;
+      const t=list[Math.floor(Math.random()*list.length)];
+      document.getElementById('fy-topic').value=t;
+      document.getElementById('fy-concept').value=t;
+      toast('Try explaining: '+t);
+    };
+  }
   const list=document.getElementById('fy-list');
   list.innerHTML=DB.feynman.length? DB.feynman.slice().reverse().map(f=>`
     <details><summary>${esc(f.concept)} <span class="tag" style="margin-left:6px">${subjById(f.subj)?.name||''}</span></summary>
@@ -2307,6 +1715,7 @@ document.getElementById('fy-save').onclick=()=>{
     refine:document.getElementById('fy-refine').value.trim()});
   save();toast("Saved ✓");
   ['fy-concept','fy-explain','fy-gaps','fy-refine'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('fy-topic').value='';
   renderFeynman();
 };
 document.getElementById('fy-prompt').onclick=()=>{
@@ -2463,6 +1872,9 @@ document.getElementById('cr-connect').onclick=()=>{
 
 /* ============================ SCHEDULE ============================ */
 const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+function hm2min(t){if(!t)return null;const p=t.split(':');return (+p[0])*60+(+p[1]||0);}
+function isWeekendDay(d){return d==='Sat'||d==='Sun';}
+function setVal(id,v){const el=document.getElementById(id);if(el&&v!=null)el.value=v;}
 function initSchedule(){
   const dc=document.getElementById('sc-days');
   if(!dc.dataset.init){
@@ -2470,33 +1882,95 @@ function initSchedule(){
     const pr=document.getElementById('sc-priorities');
     pr.innerHTML=SUBJECTS.map(s=>`<div class="row" style="margin-bottom:8px"><span style="min-width:170px;font-size:13px">${s.name}</span>
       <input type="range" min="0" max="3" value="1" class="sc-pri" data-s="${s.id}" style="flex:1"></div>`).join('');
+    document.getElementById('sc-add-commit').onclick=()=>addCommitRow();
     dc.dataset.init=1;
+  }
+  // restore saved intake, or seed one example commitment
+  const p=DB.schedulePrefs;
+  document.getElementById('sc-commits').innerHTML='';
+  if(p){
+    setVal('sc-schoolend',p.schoolEnd);setVal('sc-weekendstart',p.weekendStart);setVal('sc-bedtime',p.bedtime);
+    setVal('sc-dinner',p.dinner);setVal('sc-dinnerlen',p.dinnerLen);setVal('sc-winddown',p.winddown);
+    setVal('sc-block',p.block);setVal('sc-gap',p.gap);setVal('sc-max',p.max);
+    if(p.days){document.querySelectorAll('.sc-day').forEach(c=>c.checked=p.days.includes(c.value));}
+    if(p.pri){document.querySelectorAll('.sc-pri').forEach(r=>{if(p.pri[r.dataset.s]!=null)r.value=p.pri[r.dataset.s];});}
+    (p.commits&&p.commits.length?p.commits:[]).forEach(c=>addCommitRow(c));
+  } else {
+    addCommitRow({name:"Sports practice",days:["Mon","Wed"],start:"17:00",end:"18:30"});
   }
   if(DB.schedule){renderSchedule(DB.schedule.grid);}
 }
+function addCommitRow(c){
+  c=c||{name:'',days:[],start:'17:00',end:'18:00'};
+  const wrap=document.getElementById('sc-commits');
+  const row=document.createElement('div');row.className='commit-row';
+  row.innerHTML=`
+    <div><label class="fld" style="margin-top:0">Activity</label><input type="text" class="cm-name" placeholder="e.g. Piano lesson, soccer, work shift" value="${esc(c.name)}">
+      <div class="cdays">${DAYS.map(d=>`<label><input type="checkbox" class="cm-day" value="${d}" ${c.days.includes(d)?'checked':''}>${d}</label>`).join('')}</div></div>
+    <div><label class="fld" style="margin-top:0">Start</label><input type="time" class="cm-start" value="${c.start}"></div>
+    <div><label class="fld" style="margin-top:0">End</label><input type="time" class="cm-end" value="${c.end}"></div>
+    <button class="btn ghost sm cm-del" title="Remove">✕</button>`;
+  wrap.appendChild(row);
+  row.querySelector('.cm-del').onclick=()=>row.remove();
+}
+function collectCommits(){
+  return [...document.querySelectorAll('#sc-commits .commit-row')].map(r=>({
+    name:r.querySelector('.cm-name').value.trim()||'Busy',
+    days:[...r.querySelectorAll('.cm-day:checked')].map(c=>c.value),
+    start:r.querySelector('.cm-start').value,
+    end:r.querySelector('.cm-end').value
+  })).filter(c=>c.days.length&&c.start&&c.end);
+}
 document.getElementById('sc-generate').onclick=()=>{
   const days=[...document.querySelectorAll('.sc-day:checked')].map(c=>c.value);
-  if(!days.length){toast("Pick at least one day");return;}
-  const start=document.getElementById('sc-start').value,end=document.getElementById('sc-end').value;
+  if(!days.length){toast("Pick at least one study day");return;}
+  const schoolEnd=hm2min(document.getElementById('sc-schoolend').value);
+  const weekendStart=hm2min(document.getElementById('sc-weekendstart').value);
+  const bedtime=hm2min(document.getElementById('sc-bedtime').value);
+  const dinner=hm2min(document.getElementById('sc-dinner').value);
+  const dinnerLen=+document.getElementById('sc-dinnerlen').value||0;
+  const winddown=+document.getElementById('sc-winddown').value||0;
   const blockMin=+document.getElementById('sc-block').value;
-  const [sh,sm]=start.split(':').map(Number),[eh,em]=end.split(':').map(Number);
-  let mins=(eh*60+em)-(sh*60+sm);
-  if(mins<blockMin){toast("Your time window is shorter than one block");return;}
-  const perDay=Math.floor(mins/blockMin);
-  // weighted subject list
+  const gap=+document.getElementById('sc-gap').value;
+  const maxDay=+document.getElementById('sc-max').value;
   const pris=[...document.querySelectorAll('.sc-pri')].map(r=>({s:r.dataset.s,w:+r.value}));
   let pool=[];pris.forEach(p=>{for(let i=0;i<p.w;i++)pool.push(p.s);});
   if(!pool.length){toast("Give at least one subject a priority above 0");return;}
-  const grid={};let rot=0;
+  const commits=collectCommits();
+  // save the intake so it's remembered
+  DB.schedulePrefs={
+    schoolEnd:document.getElementById('sc-schoolend').value,weekendStart:document.getElementById('sc-weekendstart').value,
+    bedtime:document.getElementById('sc-bedtime').value,dinner:document.getElementById('sc-dinner').value,
+    dinnerLen:document.getElementById('sc-dinnerlen').value,winddown:document.getElementById('sc-winddown').value,
+    block:blockMin,gap,max:maxDay,days,commits,
+    pri:Object.fromEntries(pris.map(p=>[p.s,p.w]))
+  };
+  const grid={};let rot=0,anyPlaced=false;
   days.forEach(d=>{
-    grid[d]=[];
-    for(let b=0;b<perDay;b++){
-      const t1=sh*60+sm+b*blockMin;
-      const time=fmtTime(t1)+'–'+fmtTime(t1+blockMin);
-      grid[d].push({subj:pool[rot%pool.length],time});rot++;
-    }
+    const dayStart=isWeekendDay(d)?weekendStart:schoolEnd;
+    const dayEnd=bedtime-winddown;
+    // gather busy intervals for this day, clipped to the study window
+    let busy=[];
+    if(dinner!=null&&dinnerLen>0)busy.push({s:dinner,e:dinner+dinnerLen,label:'Dinner'});
+    commits.forEach(c=>{if(c.days.includes(d)){const s=hm2min(c.start),e=hm2min(c.end);if(s!=null&&e!=null&&e>s)busy.push({s,e,label:c.name});}});
+    busy=busy.map(b=>({s:Math.max(b.s,dayStart),e:Math.min(b.e,dayEnd),label:b.label})).filter(b=>b.e>b.s).sort((a,b)=>a.s-b.s);
+    // free gaps = window minus busy
+    let free=[],cursor=dayStart;
+    busy.forEach(b=>{if(b.s>cursor)free.push({s:cursor,e:b.s});cursor=Math.max(cursor,b.e);});
+    if(cursor<dayEnd)free.push({s:cursor,e:dayEnd});
+    // fill gaps with study blocks up to the daily cap
+    let studied=0;const placed=[];
+    free.forEach(g=>{let t=g.s;while(t+blockMin<=g.e&&studied+blockMin<=maxDay){placed.push({s:t,e:t+blockMin,subj:pool[rot%pool.length]});rot++;studied+=blockMin;t+=blockMin+gap;}});
+    if(placed.length)anyPlaced=true;
+    // merge study + busy into one time-ordered list for display
+    const slots=[];
+    placed.forEach(p=>slots.push({kind:'study',subj:p.subj,time:fmtTime(p.s)+'–'+fmtTime(p.e),_s:p.s}));
+    busy.forEach(b=>slots.push({kind:'busy',label:b.label,time:fmtTime(b.s)+'–'+fmtTime(b.e),_s:b.s}));
+    slots.sort((a,b)=>a._s-b._s).forEach(x=>delete x._s);
+    grid[d]=slots;
   });
-  DB.schedule={grid};save();renderSchedule(grid);toast("Schedule generated ✓");
+  DB.schedule={grid};save();renderSchedule(grid);
+  toast(anyPlaced?"Built your schedule around your commitments ✓":"No free study time found — try a later bedtime, more days, or fewer commitments");
 };
 document.getElementById('sc-clear').onclick=()=>{DB.schedule=null;save();document.getElementById('sc-result').style.display='none';toast("Cleared");};
 function fmtTime(m){let h=Math.floor(m/60)%24,mm=m%60,ap=h<12?'AM':'PM',h12=h%12||12;return `${h12}:${String(mm).padStart(2,'0')} ${ap}`;}
@@ -2509,8 +1983,12 @@ function renderSchedule(grid){
     html+='<tr>'+days.map(d=>{
       const slot=grid[d][r];
       if(!slot)return '<td></td>';
+      if(slot.kind==='busy'){
+        return `<td><div class="sched-slot busy"><span class="x" data-d="${d}" data-r="${r}">✕</span>${esc(slot.label||'Busy')}<br><span style="font-weight:400">${slot.time}</span></div></td>`;
+      }
+      const nm=subjById(slot.subj)?subjById(slot.subj).name:slot.subj;
       return `<td><div class="sched-slot" style="background:${col(slot.subj)}">
-        <span class="x" data-d="${d}" data-r="${r}">✕</span>${subjById(slot.subj).name}<br><span style="font-weight:400">${slot.time}</span></div></td>`;
+        <span class="x" data-d="${d}" data-r="${r}">✕</span>${esc(nm)}<br><span style="font-weight:400">${slot.time}</span></div></td>`;
     }).join('')+'</tr>';
   }
   // add-block row
@@ -2521,8 +1999,66 @@ function renderSchedule(grid){
     const d=b.dataset.add;const subj=prompt("Subject? Type: "+SUBJECTS.map(s=>s.id).join(', '));
     if(!subj||!subjById(subj))return;
     const time=prompt("Time label? e.g. 7:00 PM–7:50 PM","");
-    grid[d].push({subj,time:time||''});DB.schedule={grid};save();renderSchedule(grid);
+    grid[d].push({kind:'study',subj,time:time||''});DB.schedule={grid};save();renderSchedule(grid);
   });
+  document.getElementById('sc-ics').onclick=()=>exportICS(grid);
+}
+/* ---- Google Calendar export via .ics (weekly recurring events) ---- */
+const ICS_BYDAY={Mon:'MO',Tue:'TU',Wed:'WE',Thu:'TH',Fri:'FR',Sat:'SA',Sun:'SU'};
+const ICS_JSDAY={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:0};
+function parseClock(str){
+  // accepts "4:00 PM" / "16:00" / "4 PM"
+  if(!str)return null;
+  const m=str.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([AaPp][Mm])?$/);
+  if(!m)return null;
+  let h=+m[1],min=m[2]?+m[2]:0,ap=m[3]?m[3].toLowerCase():'';
+  if(ap==='pm'&&h<12)h+=12; if(ap==='am'&&h===12)h=0;
+  if(h>23||min>59)return null;
+  return {h,min};
+}
+function nextDateFor(dayName,h,min){
+  const target=ICS_JSDAY[dayName];const now=new Date();
+  const d=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,min,0);
+  let diff=(target-d.getDay()+7)%7;
+  if(diff===0 && d<=now)diff=7; // if today but time passed, start next week
+  d.setDate(d.getDate()+diff);
+  return d;
+}
+function icsStamp(d){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00';}
+function exportICS(grid){
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Study Buddy//Schedule//EN','CALSCALE:GREGORIAN'];
+  let count=0,skipped=0;
+  Object.keys(grid).forEach(day=>{
+    (grid[day]||[]).forEach((slot,i)=>{
+      if(slot.kind==='busy')return; // only study blocks become calendar events
+      const parts=(slot.time||'').split(/[–—-]/); // en/em dash or hyphen
+      const start=parseClock(parts[0]);
+      let end=parts[1]?parseClock(parts[1]):null;
+      if(!start){skipped++;return;}
+      const sd=nextDateFor(day,start.h,start.min);
+      let ed;
+      if(end){ed=nextDateFor(day,end.h,end.min); if(ed<=sd)ed=new Date(sd.getTime()+50*60000);}
+      else ed=new Date(sd.getTime()+50*60000); // default 50 min if no end time
+      const name=subjById(slot.subj)?subjById(slot.subj).name:slot.subj;
+      lines.push('BEGIN:VEVENT',
+        'UID:sb-'+day+'-'+i+'-'+Date.now()+'@studybuddy',
+        'DTSTAMP:'+icsStamp(new Date()),
+        'DTSTART:'+icsStamp(sd),
+        'DTEND:'+icsStamp(ed),
+        'RRULE:FREQ=WEEKLY;BYDAY='+ICS_BYDAY[day],
+        'SUMMARY:Study: '+name,
+        'DESCRIPTION:Study Buddy session',
+        'END:VEVENT');
+      count++;
+    });
+  });
+  lines.push('END:VCALENDAR');
+  if(!count){toast(skipped?"Couldn't read the time labels — use e.g. 4:00 PM–4:50 PM":"No blocks to export yet");return;}
+  const blob=new Blob([lines.join('\r\n')],{type:'text/calendar'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='study-buddy-schedule.ics';document.body.appendChild(a);a.click();a.remove();
+  URL.revokeObjectURL(url);
+  toast(`Exported ${count} weekly events${skipped?` (${skipped} skipped — unreadable time)`:''} ✓`);
 }
 
 /* ============================ SETTINGS ============================ */
@@ -2531,12 +2067,6 @@ function renderSettings(){
   document.getElementById('set-provider').value=DB.settings.provider||'none';
   document.getElementById('set-key').value=DB.settings.key||'';
   document.getElementById('set-gcid').value=DB.settings.gcid||'';
-  const mw=document.getElementById('set-mastery-wrap');
-  mw.innerHTML = DB.finalMastered
-    ? `<label class="switchrow"><input type="checkbox" id="set-mastery-toggle" ${DB.showMasteryMsg!==false?'checked':''}> Show the mastery celebration message in My Progress</label>`
-    : `<p class="sub" style="margin:0">🔒 This toggle appears once you score 100% on the Final Exam.</p>`;
-  const mt=document.getElementById('set-mastery-toggle');
-  if(mt)mt.onchange=()=>{DB.showMasteryMsg=mt.checked;save();toast(mt.checked?'Mastery message shown':'Mastery message hidden');};
 }
 document.getElementById('set-save-name').onclick=()=>{DB.name=document.getElementById('set-name').value.trim();save();toast("Saved ✓");};
 document.getElementById('set-save-ai').onclick=()=>{DB.settings.provider=document.getElementById('set-provider').value;DB.settings.key=document.getElementById('set-key').value.trim();save();toast("AI settings saved ✓");};
@@ -2546,70 +2076,35 @@ document.getElementById('set-wipe').onclick=()=>{if(confirm("Erase ALL data and 
 
 /* ============================ PRACTICE & TESTS ============================ */
 const PR_LETTERS=['A','B','C','D','E'];
-// Randomize the position of the answer choices for ONE question, returning a fresh
-// [prompt, shuffledChoices, newCorrectIndex, explanation, topic] array. Used by every
-// quiz builder (practice, test, challenge, gauntlet) so the correct answer is never fixed
-// to a position. Any future problem-based feature should map its questions through this too.
-function randomizeChoices(q){
-  const choices=q[1].slice(), order=choices.map((_,i)=>i);
-  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
-  const newChoices=order.map(i=>choices[i]);
-  const newCorrect=order.indexOf(q[2]);
-  return [q[0],newChoices,newCorrect,q[3],q[4]];
-}
 function prShow(id){['pr-home','pr-practice','pr-setup','pr-test','pr-results'].forEach(x=>document.getElementById(x).style.display=(x===id?'block':'none'));}
 function renderPractice(){
   prShow('pr-home');
-  // banner: celebrate unlocked challenge content + explain AP Challenge
+  // banner: celebrate unlocked challenge content
   const masteredNames=SUBJECTS.filter(s=>isMastered(s.id)).map(s=>s.name);
   const banner=document.getElementById('pr-banner');
-  let bhtml='';
   if(allMastered()){
-    bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong>🏆 Challenge mode unlocked everywhere!</strong><div class="sub" style="margin:4px 0 0">You've scored 90%+ on every subject. Harder questions and tougher flashcards are now available across the board.</div></div>`;
+    banner.innerHTML=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:18px"><strong>🏆 Challenge mode unlocked everywhere!</strong><div class="sub" style="margin:4px 0 0">You've scored 90%+ on every subject. Harder questions and tougher flashcards are now available across the board.</div></div>`;
   } else if(masteredNames.length){
-    bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong>🔥 Challenge unlocked:</strong> ${masteredNames.join(', ')}<div class="sub" style="margin:4px 0 0">Score 90%+ on a subject's test to unlock its harder questions and flashcards.</div></div>`;
-  }
-  const apOpen=SUBJECTS.filter(s=>apUnlocked(s.id)).map(s=>s.name);
-  bhtml+=`<div class="card" style="border-left:4px solid var(--ap);margin-bottom:18px"><strong>⚔️ Gauntlet — ${apOpen.length?('unlocked: '+apOpen.join(', ')):'locked'}.</strong><div class="sub" style="margin:4px 0 0">5 brutal word problems per subject. Unlock by scoring 100% on a subject's test <em>and</em> its Challenge.</div></div>`;
-  // Final Exam card pinned to the top of Practice & Tests.
-  const fAced=gauntletsAced(), fOK=finalUnlocked(), fN=Math.min(FINAL_PULL,FINAL_QUESTIONS.length);
-  let finalCard;
-  if(DB.finalMastered){
-    finalCard=`<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:14px"><div class="between"><div><strong>🏆 Final Exam — MASTERED</strong><div class="sub" style="margin:4px 0 0">Best score ${DB.finalBest}%. You have conquered everything this app can throw at you.</div></div><button class="btn sm" id="pr-final-start">Retake Final</button></div></div>`;
-  } else if(fOK){
-    finalCard=`<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:14px"><div class="between"><div><strong>🏆 Final Exam — UNLOCKED</strong><div class="sub" style="margin:4px 0 0">The ultimate test: ${fN} brutal questions spanning every subject, harder than the Challenge and Gauntlet combined. Score 100% for permanent mastery.</div></div><button class="btn" id="pr-final-start">Start Final Exam</button></div></div>`;
+    banner.innerHTML=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:18px"><strong>🔥 Challenge unlocked:</strong> ${masteredNames.join(', ')}<div class="sub" style="margin:4px 0 0">Score 90%+ on a subject's test to unlock its harder questions and flashcards.</div></div>`;
   } else {
-    finalCard=`<div class="card" style="border-left:4px solid var(--faint);margin-bottom:14px"><strong>🔒 Final Exam — locked</strong><div class="sub" style="margin:4px 0 0">The hardest test of all. Unlock it by scoring <strong>100% on every subject's Gauntlet</strong> — <strong>${fAced}/${SUBJECTS.length}</strong> aced so far.</div></div>`;
+    banner.innerHTML='';
   }
-  bhtml = finalCard + bhtml;
-  banner.innerHTML=bhtml;
-  const fbtn=document.getElementById('pr-final-start'); if(fbtn)fbtn.onclick=openFinal;
   const g=document.getElementById('pr-grid');
   g.innerHTML=SUBJECTS.map(s=>{
     const n=(QUESTIONS[s.id]||[]).length;
     const nt=(TEST_QUESTIONS[s.id]||[]).length;
-    const nap=(AP_QUESTIONS[s.id]||[]).length;
     const best=DB.tests[s.id];
-    const apBest=DB.apTests[s.id];
     const mastered=isMastered(s.id);
-    const apOK=apUnlocked(s.id);
-    const cBest=DB.challengeBest[s.id];
     const challengeBtn = mastered
       ? `<button class="btn sm" style="background:var(--warn)" data-mode="challenge" data-s="${s.id}">Challenge 🔥</button>`
       : `<span class="tag" title="Score 90%+ on this subject's test to unlock">🔒 Challenge</span>`;
-    // AP Challenge is locked until BOTH the practice test and the Challenge are scored 100%.
-    const apBtn = apOK
-      ? `<button class="btn sm ap" data-mode="ap" data-s="${s.id}">Gauntlet ⚔️</button>`
-      : `<span class="tag" title="Score 100% on BOTH this subject's practice test AND its Challenge to unlock the Gauntlet">🔒 Gauntlet</span>`;
-    const apGate = apOK ? '' : ` · <span class="sub" style="font-size:11px">Gauntlet needs 100% test ${testPerfect(s.id)?'✓':'✗'} &amp; 100% challenge ${challengePerfect(s.id)?'✓':'✗'}</span>`;
     return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
-      <h3>${s.name}${mastered?' <span class="tag" style="border-color:var(--warn);color:var(--warn)">mastered</span>':''}${apOK?' <span class="ap-chip">Gauntlet unlocked</span>':''}</h3>
-      <p>${best?`Best test <strong style="color:${col(s.id)}">${best}%</strong>`:'Practice, test, and challenge yourself.'}${apBest?` · <span class="ap-chip">Gauntlet best ${apBest}%</span>`:''}${apGate}</p>
+      <h3>${s.name}${mastered?' <span class="tag" style="border-color:var(--warn);color:var(--warn)">mastered</span>':''}</h3>
+      <p>${n} practice + ${nt} test questions${best?` · best test <strong style="color:${col(s.id)}">${best}%</strong>`:''}</p>
       <div class="row" style="margin-top:12px">
         <button class="btn sm" data-mode="practice" data-s="${s.id}">Practice</button>
         <button class="btn sm sec" data-mode="test" data-s="${s.id}">Take test</button>
         ${challengeBtn}
-        ${apBtn}
       </div>
     </div>`;
   }).join('');
@@ -2617,7 +2112,6 @@ function renderPractice(){
     e.stopPropagation();
     if(b.dataset.mode==='practice')startPractice(b.dataset.s,false);
     else if(b.dataset.mode==='challenge')startPractice(b.dataset.s,true);
-    else if(b.dataset.mode==='ap')openAPTest(b.dataset.s);
     else openTestSetup(b.dataset.s);
   });
 }
@@ -2626,7 +2120,7 @@ function renderPractice(){
 let pp={subj:null,qs:[],i:0,score:0,answered:false,challenge:false};
 function startPractice(subj,challenge=false){
   const bank = challenge ? (CHALLENGE_QUESTIONS[subj]||[]) : (QUESTIONS[subj]||[]);
-  pp={subj,qs:shuffle(bank.slice()).map(randomizeChoices),i:0,score:0,answered:false,challenge};
+  pp={subj,qs:shuffle(bank.slice()),i:0,score:0,answered:false,challenge};
   prShow('pr-practice');
   document.getElementById('pr-p-title').textContent=subjById(subj).name+(challenge?' · Challenge 🔥':' · Practice');
   document.getElementById('pr-p-total').textContent=pp.qs.length;
@@ -2661,22 +2155,16 @@ function ppAnswer(idx){
 }
 document.getElementById('pr-p-next').onclick=()=>{
   if(pp.i+1>=pp.qs.length){
-    // Challenge runs record a best score; a 100% here is one of the two keys to the AP Challenge.
-    if(pp.challenge){
-      const cpct=Math.round(pp.score/pp.qs.length*100);
-      if(!DB.challengeBest[pp.subj]||cpct>DB.challengeBest[pp.subj]){DB.challengeBest[pp.subj]=cpct;save();}
-      maybeUnlockAP(pp.subj);
-    }
-    toast(`${pp.challenge?'Challenge':'Practice'} done — ${pp.score}/${pp.qs.length} correct`);
+    toast(`Practice done — ${pp.score}/${pp.qs.length} correct`);
     renderPractice();
   } else {pp.i++;ppRender();}
 };
 document.getElementById('pr-p-back').onclick=renderPractice;
 
-/* --- TEST MODE (timed + scored). Also drives the AP Challenge via tt.ap. --- */
-let tt={subj:null,qs:[],time:0,timer:null,remaining:0,ap:false};
+/* --- TEST MODE (timed + scored) --- */
+let tt={subj:null,qs:[],time:0,timer:null,remaining:0};
 function openTestSetup(subj){
-  tt.subj=subj; tt.ap=false;
+  tt.subj=subj;
   prShow('pr-setup');
   document.getElementById('pr-s-title').textContent=subjById(subj).name+' · Practice Test';
   const max=(TEST_QUESTIONS[subj]||[]).length;
@@ -2686,25 +2174,14 @@ function openTestSetup(subj){
 document.getElementById('pr-s-back').onclick=renderPractice;
 document.getElementById('pr-s-start').onclick=()=>{
   const n=+document.getElementById('pr-s-num').value;
-  tt.ap=false;
-  tt.qs=shuffle((TEST_QUESTIONS[tt.subj]||[]).slice()).slice(0,n).map(q=>({q:randomizeChoices(q),picked:null}));
+  tt.qs=shuffle((TEST_QUESTIONS[tt.subj]||[]).slice()).slice(0,n).map(q=>({q,picked:null}));
   tt.time=+document.getElementById('pr-s-time').value;
   startTest();
 };
-// AP Challenge: pull 5 random questions from the deep AP bank, fixed 10-minute timer,
-// then run through the exact same scoring/storage path as a normal test.
-function openAPTest(subj){
-  tt.subj=subj; tt.ap=true;
-  const bank=(AP_QUESTIONS[subj]||[]).slice();
-  tt.qs=shuffle(bank).slice(0,5).map(q=>({q:randomizeChoices(q),picked:null}));
-  tt.time=600; // 10-minute AP-styled limit
-  startTest();
-}
 function startTest(){
   prShow('pr-test');
-  tt.startTime=Date.now();
-  document.getElementById('pr-t-title').textContent=tt.final?'Final Exam 🏆':subjById(tt.subj).name+(tt.ap?' · Gauntlet ⚔️':' · Test');
-  document.getElementById('pr-t-count').textContent=tt.qs.length+(tt.final?' brutal questions spanning every subject.':tt.ap?' Gauntlet-level questions.':' questions.');
+  document.getElementById('pr-t-title').textContent=subjById(tt.subj).name+' · Test';
+  document.getElementById('pr-t-count').textContent=tt.qs.length+' questions.';
   const wrap=document.getElementById('pr-t-questions');
   wrap.innerHTML=tt.qs.map((item,qi)=>`
     <div class="qblock" id="q-${qi}">
@@ -2736,121 +2213,31 @@ document.getElementById('pr-t-submit').onclick=()=>{
   if(unanswered>0 && !confirm(`${unanswered} question(s) still blank. Submit anyway?`))return;
   submitTest();
 };
-/* Gauntlet-only rich stats: timing, pace, attempt history, and per-topic accuracy. */
-function fmtSecs(s){const m=Math.floor(s/60);return (m?m+'m ':'')+(s%60)+'s';}
-function gauntletStats(timeUsed,prevBest){
-  const subj=tt.subj;
-  const hist=DB.history.filter(h=>h.ap&&h.subj===subj);
-  const attempts=hist.length;
-  const cur=hist[hist.length-1];
-  const best=Math.max(...hist.map(h=>h.pct));
-  const avg=Math.round(hist.reduce((a,h)=>a+h.pct,0)/attempts);
-  const perQ=timeUsed/cur.total;
-  // accuracy by topic for THIS attempt
-  const tstat={};
-  tt.qs.forEach(x=>{const tp=topicOf(subj,x.q);(tstat[tp]=tstat[tp]||{c:0,n:0});tstat[tp].n++;if(x.picked===x.q[2])tstat[tp].c++;});
-  const topicRows=Object.entries(tstat).map(([tp,o])=>{
-    const p=Math.round(o.c/o.n*100), cc=p>=70?'var(--accent2)':p>=40?'var(--warn)':'var(--bad)';
-    return `<div style="margin-bottom:7px"><div class="row between" style="margin-bottom:3px"><span style="font-size:12.5px">${esc(tp)}</span><span class="sub" style="margin:0;font-size:12px">${o.c}/${o.n} · ${p}%</span></div><div class="progress"><div style="width:${p}%;background:${cc}"></div></div></div>`;
-  }).join('');
-  const imp = attempts<2 ? null : (cur.pct - prevBest);
-  const impHtml = imp===null
-    ? `<div class="n" style="font-size:20px">—</div>`
-    : `<div class="n" style="font-size:20px;color:${imp>0?'var(--accent2)':imp<0?'var(--bad)':'var(--muted)'}">${imp>0?'+':''}${imp}%</div>`;
-  const pace = perQ<=45?'Fast ⚡':perQ<=90?'Steady':'Deliberate';
-  const blank=tt.qs.filter(x=>x.picked===null).length;
-  return `
-    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px;text-align:left">
-      <span class="ap-chip" style="display:inline-block;margin-bottom:10px">⚔️ Gauntlet stats</span>
-      <div class="grid g4" style="gap:10px;margin-bottom:12px">
-        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${fmtSecs(timeUsed)}</div><div class="l">Time used</div></div>
-        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${perQ.toFixed(1)}s</div><div class="l">Per question · ${pace}</div></div>
-        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${attempts}</div><div class="l">Gauntlets taken</div></div>
-        <div class="stat" style="padding:12px">${impHtml}<div class="l">vs previous best</div></div>
-      </div>
-      <div class="grid g4" style="gap:10px;margin-bottom:14px">
-        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px;color:${col(subj)}">${best}%</div><div class="l">Gauntlet best</div></div>
-        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${avg}%</div><div class="l">Gauntlet average</div></div>
-        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${cur.correct}/${cur.total}</div><div class="l">This attempt</div></div>
-        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${blank}</div><div class="l">Left blank</div></div>
-      </div>
-      <div class="sub" style="margin:0 0 8px;font-weight:600;color:var(--txt)">Accuracy by topic (this attempt)</div>
-      ${topicRows}
-    </div>`;
-}
-// The Final Exam: an ultra-hard, cross-subject test from its own bank. Reuses the test UI.
-function openFinal(){
-  if(!finalUnlocked()){toast("Ace every Gauntlet (100%) to unlock the Final Exam");return;}
-  const pull=Math.min(FINAL_PULL,FINAL_QUESTIONS.length);
-  tt={subj:'final',final:true,ap:false,qs:shuffle(FINAL_QUESTIONS.slice()).slice(0,pull).map(q=>({q:randomizeChoices(q),picked:null})),time:3600,timer:null,remaining:0,startTime:Date.now()};
-  startTest();
-}
-function submitFinal(){
-  let correct=0; const missedTopics=[];
-  tt.qs.forEach(x=>{if(x.picked===x.q[2])correct++;else missedTopics.push(topicOf(tt.subj,x.q));});
-  const pct=Math.round(correct/tt.qs.length*100);
-  const timeUsed=tt.time>0?(tt.time-tt.remaining):Math.round((Date.now()-(tt.startTime||Date.now()))/1000);
-  if(pct>(DB.finalBest||0))DB.finalBest=pct;
-  if(pct===100 && !DB.finalMastered){DB.finalMastered=true; DB.showMasteryMsg=true;}
-  DB.history.push({ts:Date.now(),subj:'final',final:true,correct,total:tt.qs.length,pct,missed:missedTopics,secs:timeUsed});
-  if(DB.history.length>100)DB.history=DB.history.slice(-100);
-  save();
-  prShow('pr-results');
-  document.getElementById('pr-r-pct').textContent=pct+'%';
-  const grade = pct===100?'PERFECT — total mastery 🏆':pct>=80?'Outstanding':pct>=60?'Strong, but the Final is unforgiving':'Regroup and conquer it';
-  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · Final Exam 🏆 · ${grade}`;
-  document.getElementById('pr-r-pct').style.color = pct>=70?'var(--accent2)':pct>=50?'var(--warn)':'var(--bad)';
-  const uniq=[...new Set(missedTopics)];
-  document.getElementById('pr-r-weak').innerHTML = uniq.length
-    ? `<div class="sub" style="margin:0 0 6px">Topics to review:</div>`+uniq.map(t=>`<span class="tag" style="margin:2px;border-color:var(--bad);color:var(--bad)">${esc(t)}</span>`).join(' ')
-    : `<div class="sub" style="margin:0;color:var(--accent2)">Flawless — you missed nothing. 🏆</div>`;
-  document.getElementById('pr-r-extra').innerHTML = pct===100
-    ? `<div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px"><span class="ap-chip" style="background:var(--accent2)">🏆 Mastery achieved</span><div class="sub" style="margin:8px 0 0">You aced the Final Exam. A permanent mastery message now lives in <strong>My Progress</strong> — you can toggle it in <strong>Settings</strong>.</div></div>`
-    : '';
-  document.getElementById('pr-r-review').innerHTML=tt.qs.map((x,i)=>{
-    const ok=x.picked===x.q[2];
-    const your=x.picked===null?'<em>blank</em>':PR_LETTERS[x.picked]+'. '+esc(x.q[1][x.picked]);
-    return `<div class="rev-q ${ok?'ok':'no'}">
-      <div style="font-weight:600;margin-bottom:6px">${i+1}. ${esc(x.q[0])}</div>
-      <div style="font-size:13px;color:var(--muted)">Your answer: ${ok?'✓ ':'✗ '}${your}</div>
-      ${ok?'':`<div style="font-size:13px;color:var(--accent2);margin-top:3px">Correct: ${PR_LETTERS[x.q[2]]}. ${esc(x.q[1][x.q[2]])}</div>`}
-      <div style="font-size:13px;color:var(--faint);margin-top:5px">${esc(x.q[3])}</div>
-    </div>`;
-  }).join('');
-  if(pct===100)setTimeout(()=>toast('🏆 FINAL EXAM ACED — TOTAL MASTERY!'),500);
-}
 function submitTest(){
   clearInterval(tt.timer);
-  if(tt.final){submitFinal();return;}
-  const apMode=tt.ap;
-  const prevApBest=DB.apTests[tt.subj]||0;
-  const timeUsed=tt.time>0?(tt.time-tt.remaining):Math.round((Date.now()-(tt.startTime||Date.now()))/1000);
   let correct=0;
   const missedTopics=[];
   tt.qs.forEach(x=>{if(x.picked===x.q[2])correct++;else missedTopics.push(topicOf(tt.subj,x.q));});
   const pct=Math.round(correct/tt.qs.length*100);
-  // save best + detect newly-unlocked challenge content (AP scores count just like a normal test)
+  // save best + detect newly-unlocked challenge content
   const wasMastered=isMastered(tt.subj);
   if(!DB.tests[tt.subj]||pct>DB.tests[tt.subj]){DB.tests[tt.subj]=pct;}
-  if(apMode && (!DB.apTests[tt.subj]||pct>DB.apTests[tt.subj])){DB.apTests[tt.subj]=pct;}
   const justMastered = !wasMastered && isMastered(tt.subj);
   if(justMastered){const added=syncChallengeCards();setTimeout(()=>toast(`🔥 Challenge unlocked for ${subjById(tt.subj).name}! ${added} harder flashcards added.`),600);}
-  // record this attempt in history (cap at 100 most recent) — AP attempts are flagged but stored identically
-  DB.history.push({ts:Date.now(),subj:tt.subj,correct,total:tt.qs.length,pct,missed:missedTopics,ap:apMode,secs:timeUsed});
+  // record this attempt in history (cap at 100 most recent)
+  DB.history.push({ts:Date.now(),subj:tt.subj,correct,total:tt.qs.length,pct,missed:missedTopics});
   if(DB.history.length>100)DB.history=DB.history.slice(-100);
   save();
-  maybeUnlockAP(tt.subj); // a perfect practice test may complete the AP unlock (if the Challenge is also 100%)
   prShow('pr-results');
   document.getElementById('pr-r-pct').textContent=pct+'%';
   const grade=pct>=90?'Excellent 🎉':pct>=80?'Great work':pct>=70?'Solid — keep going':pct>=60?'Passing, review the misses':'Keep practicing';
-  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · ${subjById(tt.subj).name}${apMode?' · Gauntlet ⚔️':''} · ${grade}`;
+  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · ${subjById(tt.subj).name} · ${grade}`;
   document.getElementById('pr-r-pct').style.color = pct>=70?'var(--accent2)':pct>=50?'var(--warn)':'var(--bad)';
   // weak-topic chips on the results card
   const uniqMissed=[...new Set(missedTopics)];
   document.getElementById('pr-r-weak').innerHTML = uniqMissed.length
     ? `<div class="sub" style="margin:0 0 6px">Topics to review:</div>`+uniqMissed.map(t=>`<span class="tag" style="margin:2px;border-color:var(--bad);color:var(--bad)">${esc(t)}</span>`).join(' ')
     : `<div class="sub" style="margin:0;color:var(--accent2)">Perfect — no weak topics this time! 🎯</div>`;
-  document.getElementById('pr-r-extra').innerHTML = apMode ? gauntletStats(timeUsed,prevApBest) : '';
   document.getElementById('pr-r-review').innerHTML=tt.qs.map((x,i)=>{
     const ok=x.picked===x.q[2];
     const your=x.picked===null?'<em>blank</em>':PR_LETTERS[x.picked]+'. '+esc(x.q[1][x.picked]);
@@ -2862,16 +2249,13 @@ function submitTest(){
     </div>`;
   }).join('');
 }
-document.getElementById('pr-r-retry').onclick=()=>{ if(tt.final)openFinal(); else if(tt.ap)openAPTest(tt.subj); else openTestSetup(tt.subj); };
+document.getElementById('pr-r-retry').onclick=()=>openTestSetup(tt.subj);
 document.getElementById('pr-r-back').onclick=renderPractice;
 document.getElementById('pr-r-progress').onclick=()=>go('progress');
 
 /* ============================ MY PROGRESS ============================ */
 function fmtDate(ts){const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
 function renderProgress(){
-  document.getElementById('pg-mastery').innerHTML = (DB.finalMastered && DB.showMasteryMsg!==false)
-    ? `<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:18px"><h3 style="margin:0 0 6px">🏆 Total Mastery Achieved</h3><div class="sub" style="margin:0;font-size:14px;line-height:1.6">You aced the Final Exam after conquering every Practice set, Test, Challenge, and Gauntlet across all five subjects. There is nothing left to prove here — you have mastered it all. <em>(You can hide this message in Settings.)</em></div></div>`
-    : '';
   const h=DB.history;
   document.getElementById('pg-empty').style.display=h.length?'none':'block';
   document.getElementById('pg-content').style.display=h.length?'block':'none';
@@ -2901,7 +2285,7 @@ function renderProgress(){
 
   // per-subject averages
   const bySubj={};
-  h.forEach(t=>{if(t.final)return;(bySubj[t.subj]=bySubj[t.subj]||[]).push(t.pct);});
+  h.forEach(t=>{(bySubj[t.subj]=bySubj[t.subj]||[]).push(t.pct);});
   const sEl=document.getElementById('pg-subjects');
   sEl.innerHTML=SUBJECTS.filter(s=>bySubj[s.id]).map(s=>{
     const arr=bySubj[s.id],a=Math.round(arr.reduce((x,y)=>x+y,0)/arr.length);
@@ -2917,7 +2301,7 @@ function renderProgress(){
     const cls=t.pct>=70?'ok':'no';
     const miss=(t.missed&&t.missed.length)?[...new Set(t.missed)].map(x=>esc(x)).join(', '):'none';
     return `<div class="rev-q ${cls}">
-      <div class="row between"><strong>${t.final?'Final Exam 🏆':subjById(t.subj).name}${t.ap?' <span class="ap-chip">Gauntlet</span>':''}</strong><span style="font-weight:700;color:${t.pct>=70?'var(--accent2)':t.pct>=50?'var(--warn)':'var(--bad)'}">${t.pct}%</span></div>
+      <div class="row between"><strong>${subjById(t.subj).name}</strong><span style="font-weight:700;color:${t.pct>=70?'var(--accent2)':t.pct>=50?'var(--warn)':'var(--bad)'}">${t.pct}%</span></div>
       <div class="sub" style="margin:4px 0 0">${t.correct}/${t.total} correct · ${fmtDate(t.ts)}</div>
       <div class="sub" style="margin:3px 0 0;font-size:12px">Missed topics: ${miss}</div>
     </div>`;
@@ -2942,7 +2326,7 @@ function coachFeedback(h,bySubj,weak,avg,trend){
     const top3=weak.slice(0,3).map(w=>w[0]);
     parts.push(`Focus your next study block on: <strong>${top3.join(', ')}</strong>. Make flashcards for these and use the Feynman page to explain each one in your own words.`);
   } else {
-    parts.push(`No recurring weak topics — try raising the difficulty with the <strong>Gauntlet ⚔️</strong> or longer, full-length tests.`);
+    parts.push(`No recurring weak topics — try raising the difficulty by taking longer, full-length tests.`);
   }
   return parts.map(p=>`<p style="margin:0 0 8px">${p}</p>`).join('');
 }
