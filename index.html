@@ -147,6 +147,12 @@
   .kcard .kdue.over{color:var(--bad);font-weight:600}
   .kcard .knote{font-size:12px;color:var(--faint);margin-top:6px;white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
   .modal.wide{max-width:520px}
+  .modal.help{max-width:600px;max-height:84vh;overflow-y:auto}
+  .help-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .help-item:last-child{border-bottom:none}
+  .help-item .hi{flex-shrink:0;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--panel2)}
+  .help-item h4{margin:0 0 2px;font-size:14.5px}
+  .help-item p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
   .fld-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:560px){.fld-row{grid-template-columns:1fr}}
   .sched-slot .badge{display:block;margin-top:3px;font-size:9px}
@@ -239,8 +245,11 @@
   <main class="main">
     <!-- DASHBOARD -->
     <section class="page active" id="page-dashboard">
-      <h2 class="title" id="greet">Welcome back</h2>
-      <p class="sub">Here's your study picture for today.</p>
+      <div class="between">
+        <div><h2 class="title" id="greet">Welcome back</h2>
+        <p class="sub" style="margin:4px 0 0">Here's your study picture for today.</p></div>
+        <button class="btn sec sm" id="help-btn" title="How to use Study Buddy">❔ How it works</button>
+      </div>
       <div class="grid g4" style="margin-bottom:16px">
         <div class="stat"><div class="n" id="st-due">0</div><div class="l">Cards due now</div></div>
         <div class="stat"><div class="n" id="st-streak">0</div><div class="l">Day streak 🔥</div></div>
@@ -777,6 +786,36 @@
     <div class="row" style="margin-top:16px;justify-content:flex-end">
       <button class="btn sec sm" id="ac-cancel">Cancel</button>
       <button class="btn sm" id="ac-save">Add card</button>
+    </div>
+  </div>
+</div>
+
+<!-- First-time / help guide -->
+<div class="modal-bg" id="modal-help">
+  <div class="modal help">
+    <div class="between" style="align-items:flex-start">
+      <div>
+        <h3 style="margin:0;font-size:20px">Welcome to Study Buddy 👋</h3>
+        <p class="sub" style="margin:4px 0 0">A quick tour of what each section does. You can reopen this anytime from the ❔ button on your dashboard.</p>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="help-item"><div class="hi">▦</div><div><h4>Dashboard</h4><p>Your home base — today's study plan, day streak, cards due, and focus sessions at a glance.</p></div></div>
+      <div class="help-item"><div class="hi">▤</div><div><h4>Subjects</h4><p>Your five courses. Open one to browse its flashcards and key topics, or add your own cards.</p></div></div>
+      <div class="help-item"><div class="hi">❏</div><div><h4>Learn</h4><p>Hand-picked free resources (videos, textbooks, practice) per subject — plus a finder that searches for a specific topic and saves links to “My Sources.”</p></div></div>
+      <div class="help-item"><div class="hi">⚯</div><div><h4>Flashcards</h4><p><strong>Review</strong> uses active recall + spaced repetition — grade each card and it returns right before you'd forget. <strong>Create / Import</strong> lets you type your own cards or upload notes for AI to turn into flashcards.</p></div></div>
+      <div class="help-item"><div class="hi">✓</div><div><h4>Practice &amp; Tests</h4><p>Multiple-choice practice with instant feedback, plus timed scored tests. Hit 90%+ on a subject to unlock harder Challenge questions.</p></div></div>
+      <div class="help-item"><div class="hi">▰</div><div><h4>My Progress</h4><p>Every test is recorded here with your average, trend, weak topics to review, and strength by subject.</p></div></div>
+      <div class="help-item"><div class="hi">✎</div><div><h4>Feynman</h4><p>Learn by explaining a topic simply. Pick or type a topic, explain it plainly, find your gaps, then refine. A worked example shows you the goal.</p></div></div>
+      <div class="help-item"><div class="hi">◷</div><div><h4>Pomodoro</h4><p>A focus timer (default 30 min work / 10 min break). Study in sprints; the skip button unlocks only in the last 2 minutes of focus.</p></div></div>
+      <div class="help-item"><div class="hi">◫</div><div><h4>Classroom</h4><p>A demo of Google Classroom assignments with an AI helper that gives summaries, how-to steps, and tips.</p></div></div>
+      <div class="help-item"><div class="hi">◨</div><div><h4>Assignments</h4><p>A Kanban board for homework and projects. Add due dates, priority, status, and notes — and drag cards between columns as you progress.</p></div></div>
+      <div class="help-item"><div class="hi">◵</div><div><h4>Schedule</h4><p>Tell it your daily routine and commitments, and it builds a study plan around them. Click any block to edit it, and export the week to Google Calendar.</p></div></div>
+      <div class="help-item"><div class="hi">⚙</div><div><h4>Settings</h4><p>Set your name, add an optional AI key (powers AI flashcards, the assignment helper, and the source finder), and manage your data.</p></div></div>
+    </div>
+    <p class="sub" style="margin:14px 0 0;font-size:12px">💡 Everything is saved right in this browser — no account needed. AI features are optional and only work if you add your own API key in Settings.</p>
+    <div class="row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn" id="help-close">Got it — let's study!</button>
     </div>
   </div>
 </div>
@@ -2880,6 +2919,15 @@ document.getElementById('ev-delete').onclick=()=>{
 
 /* ============================ UTIL ============================ */
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+/* ============================ HELP / FIRST-TIME GUIDE ============================ */
+function openHelp(){document.getElementById('modal-help').classList.add('show');}
+function closeHelp(){document.getElementById('modal-help').classList.remove('show');}
+document.getElementById('help-btn').onclick=openHelp;
+document.getElementById('help-close').onclick=closeHelp;
+document.getElementById('modal-help').onclick=(e)=>{if(e.target.id==='modal-help')closeHelp();};
+// show the guide automatically only on the very first visit
+if(!DB.seenIntro){openHelp();DB.seenIntro=true;save();}
 
 /* init */
 renderDash();
