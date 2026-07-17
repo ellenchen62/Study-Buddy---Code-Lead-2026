@@ -228,7 +228,6 @@
       <div><h1>Study Buddy</h1><small>focus mode</small></div>
     </div>
     <button class="nav-btn active" data-page="dashboard"><span class="ic">▦</span><span class="lbl">Dashboard</span></button>
-    <button class="nav-btn" data-page="subjects"><span class="ic">▤</span><span class="lbl">Subjects</span></button>
     <button class="nav-btn" data-page="resources"><span class="ic">❏</span><span class="lbl">Learn</span></button>
     <button class="nav-btn" data-page="recall"><span class="ic">⚯</span><span class="lbl">Flashcards</span></button>
     <button class="nav-btn" data-page="pomodoro"><span class="ic">◷</span><span class="lbl">Pomodoro</span></button>
@@ -281,29 +280,6 @@
       </div>
     </section>
 
-    <!-- SUBJECTS -->
-    <section class="page" id="page-subjects">
-      <h2 class="title">Subjects</h2>
-      <p class="sub">Your six courses. Open one to study its cards or add your own.</p>
-      <div class="grid g3" id="subj-grid"></div>
-
-      <div id="subj-detail" style="display:none;margin-top:26px">
-        <button class="btn ghost sm" id="subj-back">← All subjects</button>
-        <div class="between" style="margin-top:16px">
-          <h3 id="sd-name" style="margin:0;font-size:20px"></h3>
-          <div class="row">
-            <button class="btn sm" id="sd-study">Study these cards</button>
-            <button class="btn sm sec" id="sd-add">+ Add card</button>
-          </div>
-        </div>
-        <p class="sub" id="sd-desc" style="margin-top:6px"></p>
-        <div class="section-h">Key topics</div>
-        <div class="row" id="sd-topics" style="margin-bottom:6px"></div>
-        <div class="section-h">Flashcards (<span id="sd-count">0</span>)</div>
-        <div id="sd-cards"></div>
-      </div>
-    </section>
-
     <!-- RESOURCES -->
     <section class="page" id="page-resources">
       <h2 class="title">Learn</h2>
@@ -338,6 +314,7 @@
       <h2 class="title">Flashcards</h2>
       <div class="tabs" id="fc-tabs">
         <button class="active" data-fc="review">Review</button>
+        <button data-fc="subjects">Subjects</button>
         <button data-fc="create">Create / Import</button>
       </div>
 
@@ -369,6 +346,27 @@
           <button class="btn sec" id="rc-cram">Cram anyway (ignore schedule)</button>
         </div>
         <p class="sub" style="margin-top:16px;font-size:12.5px">Shortcuts: <kbd>space</kbd> flip · <kbd>1</kbd>–<kbd>4</kbd> grade</p>
+      </div>
+
+      <!-- SUBJECTS sub-tab -->
+      <div id="fc-pane-subjects" style="display:none">
+        <p class="sub">Your five courses. Open one to see its key topics and browse or add its flashcards.</p>
+        <div class="grid g3" id="subj-grid"></div>
+        <div id="subj-detail" style="display:none;margin-top:26px">
+          <button class="btn ghost sm" id="subj-back">← All subjects</button>
+          <div class="between" style="margin-top:16px">
+            <h3 id="sd-name" style="margin:0;font-size:20px"></h3>
+            <div class="row">
+              <button class="btn sm" id="sd-study">Study these cards</button>
+              <button class="btn sm sec" id="sd-add">+ Add card</button>
+            </div>
+          </div>
+          <p class="sub" id="sd-desc" style="margin-top:6px"></p>
+          <div class="section-h">Key topics</div>
+          <div class="row" id="sd-topics" style="margin-bottom:6px"></div>
+          <div class="section-h">Flashcards (<span id="sd-count">0</span>)</div>
+          <div id="sd-cards"></div>
+        </div>
       </div>
 
       <!-- CREATE / IMPORT sub-tab -->
@@ -801,9 +799,8 @@
     </div>
     <div style="margin-top:14px">
       <div class="help-item"><div class="hi">▦</div><div><h4>Dashboard</h4><p>Your home base — today's study plan, day streak, cards due, and focus sessions at a glance.</p></div></div>
-      <div class="help-item"><div class="hi">▤</div><div><h4>Subjects</h4><p>Your five courses. Open one to browse its flashcards and key topics, or add your own cards.</p></div></div>
       <div class="help-item"><div class="hi">❏</div><div><h4>Learn</h4><p>Hand-picked free resources (videos, textbooks, practice) per subject — plus a finder that searches for a specific topic and saves links to “My Sources.”</p></div></div>
-      <div class="help-item"><div class="hi">⚯</div><div><h4>Flashcards</h4><p><strong>Review</strong> uses active recall + spaced repetition — grade each card and it returns right before you'd forget. <strong>Create / Import</strong> lets you type your own cards or upload notes for AI to turn into flashcards.</p></div></div>
+      <div class="help-item"><div class="hi">⚯</div><div><h4>Flashcards</h4><p>Everything card-related in one place, with three tabs: <strong>Review</strong> (active recall + spaced repetition — cards return right before you'd forget), <strong>Subjects</strong> (browse each course's topics and cards), and <strong>Create / Import</strong> (type your own cards or turn notes/files into cards with AI).</p></div></div>
       <div class="help-item"><div class="hi">✓</div><div><h4>Practice &amp; Tests</h4><p>Multiple-choice practice with instant feedback, plus timed scored tests. Hit 90%+ on a subject to unlock harder Challenge questions.</p></div></div>
       <div class="help-item"><div class="hi">▰</div><div><h4>My Progress</h4><p>Every test is recorded here with your average, trend, weak topics to review, and strength by subject.</p></div></div>
       <div class="help-item"><div class="hi">✎</div><div><h4>Feynman</h4><p>Learn by explaining a topic simply. Pick or type a topic, explain it plainly, find your gaps, then refine. A worked example shows you the goal.</p></div></div>
@@ -1504,7 +1501,6 @@ function go(p){
   pages.forEach(x=>x.classList.toggle('active',x.id==='page-'+p));
   navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===p));
   if(p==='dashboard')renderDash();
-  if(p==='subjects')renderSubjects();
   if(p==='resources')renderResources();
   if(p==='recall')openFlashcards();
   if(p==='pomodoro')initPom();
@@ -1581,7 +1577,7 @@ function openSubject(id){
   document.getElementById('sd-cards').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
     DB.cards=DB.cards.filter(c=>c.id!==b.dataset.del);save();openSubject(id);toast("Card deleted");
   });
-  document.getElementById('sd-study').onclick=()=>{go('recall');document.getElementById('rc-subject').value=id;startRecall();};
+  document.getElementById('sd-study').onclick=()=>{showFcTab('review');document.getElementById('rc-subject').value=id;buildQueue();};
   document.getElementById('sd-add').onclick=()=>openAddCard(id);
 }
 document.getElementById('subj-back').onclick=renderSubjects;
@@ -1600,7 +1596,8 @@ document.getElementById('ac-save').onclick=()=>{
   if(!f||!b){toast("Fill in both sides");return;}
   DB.cards.push(newCard(Date.now(),document.getElementById('ac-subj').value,f,b));save();
   document.getElementById('modal-card').classList.remove('show');toast("Card added ✓");
-  if(document.getElementById('page-subjects').classList.contains('active'))openSubject(document.getElementById('ac-subj').value);
+  const sp=document.getElementById('fc-pane-subjects');
+  if(sp&&sp.style.display!=='none'&&document.getElementById('subj-detail').style.display!=='none')openSubject(document.getElementById('ac-subj').value);
 };
 
 /* ============================ SPACED REPETITION (SM-2 lite) ============================ */
@@ -1620,8 +1617,10 @@ function openFlashcards(){
 function showFcTab(which){
   document.querySelectorAll('#fc-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.fc===which));
   document.getElementById('fc-pane-review').style.display = which==='review'?'block':'none';
+  document.getElementById('fc-pane-subjects').style.display = which==='subjects'?'block':'none';
   document.getElementById('fc-pane-create').style.display = which==='create'?'block':'none';
   if(which==='review')startRecall();
+  else if(which==='subjects')renderSubjects();
   else renderCreate();
 }
 function startRecall(){
