@@ -212,6 +212,11 @@
   .cc-card .ccb{color:var(--muted);font-size:13px;margin-top:3px}
   .cc-card .ccx{float:right;cursor:pointer;color:var(--faint);font-weight:700}
   .cc-card .ccx:hover{color:var(--bad)}
+  /* Keep multi-word labels/phrases from being split across lines.
+     These components are all short, self-contained labels — they should read as one unit. */
+  .tag,.badge,.badge-demo,.ap-chip,.pill,.btn{white-space:nowrap}
+  /* .nw = "no wrap": wrap any phrase that must stay together (e.g. "Gauntlet ⚔️", "Final Exam 🏆"). */
+  .nw{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -745,10 +750,30 @@
           <h3 style="margin:0 0 4px">Live AI (optional)</h3>
           <p class="sub" style="margin:0 0 6px">The assignment helper works offline with guided templates. To get real AI-written summaries/tips, paste your own API key — it's stored only in this browser and sent straight to the provider.</p>
           <label class="fld">Provider</label>
-          <select id="set-provider"><option value="none">Off — use templates</option><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI</option></select>
+          <select id="set-provider"></select>
+          <div id="set-base-wrap" style="display:none">
+            <label class="fld">API base URL</label>
+            <input type="text" id="set-base" placeholder="https://your-gateway.example/v1">
+          </div>
+          <label class="fld">Model <span class="sub" style="font-size:11px">(optional — blank uses the provider's default)</span></label>
+          <input type="text" id="set-model" placeholder="default">
           <label class="fld">API key</label>
           <input type="password" id="set-key" placeholder="sk-…">
-          <button class="btn sm" id="set-save-ai" style="margin-top:12px">Save AI settings</button>
+          <div class="row" style="margin-top:12px">
+            <button class="btn sm" id="set-save-ai">Save AI settings</button>
+            <button class="btn sec sm" id="set-test-ai">Test connection</button>
+          </div>
+          <p class="sub" id="set-ai-note" style="margin:10px 0 0;font-size:12px"></p>
+          <div id="set-ai-diag" style="margin-top:10px"></div>
+          <details style="margin-top:12px"><summary>Why do AI calls fail?</summary>
+            <p><strong>Nine times out of ten it's CORS, not your key.</strong> A browser will only let this page call another site if that site explicitly allows it. Two things commonly block it:</p>
+            <ol style="color:var(--muted);font-size:13px;line-height:1.8">
+              <li><strong>You opened the file directly.</strong> If the address bar starts with <code>file://</code>, your page has no real origin and browsers refuse every API call. This is the most common cause. Fix it by serving the folder locally — in a terminal, run <code>python -m http.server 8000</code> in the folder holding this file, then open <code>http://localhost:8000/study_buddy.html</code>.</li>
+              <li><strong>The provider doesn't allow browser calls.</strong> Some APIs are server-only and will refuse no matter what. Anthropic works (this app sends its browser-access header) and Gemini/Groq/OpenRouter generally do; others may not. If one refuses, try another provider — OpenRouter reaches many models behind a single key.</li>
+            </ol>
+            <p>Running a <strong>Local</strong> provider? Ollama needs <code>OLLAMA_ORIGINS=*</code> set before it will accept requests from a web page.</p>
+            <p>Hit <strong>Test connection</strong> above for the exact error. AI is optional — everything else works offline.</p>
+          </details>
           <details style="margin-top:16px"><summary>Why can't it use Claude's key for free?</summary>
             <p>This page runs entirely in your browser with no server behind it, so there's no shared key it can borrow. Adding your own key (or running it through the templates) are the two safe options. Keys here never leave your machine except to call the provider you chose.</p>
           </details>
@@ -2199,6 +2224,8 @@ if(!DB.apAnnounced)DB.apAnnounced={}; // subjects whose Gauntlet unlock has been
 if(DB.finalBest===undefined)DB.finalBest=0;             // best Final Exam score
 if(DB.finalMastered===undefined)DB.finalMastered=false; // permanently true once you ace the Final
 if(DB.showMasteryMsg===undefined)DB.showMasteryMsg=true;// toggle for the mastery message
+if(DB.settings.model===undefined)DB.settings.model='';   // optional model override
+if(DB.settings.base===undefined)DB.settings.base='';     // base URL for custom providers
 syncChallengeCards(); // add harder flashcards for any already-mastered subjects
 
 // streak update
@@ -2672,9 +2699,9 @@ document.querySelectorAll('#cr-detail .tabs button').forEach(b=>b.onclick=()=>{
 async function runHelper(){
   if(!crCurrent)return;
   const out=document.getElementById('cr-out');
-  const usingAI=DB.settings.provider!=='none'&&DB.settings.key;
+  const usingAI=aiOn();
   document.getElementById('cr-aimode').textContent = usingAI
-    ? 'Powered by your '+DB.settings.provider+' key.'
+    ? `Powered by ${aiLabel()} · ${aiModel()}.`
     : 'Guided template (offline). Add an API key in Settings for AI-written help.';
   if(usingAI){
     out.textContent='Thinking…';
@@ -2766,15 +2793,113 @@ function tips(a){
   if(d.includes('preterite'))return ['Memorize the irregular stems separately (tener→tuv-, hacer→hic-).','Read your 5 sentences aloud to catch agreement errors.',...base];
   return base;
 }
+/* ============================ AI PROVIDERS ============================
+   To add a provider, add ONE entry below — nothing else in the app needs to change.
+     kind:'openai'    → any OpenAI-compatible /chat/completions API (most vendors)
+     kind:'anthropic' → Anthropic Messages API
+     kind:'gemini'    → Google Generative Language API
+     base             → API base URL (not needed for anthropic/gemini)
+     needsBase:true   → the user supplies the base URL (self-hosted / custom gateways)
+     noKey:true       → local servers that don't need an API key
+   Note: the browser must be allowed to call the provider (CORS). If one refuses,
+   the app just falls back to its offline templates. */
+const AI_PROVIDERS={
+  /* --- Popular --- */
+  anthropic:{group:'Popular',label:'Anthropic (Claude)',kind:'anthropic',model:'claude-3-5-haiku-latest',keyHint:'sk-ant-…'},
+  openai:{group:'Popular',label:'OpenAI',kind:'openai',base:'https://api.openai.com/v1',model:'gpt-4o-mini',keyHint:'sk-…'},
+  gemini:{group:'Popular',label:'Google Gemini',kind:'gemini',model:'gemini-1.5-flash',keyHint:'AIza…'},
+  xai:{group:'Popular',label:'xAI (Grok)',kind:'openai',base:'https://api.x.ai/v1',model:'grok-2-latest',keyHint:'xai-…'},
+  deepseek:{group:'Popular',label:'DeepSeek',kind:'openai',base:'https://api.deepseek.com/v1',model:'deepseek-chat',keyHint:'sk-…'},
+  mistral:{group:'Popular',label:'Mistral',kind:'openai',base:'https://api.mistral.ai/v1',model:'mistral-small-latest',keyHint:'your Mistral key'},
+  cohere:{group:'Popular',label:'Cohere',kind:'openai',base:'https://api.cohere.ai/compatibility/v1',model:'command-r-08-2024',keyHint:'your Cohere key'},
+  /* --- Fast inference & aggregators --- */
+  groq:{group:'Fast inference & aggregators',label:'Groq',kind:'openai',base:'https://api.groq.com/openai/v1',model:'llama-3.3-70b-versatile',keyHint:'gsk_…'},
+  openrouter:{group:'Fast inference & aggregators',label:'OpenRouter (many models)',kind:'openai',base:'https://openrouter.ai/api/v1',model:'openai/gpt-4o-mini',keyHint:'sk-or-…'},
+  together:{group:'Fast inference & aggregators',label:'Together AI',kind:'openai',base:'https://api.together.xyz/v1',model:'meta-llama/Llama-3.3-70B-Instruct-Turbo',keyHint:'your Together key'},
+  fireworks:{group:'Fast inference & aggregators',label:'Fireworks AI',kind:'openai',base:'https://api.fireworks.ai/inference/v1',model:'accounts/fireworks/models/llama-v3p1-8b-instruct',keyHint:'fw_…'},
+  cerebras:{group:'Fast inference & aggregators',label:'Cerebras',kind:'openai',base:'https://api.cerebras.ai/v1',model:'llama3.1-8b',keyHint:'csk-…'},
+  sambanova:{group:'Fast inference & aggregators',label:'SambaNova',kind:'openai',base:'https://api.sambanova.ai/v1',model:'Meta-Llama-3.1-8B-Instruct',keyHint:'your SambaNova key'},
+  deepinfra:{group:'Fast inference & aggregators',label:'DeepInfra',kind:'openai',base:'https://api.deepinfra.com/v1/openai',model:'meta-llama/Meta-Llama-3.1-8B-Instruct',keyHint:'your DeepInfra key'},
+  hyperbolic:{group:'Fast inference & aggregators',label:'Hyperbolic',kind:'openai',base:'https://api.hyperbolic.xyz/v1',model:'meta-llama/Meta-Llama-3.1-8B-Instruct',keyHint:'your Hyperbolic key'},
+  nebius:{group:'Fast inference & aggregators',label:'Nebius AI Studio',kind:'openai',base:'https://api.studio.nebius.ai/v1',model:'meta-llama/Meta-Llama-3.1-8B-Instruct',keyHint:'your Nebius key'},
+  novita:{group:'Fast inference & aggregators',label:'Novita AI',kind:'openai',base:'https://api.novita.ai/v3/openai',model:'meta-llama/llama-3.1-8b-instruct',keyHint:'your Novita key'},
+  perplexity:{group:'Fast inference & aggregators',label:'Perplexity',kind:'openai',base:'https://api.perplexity.ai',model:'sonar',keyHint:'pplx-…'},
+  /* --- More --- */
+  moonshot:{group:'More',label:'Moonshot (Kimi)',kind:'openai',base:'https://api.moonshot.cn/v1',model:'moonshot-v1-8k',keyHint:'sk-…'},
+  zhipu:{group:'More',label:'Zhipu (GLM)',kind:'openai',base:'https://open.bigmodel.cn/api/paas/v4',model:'glm-4-flash',keyHint:'your Zhipu key'},
+  qwen:{group:'More',label:'Alibaba Qwen (DashScope)',kind:'openai',base:'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',model:'qwen-plus',keyHint:'sk-…'},
+  ai21:{group:'More',label:'AI21 (Jamba)',kind:'openai',base:'https://api.ai21.com/studio/v1',model:'jamba-mini',keyHint:'your AI21 key'},
+  githubmodels:{group:'More',label:'GitHub Models',kind:'openai',base:'https://models.inference.ai.azure.com',model:'gpt-4o-mini',keyHint:'GitHub token (ghp_…)'},
+  huggingface:{group:'More',label:'Hugging Face',kind:'openai',base:'https://router.huggingface.co/v1',model:'meta-llama/Llama-3.1-8B-Instruct',keyHint:'hf_…'},
+  /* --- Local (run on your own machine; no key needed) --- */
+  ollama:{group:'Local (no key needed)',label:'Ollama',kind:'openai',base:'http://localhost:11434/v1',model:'llama3.1',keyHint:'no key needed',noKey:true},
+  lmstudio:{group:'Local (no key needed)',label:'LM Studio',kind:'openai',base:'http://localhost:1234/v1',model:'local-model',keyHint:'no key needed',noKey:true},
+  jan:{group:'Local (no key needed)',label:'Jan',kind:'openai',base:'http://localhost:1337/v1',model:'local-model',keyHint:'no key needed',noKey:true},
+  llamacpp:{group:'Local (no key needed)',label:'llama.cpp server',kind:'openai',base:'http://localhost:8080/v1',model:'local-model',keyHint:'no key needed',noKey:true},
+  vllm:{group:'Local (no key needed)',label:'vLLM',kind:'openai',base:'http://localhost:8000/v1',model:'local-model',keyHint:'no key needed',noKey:true},
+  /* --- Bring your own endpoint --- */
+  azure:{group:'Bring your own endpoint',label:'Azure OpenAI',kind:'azure',needsBase:true,model:'',keyHint:'your Azure key',baseHint:'https://YOUR-RESOURCE.openai.azure.com'},
+  custom:{group:'Bring your own endpoint',label:'Custom (OpenAI-compatible)',kind:'openai',needsBase:true,model:'',keyHint:'your API key',baseHint:'https://your-gateway.example/v1'},
+};
+const AZURE_API_VERSION='2024-10-21';
+function isFileUrl(){return location.protocol==='file:';}
+function aiProvider(){return AI_PROVIDERS[DB.settings.provider]||null;}
+function aiOn(){const p=aiProvider();return !!p && (p.noKey || !!(DB.settings.key||'').trim());}
+function aiLabel(){const p=aiProvider();return p?p.label:'AI';}
+function aiModel(){const p=aiProvider();return (DB.settings.model||'').trim()||(p&&p.model)||'';}
+// One request path for every provider. Returns the model's text, or throws.
+async function aiComplete(prompt,maxTokens){
+  const p=aiProvider();
+  if(!p)throw new Error('no provider selected');
+  const key=(DB.settings.key||'').trim();
+  if(!key && !p.noKey)throw new Error('no API key saved');
+  const model=aiModel();
+  if(!model)throw new Error('set a model name in Settings');
+  maxTokens=maxTokens||800;
+  let url,headers,body,pick;
+  if(p.kind==='anthropic'){
+    url='https://api.anthropic.com/v1/messages';
+    headers={'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+    body={model,max_tokens:maxTokens,messages:[{role:'user',content:prompt}]};
+    pick=j=>j.content&&j.content[0]&&j.content[0].text;
+  } else if(p.kind==='gemini'){
+    url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+    headers={'content-type':'application/json'};
+    body={contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:maxTokens}};
+    pick=j=>{const c=j.candidates&&j.candidates[0];return c&&c.content&&c.content.parts&&c.content.parts[0]&&c.content.parts[0].text;};
+  } else if(p.kind==='azure'){
+    const base=((DB.settings.base)||'').trim().replace(/\/+$/,'');
+    if(!base)throw new Error('set your Azure resource URL in Settings');
+    url=`${base}/openai/deployments/${encodeURIComponent(model)}/chat/completions?api-version=${AZURE_API_VERSION}`;
+    headers={'content-type':'application/json','api-key':key};
+    body={max_tokens:maxTokens,messages:[{role:'user',content:prompt}]};
+    pick=j=>{const c=j.choices&&j.choices[0];return c&&c.message&&c.message.content;};
+  } else { // OpenAI-compatible
+    const base=((p.needsBase?DB.settings.base:p.base)||'').trim().replace(/\/+$/,'');
+    if(!base)throw new Error('set the API base URL in Settings');
+    url=base+'/chat/completions';
+    headers={'content-type':'application/json','authorization':'Bearer '+(key||'none')};
+    body={model,max_tokens:maxTokens,messages:[{role:'user',content:prompt}]};
+    pick=j=>{const c=j.choices&&j.choices[0];return c&&c.message&&c.message.content;};
+  }
+  let r;
+  try{r=await fetch(url,{method:'POST',headers,body:JSON.stringify(body)});}
+  catch(e){
+    // A network-level throw here is almost always CORS, not a bad key.
+    throw new Error('could not reach '+p.label+' ('+(e&&e.message||'network error')+').'+(isFileUrl()
+      ? ' This page is open from a file:// path, so the browser blocks all API calls. Serve it over http://localhost — see "Why do AI calls fail?" in Settings.'
+      : ' The provider may not allow direct browser calls (CORS), or you are offline.'));
+  }
+  let j=null;try{j=await r.json();}catch(e){}
+  if(j&&j.error)throw new Error(j.error.message||j.error.type||'API error');
+  if(!r.ok)throw new Error('HTTP '+r.status+' from '+p.label);
+  const out=j&&pick(j);
+  if(!out)throw new Error('empty response from '+p.label);
+  return out;
+}
 async function callAI(a,mode){
   const ask=`You are a helpful study coach for a 9th grader. For this ${subjById(a.subj).name} assignment titled "${a.title}" with instructions: "${a.desc}", give a ${mode==='summary'?'short plain-language summary of what it asks':mode==='howto'?'clear numbered step-by-step plan to complete it':'list of practical tips to do it well'}. Keep it concise and encouraging.`;
-  if(DB.settings.provider==='anthropic'){
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':DB.settings.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-3-5-haiku-latest',max_tokens:600,messages:[{role:'user',content:ask}]})});
-    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');return j.content[0].text;
-  } else {
-    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+DB.settings.key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:ask}]})});
-    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');return j.choices[0].message.content;
-  }
+  return aiComplete(ask,600);
 }
 document.getElementById('cr-connect').onclick=()=>{
   if(DB.settings.gcid){toast("Client ID saved — live Classroom hookup runs when hosted online.");}
@@ -2968,8 +3093,30 @@ function exportICS(grid){
 /* ============================ SETTINGS ============================ */
 function renderSettings(){
   document.getElementById('set-name').value=DB.name||'';
-  document.getElementById('set-provider').value=DB.settings.provider||'none';
+  const ps=document.getElementById('set-provider');
+  const groups=[];
+  Object.keys(AI_PROVIDERS).forEach(k=>{const g=AI_PROVIDERS[k].group||'Other';if(!groups.includes(g))groups.push(g);});
+  ps.innerHTML='<option value="none">Off — use templates</option>'+groups.map(g=>
+    `<optgroup label="${esc(g)}">`+Object.keys(AI_PROVIDERS).filter(k=>(AI_PROVIDERS[k].group||'Other')===g)
+      .map(k=>`<option value="${k}">${esc(AI_PROVIDERS[k].label)}</option>`).join('')+'</optgroup>').join('');
+  ps.value=(DB.settings.provider&&(DB.settings.provider==='none'||AI_PROVIDERS[DB.settings.provider]))?DB.settings.provider:'none';
   document.getElementById('set-key').value=DB.settings.key||'';
+  document.getElementById('set-model').value=DB.settings.model||'';
+  document.getElementById('set-base').value=DB.settings.base||'';
+  const syncAi=()=>{
+    const p=AI_PROVIDERS[ps.value];
+    document.getElementById('set-base-wrap').style.display=(p&&p.needsBase)?'block':'none';
+    if(p&&p.baseHint)document.getElementById('set-base').placeholder=p.baseHint;
+    document.getElementById('set-model').placeholder=(p&&p.model)?('default: '+p.model):'e.g. gpt-4o-mini';
+    document.getElementById('set-key').placeholder=p?(p.keyHint||'your API key'):'sk-…';
+    document.getElementById('set-ai-note').textContent = !p
+      ? 'AI is off — the app uses its built-in offline templates.'
+      : (isFileUrl()?'⚠️ This page is open from a file:// path — browsers block API calls from there, so AI will fail until you serve it over http://localhost (see below). ':'')
+        +(p.noKey
+          ? 'Local provider — no key needed. Make sure the server is running and allows browser requests.'
+          : 'Your key is stored only in this browser and sent straight to '+p.label+'.');
+  };
+  ps.onchange=syncAi;syncAi();
   document.getElementById('set-gcid').value=DB.settings.gcid||'';
   const mw=document.getElementById('set-mastery-wrap');
   mw.innerHTML = DB.finalMastered
@@ -2979,7 +3126,27 @@ function renderSettings(){
   if(mt)mt.onchange=()=>{DB.showMasteryMsg=mt.checked;save();toast(mt.checked?'Mastery message shown':'Mastery message hidden');};
 }
 document.getElementById('set-save-name').onclick=()=>{DB.name=document.getElementById('set-name').value.trim();save();toast("Saved ✓");};
-document.getElementById('set-save-ai').onclick=()=>{DB.settings.provider=document.getElementById('set-provider').value;DB.settings.key=document.getElementById('set-key').value.trim();save();toast("AI settings saved ✓");};
+document.getElementById('set-test-ai').onclick=async()=>{
+  const d=document.getElementById('set-ai-diag');
+  const box=(color,txt)=>`<div class="help-out" style="margin:0;border-color:${color}">${esc(txt)}</div>`;
+  if(!aiOn()){d.innerHTML=box('var(--warn)','Pick a provider and save a key first, then test again.');return;}
+  d.innerHTML=box('var(--line)','Testing '+aiLabel()+' · '+aiModel()+'…');
+  const t0=Date.now();
+  try{
+    const out=await aiComplete('Reply with exactly: OK',16);
+    d.innerHTML=box('var(--accent2)',`✅ Connected to ${aiLabel()} in ${Date.now()-t0} ms\nModel: ${aiModel()}\nReply: ${String(out).trim().slice(0,80)}`);
+  }catch(e){
+    d.innerHTML=box('var(--bad)','❌ '+e.message);
+  }
+};
+document.getElementById('set-save-ai').onclick=()=>{
+  DB.settings.provider=document.getElementById('set-provider').value;
+  DB.settings.key=document.getElementById('set-key').value.trim();
+  DB.settings.model=document.getElementById('set-model').value.trim();
+  DB.settings.base=document.getElementById('set-base').value.trim();
+  save();
+  toast(DB.settings.provider==='none'?'AI off — using templates':`AI set to ${aiLabel()} ✓`);
+};
 document.getElementById('set-save-gcid').onclick=()=>{DB.settings.gcid=document.getElementById('set-gcid').value.trim();save();toast("Client ID saved ✓");};
 document.getElementById('set-reset-srs').onclick=()=>{if(confirm("Reset all card scheduling (keeps the cards)?")){DB.cards.forEach(c=>{c.ease=2.5;c.interval=0;c.reps=0;c.due=0;});save();toast("Card schedule reset");}};
 document.getElementById('set-wipe').onclick=()=>{if(confirm("Erase ALL data and start fresh? This cannot be undone.")){localStorage.removeItem(LS);location.reload();}};
@@ -3005,21 +3172,21 @@ function renderPractice(){
   const banner=document.getElementById('pr-banner');
   let bhtml='';
   if(allMastered()){
-    bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong>🏆 Challenge mode unlocked everywhere!</strong><div class="sub" style="margin:4px 0 0">You've scored 90%+ on every subject. Harder questions and tougher flashcards are now available across the board.</div></div>`;
+    bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong class="nw">🏆 Challenge mode unlocked everywhere!</strong><div class="sub" style="margin:4px 0 0">You've scored 90%+ on every subject. Harder questions and tougher flashcards are now available across the board.</div></div>`;
   } else if(masteredNames.length){
-    bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong>🔥 Challenge unlocked:</strong> ${masteredNames.join(', ')}<div class="sub" style="margin:4px 0 0">Score 90%+ on a subject's test to unlock its harder questions and flashcards.</div></div>`;
+    bhtml+=`<div class="card" style="border-left:4px solid var(--warn);margin-bottom:14px"><strong class="nw">🔥 Challenge unlocked:</strong> ${masteredNames.map(n=>`<span class="nw">${n}</span>`).join(', ')}<div class="sub" style="margin:4px 0 0">Score 90%+ on a subject's test to unlock its harder questions and flashcards.</div></div>`;
   }
   const apOpen=SUBJECTS.filter(s=>apUnlocked(s.id)).map(s=>s.name);
-  bhtml+=`<div class="card" style="border-left:4px solid var(--ap);margin-bottom:18px"><strong>⚔️ Gauntlet — ${apOpen.length?('unlocked: '+apOpen.join(', ')):'locked'}.</strong><div class="sub" style="margin:4px 0 0">5 brutal word problems per subject. Unlock by scoring 100% on a subject's test <em>and</em> its Challenge.</div></div>`;
+  bhtml+=`<div class="card" style="border-left:4px solid var(--ap);margin-bottom:18px"><strong><span class="nw">⚔️ Gauntlet</span> — ${apOpen.length?('unlocked: '+apOpen.map(n=>`<span class="nw">${n}</span>`).join(', ')):'locked'}.</strong><div class="sub" style="margin:4px 0 0">5 brutal word problems per subject. Unlock by scoring 100% on a subject's test <em>and</em> its Challenge.</div></div>`;
   // Final Exam card pinned to the top of Practice & Tests.
   const fAced=gauntletsAced(), fOK=finalUnlocked(), fN=Math.min(FINAL_PULL,FINAL_QUESTIONS.length);
   let finalCard;
   if(DB.finalMastered){
-    finalCard=`<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:14px"><div class="between"><div><strong>🏆 Final Exam — MASTERED</strong><div class="sub" style="margin:4px 0 0">Best score ${DB.finalBest}%. You have conquered everything this app can throw at you.</div></div><button class="btn sm" id="pr-final-start">Retake Final</button></div></div>`;
+    finalCard=`<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:14px"><div class="between"><div><strong class="nw">🏆 Final Exam — MASTERED</strong><div class="sub" style="margin:4px 0 0">Best score ${DB.finalBest}%. You have conquered everything this app can throw at you.</div></div><button class="btn sm" id="pr-final-start">Retake Final</button></div></div>`;
   } else if(fOK){
-    finalCard=`<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:14px"><div class="between"><div><strong>🏆 Final Exam — UNLOCKED</strong><div class="sub" style="margin:4px 0 0">The ultimate test: ${fN} brutal questions spanning every subject, harder than the Challenge and Gauntlet combined. Score 100% for permanent mastery.</div></div><button class="btn" id="pr-final-start">Start Final Exam</button></div></div>`;
+    finalCard=`<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:14px"><div class="between"><div><strong class="nw">🏆 Final Exam — UNLOCKED</strong><div class="sub" style="margin:4px 0 0">The ultimate test: ${fN} brutal questions spanning every subject, harder than the Challenge and Gauntlet combined. Score 100% for permanent mastery.</div></div><button class="btn" id="pr-final-start">Start Final Exam</button></div></div>`;
   } else {
-    finalCard=`<div class="card" style="border-left:4px solid var(--faint);margin-bottom:14px"><strong>🔒 Final Exam — locked</strong><div class="sub" style="margin:4px 0 0">The hardest test of all. Unlock it by scoring <strong>100% on every subject's Gauntlet</strong> — <strong>${fAced}/${SUBJECTS.length}</strong> aced so far.</div></div>`;
+    finalCard=`<div class="card" style="border-left:4px solid var(--faint);margin-bottom:14px"><strong class="nw">🔒 Final Exam — locked</strong><div class="sub" style="margin:4px 0 0">The hardest test of all. Unlock it by scoring <strong class="nw">100% on every subject's Gauntlet</strong> — <strong>${fAced}/${SUBJECTS.length}</strong> aced so far.</div></div>`;
   }
   bhtml = finalCard + bhtml;
   banner.innerHTML=bhtml;
@@ -3041,7 +3208,7 @@ function renderPractice(){
     const apBtn = apOK
       ? `<button class="btn sm ap" data-mode="ap" data-s="${s.id}">Gauntlet ⚔️</button>`
       : `<span class="tag" title="Score 100% on BOTH this subject's practice test AND its Challenge to unlock the Gauntlet">🔒 Gauntlet</span>`;
-    const apGate = apOK ? '' : ` · <span class="sub" style="font-size:11px">Gauntlet needs 100% test ${testPerfect(s.id)?'✓':'✗'} &amp; 100% challenge ${challengePerfect(s.id)?'✓':'✗'}</span>`;
+    const apGate = apOK ? '' : ` · <span class="sub" style="font-size:11px">Gauntlet needs <span class="nw">100% test ${testPerfect(s.id)?'✓':'✗'}</span> &amp; <span class="nw">100% challenge ${challengePerfect(s.id)?'✓':'✗'}</span></span>`;
     return `<div class="card subj-card" style="border-left-color:${col(s.id)}" data-s="${s.id}">
       <h3>${s.name}${mastered?' <span class="tag" style="border-color:var(--warn);color:var(--warn)">mastered</span>':''}${apOK?' <span class="ap-chip">Gauntlet unlocked</span>':''}</h3>
       <p>${best?`Best test <strong style="color:${col(s.id)}">${best}%</strong>`:'Practice, test, and challenge yourself.'}${apBest?` · <span class="ap-chip">Gauntlet best ${apBest}%</span>`:''}${apGate}</p>
@@ -3068,7 +3235,7 @@ function startPractice(subj,challenge=false){
   const bank = challenge ? (CHALLENGE_QUESTIONS[subj]||[]) : (QUESTIONS[subj]||[]);
   pp={subj,qs:shuffle(bank.slice()).map(randomizeChoices),i:0,score:0,answered:false,challenge};
   prShow('pr-practice');
-  document.getElementById('pr-p-title').textContent=subjById(subj).name+(challenge?' · Challenge 🔥':' · Practice');
+  document.getElementById('pr-p-title').innerHTML=`<span class="nw">${esc(subjById(subj).name)}</span> · <span class="nw">${challenge?'Challenge 🔥':'Practice'}</span>`;
   document.getElementById('pr-p-total').textContent=pp.qs.length;
   ppRender();
 }
@@ -3143,7 +3310,7 @@ function openAPTest(subj){
 function startTest(){
   prShow('pr-test');
   tt.startTime=Date.now();
-  document.getElementById('pr-t-title').textContent=tt.final?'Final Exam 🏆':subjById(tt.subj).name+(tt.ap?' · Gauntlet ⚔️':' · Test');
+  document.getElementById('pr-t-title').innerHTML=tt.final?'<span class="nw">Final Exam 🏆</span>':`<span class="nw">${esc(subjById(tt.subj).name)}</span> · <span class="nw">${tt.ap?'Gauntlet ⚔️':'Test'}</span>`;
   document.getElementById('pr-t-count').textContent=tt.qs.length+(tt.final?' brutal questions spanning every subject.':tt.ap?' Gauntlet-level questions.':' questions.');
   const wrap=document.getElementById('pr-t-questions');
   wrap.innerHTML=tt.qs.map((item,qi)=>`
@@ -3204,7 +3371,7 @@ function gauntletStats(timeUsed,prevBest){
       <span class="ap-chip" style="display:inline-block;margin-bottom:10px">⚔️ Gauntlet stats</span>
       <div class="grid g4" style="gap:10px;margin-bottom:12px">
         <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${fmtSecs(timeUsed)}</div><div class="l">Time used</div></div>
-        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${perQ.toFixed(1)}s</div><div class="l">Per question · ${pace}</div></div>
+        <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${perQ.toFixed(1)}s</div><div class="l">Per question · <span class="nw">${pace}</span></div></div>
         <div class="stat" style="padding:12px"><div class="n" style="font-size:20px">${attempts}</div><div class="l">Gauntlets taken</div></div>
         <div class="stat" style="padding:12px">${impHtml}<div class="l">vs previous best</div></div>
       </div>
@@ -3238,7 +3405,7 @@ function submitFinal(){
   prShow('pr-results');
   document.getElementById('pr-r-pct').textContent=pct+'%';
   const grade = pct===100?'PERFECT — total mastery 🏆':pct>=80?'Outstanding':pct>=60?'Strong, but the Final is unforgiving':'Regroup and conquer it';
-  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · Final Exam 🏆 · ${grade}`;
+  document.getElementById('pr-r-line').innerHTML=`<span class="nw">${correct} of ${tt.qs.length} correct</span> · <span class="nw">Final Exam 🏆</span> · <span class="nw">${grade}</span>`;
   document.getElementById('pr-r-pct').style.color = pct>=70?'var(--accent2)':pct>=50?'var(--warn)':'var(--bad)';
   const uniq=[...new Set(missedTopics)];
   document.getElementById('pr-r-weak').innerHTML = uniq.length
@@ -3283,7 +3450,7 @@ function submitTest(){
   prShow('pr-results');
   document.getElementById('pr-r-pct').textContent=pct+'%';
   const grade=pct>=90?'Excellent 🎉':pct>=80?'Great work':pct>=70?'Solid — keep going':pct>=60?'Passing, review the misses':'Keep practicing';
-  document.getElementById('pr-r-line').textContent=`${correct} of ${tt.qs.length} correct · ${subjById(tt.subj).name}${apMode?' · Gauntlet ⚔️':''} · ${grade}`;
+  document.getElementById('pr-r-line').innerHTML=`<span class="nw">${correct} of ${tt.qs.length} correct</span> · <span class="nw">${esc(subjById(tt.subj).name)}</span>${apMode?' · <span class="nw">Gauntlet ⚔️</span>':''} · <span class="nw">${grade}</span>`;
   document.getElementById('pr-r-pct').style.color = pct>=70?'var(--accent2)':pct>=50?'var(--warn)':'var(--bad)';
   // weak-topic chips on the results card
   const uniqMissed=[...new Set(missedTopics)];
@@ -3310,7 +3477,7 @@ document.getElementById('pr-r-progress').onclick=()=>go('progress');
 function fmtDate(ts){const d=new Date(ts);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}
 function renderProgress(){
   document.getElementById('pg-mastery').innerHTML = (DB.finalMastered && DB.showMasteryMsg!==false)
-    ? `<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:18px"><h3 style="margin:0 0 6px">🏆 Total Mastery Achieved</h3><div class="sub" style="margin:0;font-size:14px;line-height:1.6">You aced the Final Exam after conquering every Practice set, Test, Challenge, and Gauntlet across all five subjects. There is nothing left to prove here — you have mastered it all. <em>(You can hide this message in Settings.)</em></div></div>`
+    ? `<div class="card" style="border-left:4px solid var(--accent2);margin-bottom:18px"><h3 class="nw" style="margin:0 0 6px">🏆 Total Mastery Achieved</h3><div class="sub" style="margin:0;font-size:14px;line-height:1.6">You aced the Final Exam after conquering every Practice set, Test, Challenge, and Gauntlet across all five subjects. There is nothing left to prove here — you have mastered it all. <em>(You can hide this message in Settings.)</em></div></div>`
     : '';
   const h=DB.history;
   document.getElementById('pg-empty').style.display=h.length?'none':'block';
@@ -3415,7 +3582,7 @@ function openResources(id){
   resCurrentSubj=id;
   document.getElementById('rs-query').value='';
   document.getElementById('rs-suggestions').innerHTML='';
-  const ai=DB.settings.provider!=='none'&&DB.settings.key;
+  const ai=aiOn();
   document.getElementById('rs-note').innerHTML=ai
     ? `AI is on — I'll suggest specific resources plus reliable search links.`
     : `Tip: add an API key in Settings for AI-picked resources. Either way you'll get reliable search links for your exact request.`;
@@ -3462,14 +3629,7 @@ function searchSources(subjName,query,type){
 }
 async function callAISources(subjName,query){
   const ask=`Suggest up to 4 real, well-known, free online resources for a 9th grader studying ${subjName}, specifically about: "${query}". Prefer YouTube videos, Khan Academy, and reputable educational sites with stable URLs. Return ONLY a JSON array of objects {"title","type","url"} where type is one of Video, Article, Course, Practice, Textbook.`;
-  let raw;
-  if(DB.settings.provider==='anthropic'){
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':DB.settings.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-3-5-haiku-latest',max_tokens:800,messages:[{role:'user',content:ask}]})});
-    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');raw=j.content[0].text;
-  } else {
-    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+DB.settings.key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:ask}]})});
-    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');raw=j.choices[0].message.content;
-  }
+  let raw=await aiComplete(ask,800);
   raw=raw.replace(/```json|```/g,'').trim();const a=raw.indexOf('['),b=raw.lastIndexOf(']');if(a>=0&&b>a)raw=raw.slice(a,b+1);
   let arr;try{arr=JSON.parse(raw);}catch(e){return [];}
   return (Array.isArray(arr)?arr:[]).map(o=>({type:o.type||'Link',title:o.title||o.url,note:'AI-suggested — check that the link opens.',url:o.url,ai:true})).filter(x=>/^https?:\/\//.test(x.url||''));
@@ -3483,7 +3643,7 @@ document.getElementById('rs-find').onclick=async ()=>{
   const subjName=subjById(resCurrentSubj).name;
   const box=document.getElementById('rs-suggestions');
   let list=searchSources(subjName,query,type);
-  const ai=DB.settings.provider!=='none'&&DB.settings.key;
+  const ai=aiOn();
   if(ai){
     box.innerHTML='<p class="sub" style="margin:0">Asking AI for the best sources…</p>';
     try{const aiList=await callAISources(subjName,query);list=aiList.concat(list);}catch(e){/* fall back to search links */}
@@ -3537,9 +3697,9 @@ function renderCreate(){
     document.getElementById('cc-add').onclick=ccAddToDeck;
   }
   ccCards=[];renderCcPreview();
-  const ai=DB.settings.provider!=='none'&&DB.settings.key;
+  const ai=aiOn();
   document.getElementById('cc-ainote').innerHTML = ai
-    ? `AI is on (your ${DB.settings.provider} key). It will read your material and write cards.`
+    ? `AI is on (${aiLabel()} · ${aiModel()}). It will read your material and write cards.`
     : `AI is off — add your own API key in <strong>Settings</strong> to auto-generate, or use the “Q | A lines” button which works offline.`;
 }
 // which textarea is the active source?
@@ -3562,7 +3722,7 @@ function ccGenerateManual(){
 async function ccGenerateAI(){
   const text=ccSourceText();
   if(!text){toast("Add notes or load a file first");return;}
-  if(!(DB.settings.provider!=='none'&&DB.settings.key)){toast("Turn on AI in Settings (add an API key) — or use the Q | A lines button");return;}
+  if(!aiOn()){toast("Turn on AI in Settings (pick a provider + add a key) — or use the Q | A lines button");return;}
   const btn=document.getElementById('cc-ai');const old=btn.textContent;btn.textContent='Thinking…';btn.disabled=true;
   try{
     ccCards=await callAIFlashcards(text);
@@ -3626,14 +3786,7 @@ async function readDOCX(f){
 }
 async function callAIFlashcards(material){
   const ask=`You are a study assistant. From the study material below, create high-quality flashcards. Return ONLY a JSON array (no prose, no code fence) of objects like {"front":"question or term","back":"concise answer"}. Make 8–15 cards, each testing one idea, with short clear answers.\n\nMATERIAL:\n${material.slice(0,6000)}`;
-  let raw;
-  if(DB.settings.provider==='anthropic'){
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':DB.settings.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-3-5-haiku-latest',max_tokens:1500,messages:[{role:'user',content:ask}]})});
-    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');raw=j.content[0].text;
-  } else {
-    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+DB.settings.key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:ask}]})});
-    const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');raw=j.choices[0].message.content;
-  }
+  let raw=await aiComplete(ask,1500);
   // pull the JSON array out of the response
   raw=raw.replace(/```json|```/g,'').trim();
   const start=raw.indexOf('['),end=raw.lastIndexOf(']');
