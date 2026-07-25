@@ -2869,8 +2869,12 @@ async function aiComplete(prompt,maxTokens){
   } else if(p.kind==='gemini'){
     url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     headers={'content-type':'application/json','x-goog-api-key':key};
-    body={contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:maxTokens}};
-    pick=j=>{const c=j.candidates&&j.candidates[0];return c&&c.content&&c.content.parts&&c.content.parts[0]&&c.content.parts[0].text;};
+    // Reasoning ("thinking") flash models spend output tokens on hidden reasoning first,
+    // so give a generous ceiling — otherwise the budget runs out before any answer text.
+    body={contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:Math.max(maxTokens,2048)}};
+    pick=j=>{const c=j.candidates&&j.candidates[0];if(!c)return '';
+      const parts=(c.content&&c.content.parts)||[];
+      return parts.map(x=>x.text||'').join('').trim();};
   } else if(p.kind==='azure'){
     const base=((DB.settings.base)||'').trim().replace(/\/+$/,'');
     if(!base)throw new Error('set your Azure resource URL in Settings');
@@ -2899,11 +2903,24 @@ async function aiComplete(prompt,maxTokens){
     let msg=j.error.message||j.error.type||'API error';
     if(p.kind==='gemini' && /oauth|authentication credential|API key not valid|API_KEY_INVALID|credential/i.test(msg))
       msg='Gemini rejected this key. Make sure it is a Gemini API key from Google AI Studio (aistudio.google.com/apikey, starts with "AIza") — NOT the Classroom OAuth Client ID. Also enable the "Generative Language API" for that key.';
+    else if(/quota|rate.?limit|resource_?exhausted|limit:\s*0|billing/i.test(msg))
+      msg=p.label+" hit a quota/billing limit. If it says \"limit: 0\", your account has no free quota for this model — add billing, or switch to a provider with a free tier (e.g. Groq or OpenRouter) in Settings. Original: "+msg;
     throw new Error(msg);
   }
   if(!r.ok)throw new Error('HTTP '+r.status+' from '+p.label);
   const out=j&&pick(j);
-  if(!out)throw new Error('empty response from '+p.label);
+  if(!out){
+    // Explain WHY it was empty instead of a bare 'empty response'.
+    let why='';
+    const c=j&&j.candidates&&j.candidates[0];
+    const fin=c&&c.finishReason;
+    const block=j&&j.promptFeedback&&j.promptFeedback.blockReason;
+    if(block)why=' The prompt was blocked ('+block+').';
+    else if(fin==='MAX_TOKENS')why=' It ran out of output tokens before producing text — this reasoning model used them all on internal thinking. Try a lighter model (e.g. gemini-2.0-flash) via List models.';
+    else if(fin==='SAFETY'||fin==='RECITATION')why=' The response was filtered ('+fin+').';
+    else if(fin)why=' (finishReason: '+fin+')';
+    throw new Error('empty response from '+p.label+'.'+why);
+  }
   return out;
 }
 // Ask the provider which models it actually offers, so the Model field is never a guess.
@@ -3189,7 +3206,7 @@ document.getElementById('set-test-ai').onclick=async()=>{
   d.innerHTML=box('var(--line)','Testing '+aiLabel()+' · '+aiModel()+'…');
   const t0=Date.now();
   try{
-    const out=await aiComplete('Reply with exactly: OK',16);
+    const out=await aiComplete('Reply with exactly: OK',256);
     d.innerHTML=box('var(--accent2)',`✅ Connected to ${aiLabel()} in ${Date.now()-t0} ms\nModel: ${aiModel()}\nReply: ${String(out).trim().slice(0,80)}`);
   }catch(e){
     d.innerHTML=box('var(--bad)','❌ '+e.message);
