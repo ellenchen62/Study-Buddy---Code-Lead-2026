@@ -790,10 +790,13 @@
             <li>Create a free project at <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a>.</li>
             <li>Enable the <strong>Google Classroom API</strong> under APIs &amp; Services.</li>
             <li>Configure the OAuth consent screen (External, add yourself as a test user).</li>
-            <li>Create an <strong>OAuth Client ID</strong> of type "Web application". Add your hosting URL to Authorized JavaScript origins (Classroom blocks <code>file://</code>, so host on e.g. GitHub Pages/Netlify).</li>
+            <li>Create an <strong>OAuth Client ID</strong> of type "Web application" (Classroom blocks <code>file://</code>, so host the page on e.g. GitHub Pages or Netlify first).</li>
+            <li>Under <strong>Authorized JavaScript origins</strong>, enter your site's <em>origin only</em> — scheme + domain, with <strong>no path and no trailing slash</strong>. For GitHub Pages that's <code>https://YOUR-USERNAME.github.io</code> — <em>not</em> <code>https://YOUR-USERNAME.github.io/your-repo/</code>. Google rejects any path here, but the browser only reports the origin anyway, so this is all it needs. (Custom domain? Use <code>https://yourdomain.com</code>.)</li>
+            <li>Leave <strong>Authorized redirect URIs</strong> empty — the in-browser Google Identity token flow this app uses doesn't need one.</li>
             <li>Use scope <code>classroom.coursework.me.readonly</code> with Google Identity Services to fetch assignments.</li>
             <li>Paste the Client ID below and press Connect on the Classroom page — the demo data is swapped for your real courses.</li>
           </ol>
+          <div class="help-out" style="margin:10px 0 0;font-size:12.5px">💡 Getting <strong>“Invalid Origin: URIs must not contain a path or end with '/'”</strong>? That's this step — delete everything after <code>.github.io</code> so the field is just <code>https://YOUR-USERNAME.github.io</code>.</div>
           <label class="fld">Google OAuth Client ID</label>
           <input type="text" id="set-gcid" placeholder="xxxxx.apps.googleusercontent.com">
           <button class="btn sm sec" id="set-save-gcid" style="margin-top:10px">Save Client ID</button>
@@ -2863,8 +2866,8 @@ async function aiComplete(prompt,maxTokens){
     body={model,max_tokens:maxTokens,messages:[{role:'user',content:prompt}]};
     pick=j=>j.content&&j.content[0]&&j.content[0].text;
   } else if(p.kind==='gemini'){
-    url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
-    headers={'content-type':'application/json'};
+    url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    headers={'content-type':'application/json','x-goog-api-key':key};
     body={contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:maxTokens}};
     pick=j=>{const c=j.candidates&&j.candidates[0];return c&&c.content&&c.content.parts&&c.content.parts[0]&&c.content.parts[0].text;};
   } else if(p.kind==='azure'){
@@ -2891,7 +2894,12 @@ async function aiComplete(prompt,maxTokens){
       : ' The provider may not allow direct browser calls (CORS), or you are offline.'));
   }
   let j=null;try{j=await r.json();}catch(e){}
-  if(j&&j.error)throw new Error(j.error.message||j.error.type||'API error');
+  if(j&&j.error){
+    let msg=j.error.message||j.error.type||'API error';
+    if(p.kind==='gemini' && /oauth|authentication credential|API key not valid|API_KEY_INVALID|credential/i.test(msg))
+      msg='Gemini rejected this key. Make sure it is a Gemini API key from Google AI Studio (aistudio.google.com/apikey, starts with "AIza") — NOT the Classroom OAuth Client ID. Also enable the "Generative Language API" for that key.';
+    throw new Error(msg);
+  }
   if(!r.ok)throw new Error('HTTP '+r.status+' from '+p.label);
   const out=j&&pick(j);
   if(!out)throw new Error('empty response from '+p.label);
