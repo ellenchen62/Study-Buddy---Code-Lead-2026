@@ -762,6 +762,7 @@
           <div class="row" style="margin-top:12px">
             <button class="btn sm" id="set-save-ai">Save AI settings</button>
             <button class="btn sec sm" id="set-test-ai">Test connection</button>
+            <button class="btn sec sm" id="set-list-models">List models</button>
           </div>
           <p class="sub" id="set-ai-note" style="margin:10px 0 0;font-size:12px"></p>
           <div id="set-ai-diag" style="margin-top:10px"></div>
@@ -2810,7 +2811,7 @@ const AI_PROVIDERS={
   /* --- Popular --- */
   anthropic:{group:'Popular',label:'Anthropic (Claude)',kind:'anthropic',model:'claude-3-5-haiku-latest',keyHint:'sk-ant-…'},
   openai:{group:'Popular',label:'OpenAI',kind:'openai',base:'https://api.openai.com/v1',model:'gpt-4o-mini',keyHint:'sk-…'},
-  gemini:{group:'Popular',label:'Google Gemini',kind:'gemini',model:'gemini-1.5-flash',keyHint:'AIza…'},
+  gemini:{group:'Popular',label:'Google Gemini',kind:'gemini',model:'gemini-2.0-flash',keyHint:'AIza…'},
   xai:{group:'Popular',label:'xAI (Grok)',kind:'openai',base:'https://api.x.ai/v1',model:'grok-2-latest',keyHint:'xai-…'},
   deepseek:{group:'Popular',label:'DeepSeek',kind:'openai',base:'https://api.deepseek.com/v1',model:'deepseek-chat',keyHint:'sk-…'},
   mistral:{group:'Popular',label:'Mistral',kind:'openai',base:'https://api.mistral.ai/v1',model:'mistral-small-latest',keyHint:'your Mistral key'},
@@ -2904,6 +2905,40 @@ async function aiComplete(prompt,maxTokens){
   const out=j&&pick(j);
   if(!out)throw new Error('empty response from '+p.label);
   return out;
+}
+// Ask the provider which models it actually offers, so the Model field is never a guess.
+async function aiListModels(){
+  const p=aiProvider();
+  if(!p)throw new Error('no provider selected');
+  const key=(DB.settings.key||'').trim();
+  if(!key && !p.noKey)throw new Error('no API key saved');
+  let url,headers,pick;
+  if(p.kind==='anthropic'){
+    url='https://api.anthropic.com/v1/models?limit=100';
+    headers={'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+    pick=j=>(j.data||[]).map(m=>m.id);
+  } else if(p.kind==='gemini'){
+    url='https://generativelanguage.googleapis.com/v1beta/models?pageSize=200';
+    headers={'x-goog-api-key':key};
+    // only models that can actually answer a prompt, with the "models/" prefix stripped
+    pick=j=>(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>(m.name||'').replace(/^models\//,''));
+  } else if(p.kind==='azure'){
+    throw new Error('Azure lists "deployments", not models — use the deployment name you created in the Azure portal.');
+  } else { // OpenAI-compatible
+    const base=((p.needsBase?DB.settings.base:p.base)||'').trim().replace(/\/+$/,'');
+    if(!base)throw new Error('set the API base URL in Settings');
+    url=base+'/models';
+    headers={'authorization':'Bearer '+(key||'none')};
+    pick=j=>(j.data||j.models||[]).map(m=>m.id||m.name).filter(Boolean);
+  }
+  let r;
+  try{r=await fetch(url,{headers});}catch(e){throw new Error('could not reach '+p.label+' ('+(e&&e.message||'network')+')'+(isFileUrl()?' — serve the page over http://localhost, not file://':''));}
+  let j=null;try{j=await r.json();}catch(e){}
+  if(j&&j.error)throw new Error(j.error.message||'API error');
+  if(!r.ok)throw new Error('HTTP '+r.status+' from '+p.label);
+  const list=(pick(j)||[]).filter(Boolean);
+  list.sort();
+  return list;
 }
 async function callAI(a,mode){
   const ask=`You are a helpful study coach for a 9th grader. For this ${subjById(a.subj).name} assignment titled "${a.title}" with instructions: "${a.desc}", give a ${mode==='summary'?'short plain-language summary of what it asks':mode==='howto'?'clear numbered step-by-step plan to complete it':'list of practical tips to do it well'}. Keep it concise and encouraging.`;
@@ -3134,6 +3169,19 @@ function renderSettings(){
   if(mt)mt.onchange=()=>{DB.showMasteryMsg=mt.checked;save();toast(mt.checked?'Mastery message shown':'Mastery message hidden');};
 }
 document.getElementById('set-save-name').onclick=()=>{DB.name=document.getElementById('set-name').value.trim();save();toast("Saved ✓");};
+document.getElementById('set-list-models').onclick=async()=>{
+  const d=document.getElementById('set-ai-diag');
+  const box=(color,html)=>`<div class="help-out" style="margin:0;border-color:${color}">${html}</div>`;
+  if(!aiOn()){d.innerHTML=box('var(--warn)','Pick a provider and save a key first.');return;}
+  d.innerHTML=box('var(--line)','Fetching models from '+aiLabel()+'…');
+  try{
+    const list=await aiListModels();
+    if(!list.length){d.innerHTML=box('var(--warn)','Connected, but the provider returned no models. Type the model name manually.');return;}
+    d.innerHTML=box('var(--accent2)',`${list.length} models available — click one to use it:<br>`+
+      list.map(m=>`<button class="tag mdl-pick" style="cursor:pointer;margin:3px 3px 0 0" data-m="${esc(m)}">${esc(m)}</button>`).join(''));
+    d.querySelectorAll('.mdl-pick').forEach(b=>b.onclick=()=>{document.getElementById('set-model').value=b.dataset.m;toast('Model set to '+b.dataset.m);});
+  }catch(e){d.innerHTML=box('var(--bad)','❌ '+e.message);}
+};
 document.getElementById('set-test-ai').onclick=async()=>{
   const d=document.getElementById('set-ai-diag');
   const box=(color,txt)=>`<div class="help-out" style="margin:0;border-color:${color}">${esc(txt)}</div>`;
