@@ -2859,7 +2859,7 @@ async function aiComplete(prompt,maxTokens){
   if(!key && !p.noKey)throw new Error('no API key saved');
   const model=aiModel();
   if(!model)throw new Error('set a model name in Settings');
-  maxTokens=maxTokens||800;
+  maxTokens=maxTokens||2048;
   let url,headers,body,pick;
   if(p.kind==='anthropic'){
     url='https://api.anthropic.com/v1/messages';
@@ -2871,7 +2871,7 @@ async function aiComplete(prompt,maxTokens){
     headers={'content-type':'application/json','x-goog-api-key':key};
     // Reasoning ("thinking") flash models spend output tokens on hidden reasoning first,
     // so give a generous ceiling — otherwise the budget runs out before any answer text.
-    body={contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:Math.max(maxTokens,2048)}};
+    body={contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:Math.max(maxTokens,4096)}};
     pick=j=>{const c=j.candidates&&j.candidates[0];if(!c)return '';
       const parts=(c.content&&c.content.parts)||[];
       return parts.map(x=>x.text||'').join('').trim();};
@@ -2959,7 +2959,7 @@ async function aiListModels(){
 }
 async function callAI(a,mode){
   const ask=`You are a helpful study coach for a 9th grader. For this ${subjById(a.subj).name} assignment titled "${a.title}" with instructions: "${a.desc}", give a ${mode==='summary'?'short plain-language summary of what it asks':mode==='howto'?'clear numbered step-by-step plan to complete it':'list of practical tips to do it well'}. Keep it concise and encouraging.`;
-  return aiComplete(ask,600);
+  return aiComplete(ask,2048);
 }
 document.getElementById('cr-connect').onclick=()=>{
   if(DB.settings.gcid){toast("Client ID saved — live Classroom hookup runs when hosted online.");}
@@ -3206,7 +3206,7 @@ document.getElementById('set-test-ai').onclick=async()=>{
   d.innerHTML=box('var(--line)','Testing '+aiLabel()+' · '+aiModel()+'…');
   const t0=Date.now();
   try{
-    const out=await aiComplete('Reply with exactly: OK',256);
+    const out=await aiComplete('Reply with exactly: OK',512);
     d.innerHTML=box('var(--accent2)',`✅ Connected to ${aiLabel()} in ${Date.now()-t0} ms\nModel: ${aiModel()}\nReply: ${String(out).trim().slice(0,80)}`);
   }catch(e){
     d.innerHTML=box('var(--bad)','❌ '+e.message);
@@ -3702,7 +3702,7 @@ function searchSources(subjName,query,type){
 }
 async function callAISources(subjName,query){
   const ask=`Suggest up to 4 real, well-known, free online resources for a 9th grader studying ${subjName}, specifically about: "${query}". Prefer YouTube videos, Khan Academy, and reputable educational sites with stable URLs. Return ONLY a JSON array of objects {"title","type","url"} where type is one of Video, Article, Course, Practice, Textbook.`;
-  let raw=await aiComplete(ask,800);
+  let raw=await aiComplete(ask,2048);
   raw=raw.replace(/```json|```/g,'').trim();const a=raw.indexOf('['),b=raw.lastIndexOf(']');if(a>=0&&b>a)raw=raw.slice(a,b+1);
   let arr;try{arr=JSON.parse(raw);}catch(e){return [];}
   return (Array.isArray(arr)?arr:[]).map(o=>({type:o.type||'Link',title:o.title||o.url,note:'AI-suggested — check that the link opens.',url:o.url,ai:true})).filter(x=>/^https?:\/\//.test(x.url||''));
@@ -3859,7 +3859,7 @@ async function readDOCX(f){
 }
 async function callAIFlashcards(material){
   const ask=`You are a study assistant. From the study material below, create high-quality flashcards. Return ONLY a JSON array (no prose, no code fence) of objects like {"front":"question or term","back":"concise answer"}. Make 8–15 cards, each testing one idea, with short clear answers.\n\nMATERIAL:\n${material.slice(0,6000)}`;
-  let raw=await aiComplete(ask,1500);
+  let raw=await aiComplete(ask,4096);
   // pull the JSON array out of the response
   raw=raw.replace(/```json|```/g,'').trim();
   const start=raw.indexOf('['),end=raw.lastIndexOf(']');
