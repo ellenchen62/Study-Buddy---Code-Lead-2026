@@ -794,8 +794,8 @@
           <p class="sub" style="margin:0 0 6px">The assignment helper works offline with guided templates. To get real AI-written summaries/tips, paste your own API key — it's stored only in this browser and sent straight to the provider.</p>
           <label class="fld">Provider</label>
           <select id="set-provider"><option value="none">Off — use templates</option><option value="gemini">Google (Gemini)</option><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI</option></select>
-          <label class="fld">API key</label>
-          <input type="password" id="set-key" placeholder="sk-…">
+          <label class="fld">API key <button class="btn ghost sm" id="set-key-help" style="padding:2px 8px;font-size:11px;margin-left:6px">❔ How do I get one?</button></label>
+          <input type="password" id="set-key" placeholder="Paste your key here…">
           <button class="btn sm" id="set-save-ai" style="margin-top:12px">Save AI settings</button>
           <details style="margin-top:16px"><summary>Why can't it use Claude's key for free?</summary>
             <p>This page runs entirely in your browser with no server behind it, so there's no shared key it can borrow. Adding your own key (or running it through the templates) are the two safe options. Keys here never leave your machine except to call the provider you chose.</p>
@@ -866,6 +866,35 @@
     <p class="sub" style="margin:14px 0 0;font-size:12px">💡 Everything is saved right in this browser — no account needed. AI features are optional and only work if you add your own API key in Settings.</p>
     <div class="row" style="margin-top:16px;justify-content:flex-end">
       <button class="btn" id="help-close">Got it — let's study!</button>
+    </div>
+  </div>
+</div>
+
+<!-- API key tutorial -->
+<div class="modal-bg" id="modal-apikey">
+  <div class="modal help">
+    <h3 style="margin:0;font-size:20px">🔑 Getting a free AI key</h3>
+    <p class="sub" style="margin:4px 0 0">The AI features (assignment helper, AI flashcards, source finder, and the Study Coach's practice/test/chat) run on your own API key. Google's <strong>Gemini</strong> has a free tier and is the easiest — here's how.</p>
+
+    <div class="section-h">Get a Gemini key (recommended, free)</div>
+    <ol style="color:var(--muted);font-size:13.5px;line-height:1.85">
+      <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/app/apikey</a> and sign in with a Google account.</li>
+      <li>Click <strong>“Create API key”</strong> (choose “Create in new project” if it asks).</li>
+      <li>Your key appears — it starts with <code>AIza…</code>. Click <strong>Copy</strong>.</li>
+      <li>Come back here. Set <strong>Provider</strong> to <strong>Google (Gemini)</strong>, paste the key in the box, and click <strong>Save AI settings</strong>.</li>
+      <li>Done! The AI features turn on. Test it in the Study Coach.</li>
+    </ol>
+
+    <div class="section-h">Prefer OpenAI or Anthropic?</div>
+    <p class="sub" style="margin:0">You can also use a paid key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">OpenAI</a> (starts with <code>sk-…</code>) or <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer">Anthropic</a> — just pick that provider in the dropdown and paste the key.</p>
+
+    <div class="card" style="margin-top:14px;border-left:4px solid var(--warn);background:var(--bg2)">
+      <strong style="font-size:13px">Keep your key private 🔒</strong>
+      <p class="sub" style="margin:4px 0 0;font-size:12.5px">Your key is stored only in this browser and sent straight to the provider — never to us. Don't share it or post it anywhere. If it ever leaks, delete it and make a new one from the same page.</p>
+    </div>
+
+    <div class="row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn" id="apikey-close">Got it</button>
     </div>
   </div>
 </div>
@@ -2800,7 +2829,7 @@ function renderCoachSetup(){
   }
   document.getElementById('coach-ainote').innerHTML=coachHasAI()
     ? `AI is on — I'll generate practice, a test, and chat with you about the topic.`
-    : `Sources work without AI. To generate topic-specific practice, a test, and live chat, add an API key in <strong>Settings</strong>.`;
+    : `Sources work without AI. To generate topic-specific practice, a test, and live chat, add a free API key. <a href="#" onclick="event.preventDefault();go('settings');openApiKeyHelp();">How do I get one?</a>`;
 }
 function coachStart(){
   const topic=document.getElementById('coach-topic').value.trim();
@@ -3249,6 +3278,11 @@ function closeHelp(){document.getElementById('modal-help').classList.remove('sho
 document.getElementById('help-btn').onclick=openHelp;
 document.getElementById('help-close').onclick=closeHelp;
 document.getElementById('modal-help').onclick=(e)=>{if(e.target.id==='modal-help')closeHelp();};
+// API key tutorial
+function openApiKeyHelp(){document.getElementById('modal-apikey').classList.add('show');}
+document.getElementById('set-key-help').onclick=openApiKeyHelp;
+document.getElementById('apikey-close').onclick=()=>document.getElementById('modal-apikey').classList.remove('show');
+document.getElementById('modal-apikey').onclick=(e)=>{if(e.target.id==='modal-apikey')document.getElementById('modal-apikey').classList.remove('show');};
 // show the guide automatically only on the very first visit
 if(!DB.seenIntro){openHelp();DB.seenIntro=true;save();}
 
