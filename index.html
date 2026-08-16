@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     /* warm, relaxing light theme */
@@ -2210,27 +2211,37 @@ document.getElementById('fy-prompt').onclick=()=>{
 };
 
 /* ============================ CLASSROOM + AI HELPER ============================ */
+const GOOGLE_CLIENT_ID='1052522215829-knhqfjel0onc9vgtf4e8k6fkd0ri5kct.apps.googleusercontent.com';
 let crCurrent=null,crMode='summary';
+let crAssignments=DEMO_ASSIGNMENTS, crConnected=false, crToken=null, crTokenClient=null;
+// subject-safe name/color (real Classroom assignments use the course name, not one of the 5 subjects)
+function crName(a){return subjById(a.subj)?subjById(a.subj).name:(a.course||a.subj||'Class');}
+function crColor(a){return subjById(a.subj)?col(a.subj):'var(--accent)';}
+function fillCrFilter(){
+  const f=document.getElementById('cr-filter');const seen=[];
+  crAssignments.forEach(a=>{const k=a.subj||a.course;if(k&&!seen.includes(k))seen.push(k);});
+  f.innerHTML='<option value="">'+(crConnected?'All classes':'All subjects')+'</option>'+seen.map(k=>`<option value="${esc(k)}">${esc(subjById(k)?subjById(k).name:k)}</option>`).join('');
+}
 function renderClassroom(){
   const f=document.getElementById('cr-filter');
-  if(!f.dataset.init){fillSubjSelect(f);f.dataset.init=1;f.onchange=renderClassroomList;}
-  renderClassroomList();
+  if(!f.dataset.init){f.dataset.init=1;f.onchange=renderClassroomList;}
+  fillCrFilter();renderClassroomList();
 }
 function renderClassroomList(){
   const subj=document.getElementById('cr-filter').value;
-  const list=DEMO_ASSIGNMENTS.filter(a=>!subj||a.subj===subj);
+  const list=crAssignments.filter(a=>!subj||(a.subj||a.course)===subj);
   const el=document.getElementById('cr-list');
-  el.innerHTML=list.map(a=>`<div class="assign" data-a="${a.id}" style="border-left-color:${col(a.subj)}">
-    <h4>${a.title}</h4><div class="due">${subjById(a.subj).name} · ${a.due}</div></div>`).join('');
+  el.innerHTML=list.length?list.map(a=>`<div class="assign" data-a="${a.id}" style="border-left-color:${crColor(a)}">
+    <h4>${esc(a.title)}</h4><div class="due">${esc(crName(a))} · ${esc(a.due)}</div></div>`).join('')
+    :'<p class="empty">No assignments here.</p>';
   el.querySelectorAll('.assign').forEach(x=>x.onclick=()=>openAssign(x.dataset.a));
 }
 function openAssign(id){
-  crCurrent=DEMO_ASSIGNMENTS.find(a=>a.id===id);
+  crCurrent=crAssignments.find(a=>a.id===id);if(!crCurrent)return;
   document.querySelectorAll('#cr-list .assign').forEach(x=>x.classList.toggle('active',x.dataset.a===id));
   document.getElementById('cr-empty').style.display='none';
   document.getElementById('cr-detail').style.display='block';
-  const s=subjById(crCurrent.subj);
-  const ds=document.getElementById('cr-d-subj');ds.textContent=s.name;ds.style.background=col(crCurrent.subj);ds.style.color='#11151b';ds.style.border='none';
+  const ds=document.getElementById('cr-d-subj');ds.textContent=crName(crCurrent);ds.style.background=crColor(crCurrent);ds.style.color='#11151b';ds.style.border='none';
   document.getElementById('cr-d-title').textContent=crCurrent.title;
   document.getElementById('cr-d-due').textContent=crCurrent.due+' · '+crCurrent.desc;
   crMode='summary';
@@ -2256,7 +2267,7 @@ async function crChatSend(){
   c.insertAdjacentHTML('beforeend',`<div class="cbub coach typing" id="cr-typing">…</div>`);c.scrollTop=c.scrollHeight;
   try{
     const hist=crChatMsgs.slice(-6).map(m=>(m.who==='me'?'Student':'Helper')+': '+m.text).join('\n');
-    const prompt=`You are Study Buddy, a helpful study coach for a 9th grader. They're working on this ${subjById(crCurrent.subj).name} assignment titled "${crCurrent.title}": "${crCurrent.desc}". Help with their specific question — give hints, explanations, and steps, but don't just do the work for them. Keep it concise and encouraging.\n\nConversation:\n${hist}\n\nReply as Helper:`;
+    const prompt=`You are Study Buddy, a helpful study coach for a 9th grader. They're working on this ${crName(crCurrent)} assignment titled "${crCurrent.title}": "${crCurrent.desc}". Help with their specific question — give hints, explanations, and steps, but don't just do the work for them. Keep it concise and encouraging.\n\nConversation:\n${hist}\n\nReply as Helper:`;
     const r=await aiComplete(prompt,500);
     document.getElementById('cr-typing')?.remove();
     crChatSay(r.trim()||'Could you tell me a bit more about what you\'re stuck on?','coach');
@@ -2285,7 +2296,7 @@ async function runHelper(){
   }
 }
 function template(a,mode){
-  const s=subjById(a.subj).name;
+  const s=crName(a);
   if(mode==='summary'){
     return `📋 In plain terms\n`+
     `This ${s} assignment ("${a.title}") asks you to: ${a.desc}\n\n`+
@@ -2382,13 +2393,50 @@ async function aiComplete(prompt,maxTokens){
   const j=await r.json();if(j.error)throw new Error(j.error.message||'API error');return j.choices[0].message.content;
 }
 async function callAI(a,mode){
-  const ask=`You are a helpful study coach for a 9th grader. For this ${subjById(a.subj).name} assignment titled "${a.title}" with instructions: "${a.desc}", give a ${mode==='summary'?'short plain-language summary of what it asks':mode==='howto'?'clear numbered step-by-step plan to complete it':'list of practical tips to do it well'}. Keep it concise and encouraging.`;
+  const ask=`You are a helpful study coach for a 9th grader. For this ${crName(a)} assignment titled "${a.title}" with instructions: "${a.desc}", give a ${mode==='summary'?'short plain-language summary of what it asks':mode==='howto'?'clear numbered step-by-step plan to complete it':'list of practical tips to do it well'}. Keep it concise and encouraging.`;
   return await aiComplete(ask,600);
 }
-document.getElementById('cr-connect').onclick=()=>{
-  if(DB.settings.gcid){toast("Client ID saved — live Classroom hookup runs when hosted online.");}
-  else{toast("Add a Google OAuth Client ID in Settings to connect for real.");go('settings');}
-};
+/* ---- real Google Classroom connection (OAuth via Google Identity Services) ---- */
+function connectClassroom(){
+  if(!(window.google&&google.accounts&&google.accounts.oauth2)){
+    toast("Google sign-in is still loading — wait a second and try again. (Only works on the hosted https site.)");return;
+  }
+  const cid=(DB.settings.gcid&&DB.settings.gcid.trim())||GOOGLE_CLIENT_ID;
+  if(!crTokenClient){
+    crTokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:cid,
+      scope:'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly',
+      callback:(resp)=>{if(resp&&resp.error){toast('Sign-in failed: '+resp.error);return;}crToken=resp.access_token;loadClassroomData();}
+    });
+  }
+  crTokenClient.requestAccessToken();
+}
+function fmtCourseDue(d){if(!d)return 'No due date';const p=n=>String(n).padStart(2,'0');return 'Due '+d.year+'-'+p(d.month)+'-'+p(d.day);}
+async function loadClassroomData(){
+  toast('Loading your Classroom…');
+  try{
+    const cRes=await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE',{headers:{Authorization:'Bearer '+crToken}});
+    const cJson=await cRes.json();if(cJson.error)throw new Error(cJson.error.message||'Could not load courses');
+    const courses=cJson.courses||[];const all=[];
+    for(const course of courses){
+      try{
+        const wRes=await fetch('https://classroom.googleapis.com/v1/courses/'+course.id+'/courseWork',{headers:{Authorization:'Bearer '+crToken}});
+        const wJson=await wRes.json();
+        (wJson.courseWork||[]).forEach(w=>all.push({id:w.id,course:course.name,subj:course.name,title:w.title||'Untitled',desc:w.description||'(No description provided in Classroom.)',due:fmtCourseDue(w.dueDate)}));
+      }catch(e){/* skip a course we can't read */}
+    }
+    if(all.length){crAssignments=all;}
+    crConnected=true;
+    const badge=document.getElementById('cr-mode');if(badge){badge.textContent='CONNECTED';badge.style.background='var(--accent2)';}
+    document.getElementById('cr-connect').textContent='✓ Connected';
+    document.getElementById('cr-detail').style.display='none';
+    document.getElementById('cr-empty').style.display='block';
+    document.getElementById('cr-empty').textContent='← Pick one of your real assignments.';
+    fillCrFilter();renderClassroomList();
+    toast(all.length?('Loaded '+all.length+' real assignment(s) ✓'):'Connected — no active assignments found.');
+  }catch(e){toast('Classroom error: '+e.message);}
+}
+document.getElementById('cr-connect').onclick=connectClassroom;
 
 /* ============================ SCHEDULE ============================ */
 const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
