@@ -724,7 +724,7 @@
     <!-- CLASSROOM -->
     <section class="page" id="page-classroom">
       <div class="between">
-        <div><h2 class="title">Google Classroom <span class="badge-demo" id="cr-mode">DEMO</span></h2>
+        <div><h2 class="title">Google Classroom</h2><span id="cr-mode" style="display:none"></span>
         <p class="sub" style="margin:4px 0 0">Your assignments, with an AI helper for summaries, how-to steps, and tips.</p></div>
         <button class="btn sec sm" id="cr-connect">Connect Classroom</button>
       </div>
@@ -2427,7 +2427,7 @@ async function loadClassroomData(){
     }
     if(all.length){crAssignments=all;}
     crConnected=true;
-    const badge=document.getElementById('cr-mode');if(badge){badge.textContent='CONNECTED';badge.style.background='var(--accent2)';}
+    const badge=document.getElementById('cr-mode');if(badge){badge.textContent='● Connected';badge.style.cssText='display:inline-block;margin-left:8px;font-size:11px;font-weight:700;color:var(--accent2)';}
     document.getElementById('cr-connect').textContent='✓ Connected';
     document.getElementById('cr-detail').style.display='none';
     document.getElementById('cr-empty').style.display='block';
