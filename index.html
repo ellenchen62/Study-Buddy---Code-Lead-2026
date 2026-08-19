@@ -9,6 +9,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <style>
   :root{
     /* warm, relaxing light theme */
@@ -244,6 +247,22 @@
   .cbub.coach{background:var(--panel2);align-self:flex-start;border-bottom-left-radius:4px}
   .cbub.me{background:var(--accent);color:#2a1a10;align-self:flex-end;border-bottom-right-radius:4px}
   .cbub.typing{color:var(--muted);font-style:italic}
+  /* landing / sign-in page */
+  #landing{position:fixed;inset:0;z-index:300;background:linear-gradient(160deg,var(--bg),var(--bg2));overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 22px;text-align:center}
+  #landing .land-logo{width:96px;height:96px;margin-bottom:6px}
+  #landing h1{font-family:'Fraunces',serif;font-size:44px;font-weight:700;margin:8px 0 2px;color:var(--txt)}
+  #landing .land-tag{font-family:'Nunito',sans-serif;font-size:18px;color:var(--accent);font-weight:700;margin:0 0 18px}
+  #landing .land-desc{max-width:560px;color:var(--muted);font-size:16px;line-height:1.65;margin:0 auto 24px}
+  #landing .land-feats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:720px;margin:0 auto 28px}
+  #landing .land-feat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 10px}
+  #landing .land-feat .lf-ic{font-size:24px}
+  #landing .land-feat .lf-t{font-weight:700;font-size:13px;margin-top:6px}
+  #landing .land-feat .lf-d{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
+  #landing .land-cta{display:flex;flex-direction:column;align-items:center;gap:12px}
+  #landing #g-signin-btn{min-height:44px}
+  #landing .land-guest{background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer}
+  #landing .land-note{color:var(--faint);font-size:12px;max-width:440px;margin:10px auto 0;line-height:1.5}
+  @media(max-width:700px){#landing .land-feats{grid-template-columns:repeat(2,1fr)}#landing h1{font-size:36px}}
   /* floating help bubble */
   #help-fab{position:fixed;bottom:22px;right:22px;width:60px;height:60px;border-radius:50%;background:var(--accent);border:none;box-shadow:var(--shadow);z-index:120;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0}
   #help-fab:hover{transform:translateY(-2px) scale(1.04)}
@@ -268,7 +287,34 @@
 </style>
 </head>
 <body>
-<div class="app">
+<!-- LANDING / SIGN-IN -->
+<div id="landing" style="display:none">
+  <svg class="land-logo" viewBox="0 0 64 64" aria-hidden="true">
+    <rect width="64" height="64" rx="15" fill="#c67c4e"/>
+    <circle cx="32" cy="21" r="9" fill="#fdfaf3"/>
+    <circle cx="29" cy="20" r="1.5" fill="#3f382f"/><circle cx="35" cy="20" r="1.5" fill="#3f382f"/>
+    <path d="M29 23.5 Q32 26.5 35 23.5" fill="none" stroke="#3f382f" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M32 34 C27.5 31.5 21 31.5 15.5 33.5 L15.5 46 C21 44 27.5 44 32 46.5 Z" fill="#fdfaf3"/>
+    <path d="M32 34 C36.5 31.5 43 31.5 48.5 33.5 L48.5 46 C43 44 36.5 44 32 46.5 Z" fill="#f1e8d8"/>
+    <line x1="32" y1="34" x2="32" y2="46.5" stroke="#c67c4e" stroke-width="1.4"/>
+  </svg>
+  <h1>Study Buddy</h1>
+  <p class="land-tag">Focus made simple</p>
+  <p class="land-desc">Study Buddy is your all-in-one study companion. Learn with proven methods like active recall, spaced repetition, and the Feynman technique, get AI help on any topic, connect your Google Classroom, and stay organized with goals, a planner, and a schedule that fits your real life.</p>
+  <div class="land-feats">
+    <div class="land-feat"><div class="lf-ic">⚯</div><div class="lf-t">Smart flashcards</div><div class="lf-d">Recall + spaced repetition</div></div>
+    <div class="land-feat"><div class="lf-ic">❏</div><div class="lf-t">Study Coach</div><div class="lf-d">Guided AI study plans</div></div>
+    <div class="land-feat"><div class="lf-ic">◨</div><div class="lf-t">Stay organized</div><div class="lf-d">Goals, planner & schedule</div></div>
+    <div class="land-feat"><div class="lf-ic">◫</div><div class="lf-t">Google Classroom</div><div class="lf-d">Your real assignments</div></div>
+  </div>
+  <div class="land-cta">
+    <div id="g-signin-btn"></div>
+    <button class="land-guest" id="land-guest">Continue without an account</button>
+  </div>
+  <p class="land-note" id="land-note">Sign in with Google to save your progress to your account on this device. Your data stays in your browser.</p>
+</div>
+
+<div class="app" style="display:none">
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="brand">
@@ -846,6 +892,10 @@
     <section class="page" id="page-settings">
       <h2 class="title">Settings</h2>
       <p class="sub">Personalize the app and (optionally) turn on live AI.</p>
+      <div class="card" style="margin-bottom:16px">
+        <h3 style="margin:0 0 10px">Account</h3>
+        <div id="set-account"></div>
+      </div>
       <div class="grid g2" style="align-items:start">
         <div class="card">
           <h3 style="margin:0 0 4px">You</h3>
@@ -1686,23 +1736,31 @@ function syncChallengeCards(){
 }
 
 /* ============================ STATE / STORAGE ============================ */
-const LS="studyhub_v1";
-let DB = load();
-function load(){
-  try{const r=JSON.parse(localStorage.getItem(LS));if(r)return r;}catch(e){}
-  return {name:"",cards:[],feynman:[],pomToday:{date:"",count:0},streak:{count:0,last:""},
-          settings:{provider:"none",key:"",gcid:""},schedule:null};
+const LS="studyhub_v1"; // legacy single-profile key (migrated into the first Google account)
+const USERS_KEY="sb_users_v1", SESS_KEY="sb_session_v1";
+function defaultDB(){return {name:"",cards:[],feynman:[],pomToday:{date:"",count:0},streak:{count:0,last:""},
+  settings:{provider:"none",key:"",gcid:""},schedule:null};}
+function loadUsers(){try{return JSON.parse(localStorage.getItem(USERS_KEY))||{};}catch(e){return {};}}
+function saveUsers(u){localStorage.setItem(USERS_KEY,JSON.stringify(u));}
+function currentEmail(){return localStorage.getItem(SESS_KEY)||'';}
+let DB = defaultDB(); // the real account data loads on sign-in
+// Save the current account's data. Cloud accounts write to Firestore (debounced) with a local cache;
+// guest/local accounts write to localStorage.
+function save(){
+  if(typeof fbUser!=='undefined' && fbUser){
+    try{localStorage.setItem('sb_cache_'+fbUser.uid,JSON.stringify(DB));}catch(e){}
+    clearTimeout(fbSaveTimer);
+    fbSaveTimer=setTimeout(()=>{if(fbUser&&fbStore)fbStore.collection('users').doc(fbUser.uid).set({db:DB,name:DB.name||'',email:fbUser.email||''},{merge:true}).catch(()=>{});},1000);
+    return;
+  }
+  const e=currentEmail();if(!e)return;const u=loadUsers();if(!u[e])u[e]={name:DB.name||'',data:DB};u[e].data=DB;saveUsers(u);
 }
-function save(){localStorage.setItem(LS,JSON.stringify(DB));}
 
-// seed cards on first run
 function newCard(id,subj,front,back){
   return {id:"c"+id+"_"+Math.random().toString(36).slice(2,6),subj,front,back,
     ease:2.5,interval:0,reps:0,due:0/*0 = new, ready now*/};
 }
 // Adds any seed card not already present (matched by subject + front text).
-// Works for brand-new installs (adds all) and returning users (adds only the new ones),
-// preserving spaced-repetition progress and any cards the student created.
 function syncSeedCards(){
   const have=new Set(DB.cards.map(c=>c.subj+'||'+c.front));
   let id=Date.now();
@@ -1713,29 +1771,33 @@ function syncSeedCards(){
   }
   save();
 }
-// SEED_VERSION bumps whenever new seed cards are added, so returning users get them once.
 const SEED_VERSION=2;
-if((DB.seedVersion||0)<SEED_VERSION){syncSeedCards();DB.seedVersion=SEED_VERSION;save();}
-if(!DB.tests)DB.tests={}; // best practice-test score per subject
-if(!DB.history)DB.history=[]; // every completed practice-test attempt
-if(!DB.assignments)DB.assignments=[]; // kanban assignments
-if(!DB.priorities)DB.priorities=["Low","Medium","High"]; // customizable
-if(!DB.statuses)DB.statuses=["Not started","In progress","Stumped","Finished"]; // customizable (kanban columns)
-if(!DB.mySources)DB.mySources={}; // saved external resources per subject
-if(!DB.goals)DB.goals=[]; // student study goals
-syncChallengeCards(); // add harder flashcards for any already-mastered subjects
-
-// streak update
-(function(){
+// Fill in any missing fields + seed content for a freshly-loaded account, then update the streak.
+function prepareDB(){
+  if(!DB.cards)DB.cards=[];
+  if(!DB.streak)DB.streak={count:0,last:""};
+  if(!DB.pomToday)DB.pomToday={date:"",count:0};
+  if(!DB.settings)DB.settings={provider:"none",key:"",gcid:""};
+  if(!DB.feynman)DB.feynman=[];
+  if((DB.seedVersion||0)<SEED_VERSION){syncSeedCards();DB.seedVersion=SEED_VERSION;}
+  if(!DB.tests)DB.tests={};
+  if(!DB.history)DB.history=[];
+  if(!DB.assignments)DB.assignments=[];
+  if(!DB.priorities)DB.priorities=["Low","Medium","High"];
+  if(!DB.statuses)DB.statuses=["Not started","In progress","Stumped","Finished"];
+  if(!DB.mySources)DB.mySources={};
+  if(!DB.goals)DB.goals=[];
+  syncChallengeCards();
   const today=dstr();
   if(DB.streak.last!==today){
     const y=dstr(-1);
     if(DB.streak.last===y) DB.streak.count+=1;
     else if(DB.streak.last!=="") DB.streak.count=1;
     else DB.streak.count=1;
-    DB.streak.last=today; save();
+    DB.streak.last=today;
   }
-})();
+  save();
+}
 function dstr(off=0){const d=new Date();d.setDate(d.getDate()+off);return d.toISOString().slice(0,10);}
 
 /* ============================ NAV ============================ */
@@ -3672,11 +3734,115 @@ function openApiKeyHelp(){document.getElementById('modal-apikey').classList.add(
 document.getElementById('set-key-help').onclick=openApiKeyHelp;
 document.getElementById('apikey-close').onclick=()=>document.getElementById('modal-apikey').classList.remove('show');
 document.getElementById('modal-apikey').onclick=(e)=>{if(e.target.id==='modal-apikey')document.getElementById('modal-apikey').classList.remove('show');};
-// show the guide automatically only on the very first visit
-if(!DB.seenIntro){openHelp();DB.seenIntro=true;save();}
 
-/* init */
-renderDash();
+/* ============================ ACCOUNTS / SIGN-IN (Firebase Auth + Firestore) ============================ */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyAke3z434bW545pOxMdwBfjylz0nTEotYw",
+  authDomain:"study-buddy-f78ed.firebaseapp.com",
+  projectId:"study-buddy-f78ed",
+  storageBucket:"study-buddy-f78ed.firebasestorage.app",
+  messagingSenderId:"462077196441",
+  appId:"1:462077196441:web:aa55aba81cc906335de008",
+  measurementId:"G-6ZS83ELEWQ"
+};
+let fbAuth=null, fbStore=null, fbUser=null, fbSaveTimer=null;
+// Start Firebase if the SDK loaded and a config is set. Returns true if cloud mode is active.
+function startFirebase(){
+  if(!(FIREBASE_CONFIG.apiKey && window.firebase && firebase.initializeApp))return false;
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    fbAuth=firebase.auth(); fbStore=firebase.firestore();
+    fbAuth.onAuthStateChanged(onAuthChange);
+    return true;
+  }catch(e){console.warn('Firebase init failed',e);return false;}
+}
+function firebaseSignIn(){
+  if(!fbAuth){toast('Sign-in needs the hosted site with internet. Locally, use “Continue without an account.”');return;}
+  const p=new firebase.auth.GoogleAuthProvider();
+  fbAuth.signInWithPopup(p).catch(e=>{toast('Sign-in failed: '+(e.message||e.code));});
+}
+async function onAuthChange(user){
+  if(user){
+    fbUser=user;
+    try{
+      const ref=fbStore.collection('users').doc(user.uid);
+      const snap=await ref.get();
+      if(snap.exists && snap.data() && snap.data().db){DB=snap.data().db;}
+      else {
+        DB=defaultDB();DB.name=(user.displayName||'').split(' ')[0]||'';
+        // one-time migration of any local data into this new cloud account
+        try{const legacy=JSON.parse(localStorage.getItem(LS));if(legacy&&legacy.cards){Object.assign(DB,legacy);if(user.displayName)DB.name=(user.displayName||'').split(' ')[0];}}catch(e){}
+      }
+    }catch(e){toast('Couldn’t load your data ('+e.message+') — starting fresh.');DB=defaultDB();}
+    prepareDB();
+    enterAppUI();
+  } else {
+    fbUser=null;DB=defaultDB();showLanding();
+  }
+}
+// local guest / fallback path (no cloud)
+function guestSignIn(){
+  localStorage.setItem(SESS_KEY,'guest@studybuddy.local');
+  const u=loadUsers();
+  if(!u['guest@studybuddy.local']){const data=defaultDB();data.name='Guest';u['guest@studybuddy.local']={name:'Guest',picture:'',data};saveUsers(u);}
+  enterApp();
+}
+function enterApp(){ // local path
+  const e=currentEmail(),u=loadUsers();
+  DB=(u[e]&&u[e].data)?u[e].data:defaultDB();
+  prepareDB();
+  enterAppUI();
+}
+function enterAppUI(){
+  document.getElementById('landing').style.display='none';
+  document.querySelector('.app').style.display='flex';
+  document.getElementById('help-fab').style.display='';
+  renderAccount();
+  go('dashboard');
+  if(!DB.seenIntro){openHelp();DB.seenIntro=true;save();}
+}
+function renderSignInButton(){
+  const el=document.getElementById('g-signin-btn');if(!el)return;
+  el.innerHTML=`<button class="btn" id="fb-google-btn" style="display:inline-flex;align-items:center;gap:10px;padding:12px 22px;font-size:15px;background:#fff;color:#3f382f;border:1px solid var(--line)">
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M45 24c0-1.5-.1-3-.4-4.4H24v8.4h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1C42.7 36.4 45 30.7 45 24z"/><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.1 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.8 28.3c-.4-1.3-.7-2.7-.7-4.3s.3-3 .7-4.3v-5.7H4.5C3 17 2 20.4 2 24s1 7 2.5 10l7.3-5.7z"/><path fill="#EA4335" d="M24 10.7c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.1 29.9 2 24 2 15.4 2 8.1 6.9 4.5 14l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"/></svg>
+    Sign in with Google</button>`;
+  document.getElementById('fb-google-btn').onclick=firebaseSignIn;
+}
+function showLanding(){
+  document.querySelector('.app').style.display='none';
+  document.getElementById('help-fab').style.display='none';
+  document.getElementById('landing').style.display='flex';
+  renderSignInButton();
+  document.getElementById('land-note').textContent = fbAuth
+    ? 'Sign in with Google to save your progress to your account — it syncs to any device you sign in on.'
+    : 'Google sign-in needs the hosted site with internet. Locally, use “Continue without an account.”';
+}
+function logout(){
+  if(fbUser&&fbAuth){fbAuth.signOut().then(()=>location.reload()).catch(()=>location.reload());return;}
+  localStorage.removeItem(SESS_KEY);location.reload();
+}
+document.getElementById('land-guest').onclick=guestSignIn;
+// show the current account in Settings (name/email/picture + log out)
+function renderAccount(){
+  const box=document.getElementById('set-account');if(!box)return;
+  let name,email,picture='',sub;
+  if(fbUser){name=fbUser.displayName||fbUser.email;email=fbUser.email;picture=fbUser.photoURL||'';sub=esc(email||'')+' · synced to the cloud';}
+  else {const e=currentEmail(),u=loadUsers(),acct=u[e]||{};name=acct.name||'Guest';picture=acct.picture||'';sub=(e==='guest@studybuddy.local')?'Guest — saved on this device only':esc(e);}
+  box.innerHTML=`<div class="row" style="justify-content:space-between;align-items:center">
+    <div class="row" style="gap:10px">
+      ${picture?`<img src="${picture}" referrerpolicy="no-referrer" style="width:38px;height:38px;border-radius:50%" alt="">`:`<div style="width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">${esc((name||'?')[0].toUpperCase())}</div>`}
+      <div><div style="font-weight:700">${esc(name||'Guest')}</div><div class="sub" style="margin:0;font-size:12px">${sub}</div></div>
+    </div>
+    <button class="btn sec sm" id="acct-logout">Log out</button></div>`;
+  document.getElementById('acct-logout').onclick=logout;
+}
+
+/* init — Firebase drives sign-in when available; otherwise fall back to local/guest */
+window.addEventListener('load',function(){
+  const cloud=startFirebase();
+  if(cloud){ showLanding(); /* onAuthChange swaps to the app if already signed in */ }
+  else { const e=currentEmail(),u=loadUsers(); if(e&&u[e]) enterApp(); else showLanding(); }
+});
 </script>
 </body>
 </html>
