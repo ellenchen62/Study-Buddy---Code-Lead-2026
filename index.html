@@ -3859,10 +3859,11 @@ function showLanding(){
 // reopen the welcome page while signed in (no logout) with a Back-to-app button
 function showAbout(){
   document.getElementById('land-close').style.display='block';
-  document.getElementById('land-cta').style.display='none';
-  document.getElementById('land-note').style.display='none';
+  document.getElementById('land-cta').style.display='flex'; // keep sign-in / switch-account buttons visible
+  document.getElementById('land-note').style.display='block';
   document.getElementById('landing').style.display='block';
   document.getElementById('landing').scrollTop=0;
+  renderSignInButton();
 }
 document.getElementById('land-close').onclick=()=>{document.getElementById('landing').style.display='none';};
 document.getElementById('side-about').onclick=(e)=>{e.preventDefault();showAbout();};
